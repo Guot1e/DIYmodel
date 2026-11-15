@@ -123,12 +123,18 @@ input,select{font-family:inherit}
 .sec::after{content:"";flex:1;height:1px;background:var(--line2);margin-left:8px;order:2}
 .sec .tag{order:3;font-size:7.5px;font-weight:400;color:#B26A00;
   background:#FFF8EC;border:1px solid #F7DFB5;border-radius:4px;padding:1px 5px;margin-left:6px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0}
-.row label{font-size:9.5px;color:var(--txt2);flex:0 0 auto}
+.row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0}
+.row label{font-size:9.5px;color:var(--txt2);flex:0 0 auto;white-space:nowrap}
 .row .v{font-size:9.5px;font-weight:700;color:var(--txt);text-align:right;white-space:nowrap}
 .row .v.dim{color:#B6C0CE;font-weight:400}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;
-  border-radius:2px;background:#E9EEF7;outline:none;margin:2px 0 4px;display:block}
+/* 数值栏：数字可直接输入 */
+.numwrap{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex:0 0 auto}
+.numwrap input[type=number]{
+  width:56px;height:22px;font-size:9.5px;padding:0 4px;text-align:right;border-radius:6px;
+}
+/* 单位已写在标签里，数字框右侧不再重复 */
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1 1 auto;width:auto;min-width:34px;height:4px;
+  border-radius:2px;background:#E9EEF7;outline:none;margin:0 3px;display:block}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;
   border-radius:50%;background:#fff;border:2px solid var(--blue);cursor:pointer}
 input[type=range]:disabled::-webkit-slider-thumb{border-color:#C9D3E0}
@@ -220,6 +226,25 @@ textarea:focus{outline:none;border-color:var(--blue)}
   .sp{display:none}
   input[type=number],select{font-size:16px}
 }
+
+/* ---- 右下角水印 ---- */
+body::after{
+  content:"Guot1e";
+  position:fixed;
+  right:16px;
+  bottom:12px;
+  z-index:9000;
+  pointer-events:none;
+  user-select:none;
+  font:500 13px/1 "Segoe UI",system-ui,-apple-system,sans-serif;
+  letter-spacing:.08em;
+  color:rgba(28,52,84,.34);
+  text-shadow:0 1px 0 rgba(255,255,255,.75);
+  mix-blend-mode:multiply;
+}
+@media (max-width:820px){
+  body::after{right:10px;bottom:8px;font-size:12px;letter-spacing:.06em}
+}
 </style>
 </head>
 <body>
@@ -253,10 +278,10 @@ textarea:focus{outline:none;border-color:var(--blue)}
 
   <div class="sp"></div>
 
-  <div class="sw pu" id="swPoint">
+  <div class="sw pu" id="swPoint" title="切换计算模型：点亮＝质点（只算平动）；熄灭＝非质点（球自转、可滚动）">
     <span>质点</span>
     <span class="dot"></span>
-    <span style="color:#A79FC0">真实尺寸</span>
+    <span style="color:#A79FC0">非质点</span>
   </div>
   <button class="btn" id="btnUndo" title="撤销 Ctrl+Z">↶</button>
   <button class="btn" id="btnRedo" title="重做 Ctrl+Y">↷</button>
@@ -355,8 +380,8 @@ textarea:focus{outline:none;border-color:var(--blue)}
     </div>
 
     <div class="pmode" id="pMode">
-      <div class="t"><span>●</span>质点显示模式</div>
-      <div class="d" id="pModeD">小球显示为质点；碰撞与接触仍按实际半径/宽高计算</div>
+      <div class="t"><span>●</span>计算模型（外观不变）</div>
+      <div class="d" id="pModeD">小球始终画成实心球；这里只切「算不算自转」。质点＝只算平动。</div>
     </div>
 
     <div id="pEmpty" class="empty">在画面中点选一个物体<br>即可编辑它的参数</div>
@@ -364,21 +389,20 @@ textarea:focus{outline:none;border-color:var(--blue)}
     <div id="pForm" class="hidden">
       <div class="sec">初始条件<span class="tag" id="lockTag">开始后锁定</span></div>
 
-      <div class="row" id="rowMass"><label>质量</label><span class="v" id="vMass">1.00 kg</span></div>
-      <input type="range" id="rMass" min="0.01" max="100" step="0.01">
+      <div class="row" id="rowMass"><label>质量 kg</label><input type="range" id="rMass" min="0.01" max="100" step="0.01"><span class="numwrap"><input type="number" id="nMass" step="0.01" style="width:48px"></span></div>
 
-      <div class="row" id="rowRadius"><label id="lbRadius">半径</label><span class="v" id="vRadius">0.10 m</span></div>
-      <input type="range" id="rRadius" min="0.02" max="1.5" step="0.01">
+      <div class="row" id="rowRadius"><label id="lbRadius">半径 m</label><input type="range" id="rRadius" min="0.02" max="1.5" step="0.01"><span class="numwrap"><input type="number" id="nRadius" step="0.01" style="width:48px"></span></div>
+      <div class="note" id="vRadiusNote" style="margin:0 0 6px"></div>
 
-      <div class="duo" id="rowWH">
-        <div><div class="row"><label>宽</label><span class="v" id="vW">0.60 m</span></div>
-          <input type="range" id="rW" min="0.1" max="4" step="0.02"></div>
-        <div><div class="row"><label>高</label><span class="v" id="vH">0.60 m</span></div>
-          <input type="range" id="rH" min="0.1" max="4" step="0.02"></div>
+      <div id="rowWH">
+        <div class="row"><label>宽 m</label><input type="range" id="rW" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nW" step="0.02" style="width:48px"></span></div>
+        <div class="row"><label>高 m</label><input type="range" id="rH" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nH" step="0.02" style="width:48px"></span></div>
       </div>
 
-      <div class="row" id="rowSlotR"><label>槽半径 R</label><span class="v" id="vSlotR">0.60 m</span></div>
-      <input type="range" id="rSlotR" min="0.1" max="4" step="0.02">
+      <div class="row" id="rowRodLen"><label>杆长 m</label><input type="range" id="rRodLen" min="0.4" max="3" step="0.05"><span class="numwrap"><input type="number" id="nRodLen" step="0.05" style="width:48px"></span></div>
+      <div class="row" id="rowRodAng"><label>杆角 °</label><input type="range" id="rRodAng" min="-180" max="180" step="1"><span class="numwrap"><input type="number" id="nRodAng" step="1" style="width:48px"></span></div>
+
+      <div class="row" id="rowSlotR"><label>槽半径 R m</label><input type="range" id="rSlotR" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nSlotR" step="0.02" style="width:48px"></span></div>
 
       <div class="row" id="rowOrient"><label>槽朝向</label>
         <select id="selOrient" style="width:130px">
@@ -398,18 +422,34 @@ textarea:focus{outline:none;border-color:var(--blue)}
         <select id="selSlide" style="width:130px">
           <option value="0">固定（不移动）</option>
           <option value="1">可沿地面滑动</option>
+          <option value="2">无约束（自由运动）</option>
         </select>
       </div>
 
-      <div class="row"><label>初速度</label><span class="v" id="vVel">0.00 m/s</span></div>
-      <input type="range" id="rVel" min="0" max="15" step="0.05">
-      <div class="row"><label>速度方向</label><span class="v" id="vAng">0°</span></div>
-      <input type="range" id="rAng" min="-180" max="180" step="1">
+      <div class="row" id="rowBind"><label>与小车结合</label>
+        <select id="selBind" style="width:130px">
+          <option value="0">独立（不结合）</option>
+          <option value="1">结合为一体 · 弧面贴车面</option>
+        </select>
+      </div>
+      <div class="note" id="vBind" style="margin:0 0 8px"></div>
 
-      <div class="row"><label>外力 F</label><span class="v" id="vForce">0.00 N</span></div>
-      <input type="range" id="rForce" min="0" max="100" step="0.5">
-      <div class="row"><label>外力方向</label><span class="v" id="vFdir">0°</span></div>
-      <input type="range" id="rFdir" min="-180" max="180" step="1">
+      <div id="rowVel"><div class="row"><label>初速度 m/s</label><input type="range" id="rVel" min="0" max="15" step="0.05"><span class="numwrap"><input type="number" id="nVel" step="0.05" style="width:48px"></span></div></div>
+      <div id="rowAng"><div class="row"><label>速度方向 °</label><input type="range" id="rAng" min="-180" max="180" step="1">
+        <span class="numwrap">
+          <input type="number" id="nAng" step="1" min="-180" max="180" style="width:52px">
+          
+        </span>
+      </div></div>
+
+      <div id="rowForce"><div class="row"><label>外力 F N</label><input type="range" id="rForce" min="0" max="100" step="0.5"><span class="numwrap"><input type="number" id="nForce" step="0.5" style="width:48px"></span></div></div>
+      <div id="rowFdir"><div class="row"><label>外力方向 °</label><input type="range" id="rFdir" min="-180" max="180" step="1">
+        <span class="numwrap">
+          <input type="number" id="nFdir" step="1" min="-180" max="180" style="width:52px">
+          
+        </span>
+      </div>
+      <div class="note" style="margin:4px 0 8px">方向口径：0° 向右、180°（或 -180°）向左、90° 向上、-90° 向下</div></div>
 
       <div class="row"><label>位置 x / y</label>
         <span style="display:flex;gap:6px;width:180px">
@@ -418,27 +458,24 @@ textarea:focus{outline:none;border-color:var(--blue)}
         </span>
       </div>
 
-      <div class="sec">外观</div>
-      <div class="row"><label>颜色</label>
+      <div class="sec" id="secColor">外观</div>
+      <div class="row" id="rowColor"><label>颜色</label>
         <div class="swatches" id="colors"></div>
       </div>
 
-      <div class="row" id="rowMu"><label>摩擦系数 μ</label><span class="v" id="vMu">0.30</span></div>
-      <input type="range" id="rMu" min="0" max="1" step="0.01">
+      <div class="row" id="rowMu"><label>摩擦系数 μ</label><input type="range" id="rMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nMu" step="0.01" style="width:48px"></span></div>
 
       <div class="row" id="rowWallE"><label>碰撞模式</label>
         <select id="selWallE" style="width:130px">
-          <option value="auto">跟随场景（仅小球弹）</option>
+          <option value="auto">跟随场景（小球/异形块弹）</option>
           <option value="0">非弹性（贴住不弹）</option>
           <option value="1">弹性（等速反弹）</option>
         </select>
       </div>
 
-      <div class="row" id="rowTilt"><label>倾角 θ</label><span class="v" id="vTilt">0°</span></div>
-      <input type="range" id="rTilt" min="-30" max="30" step="1">
+      <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:48px"></span></div>
 
-      <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><span class="v" id="vCartMu">0.20</span></div>
-      <input type="range" id="rCartMu" min="0" max="1" step="0.01">
+      <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><input type="range" id="rCartMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nCartMu" step="0.01" style="width:48px"></span></div>
 
       <div class="row" id="rowFixed"><label>类型</label>
         <select id="selFixed" style="width:130px">
@@ -493,6 +530,7 @@ textarea:focus{outline:none;border-color:var(--blue)}
    ========================================================================== */
 
 /* SECTION: constants */
+const $  = (id) => document.getElementById(id);
 const COLORS = ["#CFE0FF","#FFD9A8","#9AE6C8","#F6B5B5","#C6BFE8","#DDE7F6"];
 const C_FORCE = { g:"#F59E0B", n:"#14B8A6", f:"#EF4444", ext:"#8B98AA", rope:"#0E8C7F" };
 const C_VEL = "#2F6FED";
@@ -545,7 +583,7 @@ function pushUndo(){
 /* SECTION: object factory */
 const DEF = {
   block: { type:"block", w:0.6, h:0.6, m:1.0 },
-  ball:  { type:"ball",  r:0.12, m:0.5 },
+  ball:  { type:"ball",  r:0.18, m:0.5 },
   cart:  { type:"cart",  w:1.2, h:0.32, m:2.0, cartMu:0.2, wr:0.09 },
   shape: { type:"shape", w:1.0, h:1.0, R:0.9, orient:"TL", m:1.5, wallMu:0.2 },
   rope:  { type:"rope",  elastic:false },
@@ -561,7 +599,8 @@ function makeObj(type, x, y){
   const o = Object.assign({}, d);
   o.id = nid();
   o.x = x; o.y = y;
-  o.color = COLORS[Math.floor(Math.random()*4)];
+  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA" };
+  o.color = DEFC[type] || COLORS[Math.floor(Math.random()*4)];
   o.vx = 0; o.vy = 0;
   o.fx = 0; o.fy = 0;        // 外力
   o.ang = 0;                 // 朝向（异形块/滑轮/细杆）
@@ -620,12 +659,6 @@ function polyOf(o){
   if(o.type==="shape") return shapePts(o, 28);
   if(o.type==="cart")  return rectPts(o);
   return [];
-}
-
-/* 圆：小球 */
-function circleOf(o){
-  if(o.type==="ball") return {x:o.x, y:o.y, r:o.r};
-  return null;
 }
 
 /* 点是否在凸多边形内 */
@@ -690,29 +723,12 @@ function groundY(wx){
   const th = (g.tilt||0)*Math.PI/180;
   return g.y + (wx - g.x) * Math.tan(th);
 }
-function groundNormal(){
-  const g = groundObj();
-  const th = g ? (g.tilt||0)*Math.PI/180 : 0;
-  return { x: Math.sin(th), y: Math.cos(th) };
-}
-function groundMu(){ const g = groundObj(); return g ? (g.mu||0) : 0; }
 
 /* 细杆端点 */
 function rodEnds(o){
   const a = o.ax!==undefined ? {x:o.ax,y:o.ay} : {x:o.x, y:o.y};
   const L = o.len;
   return { a, b:{ x:a.x + L*Math.cos(o.ang), y:a.y + L*Math.sin(o.ang) } };
-}
-
-/* 角落候选矩形（用于把圆形物体扶到地面上） */
-function bottomExtent(o){
-  if(o.type==="ball") return o.r;
-  if(o.type==="pulley") return o.r||0;
-  if(o.type==="block"||o.type==="cart") return o.h/2;
-  if(o.type==="shape"){
-    return -Math.min.apply(null, shapePts(o).map(p=>p.y)) + o.y;
-  }
-  return 0;
 }
 
 /* SECTION: anchors (蓝点) */
@@ -726,8 +742,8 @@ function anchorsOf(o){
       push((p[0].x+p[1].x)/2, p[0].y, "车面中点");
       push(o.x - o.w*0.25, p[3].y, "车面左");
       push(o.x + o.w*0.25, p[3].y, "车面右");
-      push(o.x - o.w*0.3, o.y - o.h/2 - (o.wr||0.09), "轮轴左");
-      push(o.x + o.w*0.3, o.y - o.h/2 - (o.wr||0.09), "轮轴右");
+      push(o.x - o.w*0.3, o.y - o.h/2 + (o.wr||0.09), "轮轴左");
+      push(o.x + o.w*0.3, o.y - o.h/2 + (o.wr||0.09), "轮轴右");
     }
   } else if(o.type==="ball"){
     for(let i=0;i<8;i++){
@@ -793,83 +809,90 @@ function tangentPointsTo(px,py,cx,cy,r){
   ];
 }
 
-/* 计算一条绳的完整路径。nodes: [{x,y},...]，pulleys 为中间滑轮 id 列表 */
+/* 计算一条绳的完整路径。pointList: 首尾（可带中间直连点）；pulleyIds: 依次途经的滑轮
+   返回 {pts, arcs, len, pulls}
+   两个要点：
+   1) 单个滑轮：4 组切点 × 2 绕向共 8 条候选，选「弧落在两端点中点反侧」的那条
+      —— 定滑轮绳绕轮顶、动滑轮绳兜轮底，不再按"最短"选，避免绳从两端那一侧穿堂而过
+   2) 多个滑轮串联：前一个滑轮的出切点作为下一段的起点，逐段接上
+      （原实现按 pointList[i+1] 配对，第二个滑轮起就没有端点，路径会直接断掉） */
 function ropePath(pointList, pulleyIds){
-  // pointList: 首尾 + 中间直连点；pulleyIds: 与 pointList 之间交错插入
-  // 统一用 segs 表示：['p', pt] 或 ['u', pulleyObj]
-  const segs = [];
   const pulls = [];
-  segs.push({k:"p", p:pointList[0]});
-  if(pulleyIds && pulleyIds.length){
-    pulleyIds.forEach((pid, i)=>{
-      segs.push({k:"u", o: byId(pid)});
-      if(pointList[i+1]) segs.push({k:"p", p: pointList[i+1]});
-    });
-  } else {
-    for(let i=1;i<pointList.length;i++) segs.push({k:"p", p:pointList[i]});
+  const ids = pulleyIds || [];
+  const seq = [{k:"p", p: pointList[0]}];
+  ids.forEach(pid=>{ const o = byId(pid); if(o) seq.push({k:"u", o:o}); });
+  if(!ids.length){
+    for(let i=1;i<pointList.length;i++) seq.push({k:"p", p: pointList[i]});
+  } else if(pointList[1]){
+    seq.push({k:"p", p: pointList[1]});
   }
 
-  // 逐段：相邻两个 p 之间若夹一个 u，则求公切；否则直线
-  let pts = [];
-  let arcs = [];
+  const pts = [{x: seq[0].p.x, y: seq[0].p.y}];
+  const arcs = [];
   let len = 0;
-  let cur = segs[0].p;
-  pts.push({x:cur.x,y:cur.y});
-  for(let i=1;i<segs.length;i++){
-    const s = segs[i];
-    if(s.k==="u"){
-      const P = cur;
-      const N = segs[i+1] ? segs[i+1].p : null;
-      if(!N){ break; }
-      const c = s.o;
-      const tp = tangentPointsTo(P.x,P.y,c.x,c.y,c.r);
-      const tq = tangentPointsTo(N.x,N.y,c.x,c.y,c.r);
-      if(!tp || !tq){
-        len += dist(P.x,P.y,c.x,c.y) + dist(c.x,c.y,N.x,N.y);
-        pts.push({x:c.x,y:c.y});
-        cur = N;
-        continue;
-      }
-      // 4 组合 × 2 方向，取最短（拉紧的绳走最短路径）
-      let best=null;
-      for(const a of tp) for(const b of tq){
-        for(const ccw of [true,false]){
-          const ang0 = Math.atan2(a.y-c.y, a.x-c.x);
-          const ang1 = Math.atan2(b.y-c.y, b.x-c.x);
-          let sw = ang1-ang0;
-          if(ccw){ while(sw<=0) sw+=Math.PI*2; } else { while(sw>=0) sw-=Math.PI*2; }
-          let L = dist(P.x,P.y,a.x,a.y) + Math.abs(sw)*c.r + dist(b.x,b.y,N.x,N.y);
-          if(!best || L < best.L){
-            best = {L, a, b, ang0, ang1, sw};
-          }
+  let seg = 0;                                   // 直线段总长（不含弧长）：绳在轮上不打滑，弧长锁定
+  let cur = {x: seq[0].p.x, y: seq[0].p.y};
+
+  for(let i=1;i<seq.length;i++){
+    const s = seq[i];
+    if(s.k === "p"){
+      const dseg = dist(cur.x, cur.y, s.p.x, s.p.y);
+      len += dseg; seg += dseg;
+      pts.push({x:s.p.x, y:s.p.y});
+      cur = {x:s.p.x, y:s.p.y};
+      continue;
+    }
+    const c = s.o;
+    const nx = seq[i+1];
+    if(!nx) break;
+    const N = nx.k === "p" ? nx.p : {x: nx.o.x, y: nx.o.y};
+    const tp = tangentPointsTo(cur.x, cur.y, c.x, c.y, c.r);
+    const tq = tangentPointsTo(N.x, N.y, c.x, c.y, c.r);
+    if(!tp || !tq){
+      const dseg = dist(cur.x, cur.y, c.x, c.y) + dist(c.x, c.y, N.x, N.y);
+      len += dseg; seg += dseg;
+      pts.push({x:c.x, y:c.y});
+      cur = {x:c.x, y:c.y};
+      continue;
+    }
+    const mx = (cur.x + N.x)/2 - c.x, my = (cur.y + N.y)/2 - c.y;
+    const md = Math.hypot(mx, my);
+    let best = null;
+    for(const a of tp) for(const b of tq){
+      for(const ccw of [true, false]){
+        const ang0 = Math.atan2(a.y-c.y, a.x-c.x);
+        const ang1 = Math.atan2(b.y-c.y, b.x-c.x);
+        let sw = ang1 - ang0;
+        if(ccw){ while(sw <= 0) sw += Math.PI*2; } else { while(sw >= 0) sw -= Math.PI*2; }
+        const am = ang0 + sw/2;
+        const L = dist(cur.x,cur.y,a.x,a.y) + Math.abs(sw)*c.r +
+                  (nx.k === "p" ? dist(b.x,b.y,N.x,N.y) : 0);
+        // 弧中点与「两端点中点」方向相反的优先；两端几乎同心时退回最短弧
+        const dot = md > c.r*0.6 ? (Math.cos(am)*mx + Math.sin(am)*my)/md
+                                 : Math.abs(sw)/Math.PI;
+        if(!best || dot < best.dot ||
+           (Math.abs(dot - best.dot) < 1e-9 && L < best.L)){
+          best = {L:L, a:a, b:b, ang0:ang0, ang1:ang1, sw:sw, dot:dot};
         }
       }
-      len += dist(P.x,P.y,best.a.x,best.a.y);
-      len += Math.abs(best.sw)*c.r;
-      pts.push(best.a);
-      // 弧采样
-      arcs.push({cx:c.x, cy:c.y, r:c.r, a0:best.ang0, sw:best.sw});
-      const NN = 10;
-      for(let k=1;k<=NN;k++){
-        const a = best.ang0 + best.sw*(k/NN);
-        pts.push({x:c.x + c.r*Math.cos(a), y:c.y + c.r*Math.sin(a)});
-      }
-      len += dist(best.b.x, best.b.y, N.x, N.y);
-      pts.push(best.b);
-      // 绳对滑轮的净牵引方向：沿两段直绳"拉向两端"
-      const uP = norm(P.x-best.a.x, P.y-best.a.y);
-      const uN = norm(N.x-best.b.x, N.y-best.b.y);
-      pulls.push({ o:c, ux:uP.x+uN.x, uy:uP.y+uN.y });
-      cur = N;
-      len += 0;
-    } else {
-      const P = s.p;
-      if(cur){ len += dist(cur.x,cur.y,P.x,P.y); }
-      pts.push({x:P.x,y:P.y});
-      cur = P;
     }
+    const dseg = dist(cur.x, cur.y, best.a.x, best.a.y);
+    len += dseg; seg += dseg;
+    len += Math.abs(best.sw)*c.r;
+    pts.push(best.a);
+    arcs.push({cx:c.x, cy:c.y, r:c.r, a0:best.ang0, sw:best.sw});
+    const NN = 10;
+    for(let k=1;k<=NN;k++){
+      const a = best.ang0 + best.sw*(k/NN);
+      pts.push({x: c.x + c.r*Math.cos(a), y: c.y + c.r*Math.sin(a)});
+    }
+    pts.push(best.b);
+    const uP = norm(cur.x - best.a.x, cur.y - best.a.y);
+    const uN = norm(N.x - best.b.x, N.y - best.b.y);
+    pulls.push({o:c, ux:uP.x+uN.x, uy:uP.y+uN.y});
+    cur = {x: best.b.x, y: best.b.y};
   }
-  return {pts, arcs, len, pulls};
+  return {pts:pts, arcs:arcs, len:len, seg:seg, pulls:pulls};
 }
 
 /* 端点世界坐标：物体锚点或固定坐标 */
@@ -887,9 +910,30 @@ function nodePos(n){
   return {x:n.x||0, y:n.y||0};
 }
 
+/* 两端点直连时，若连线会切进某滑轮的轮缘，就把该滑轮自动纳入路径（按沿线先后排序）
+   这样在滑轮两侧直接连一条线也会自动绕轮，不必逐个去点滑轮圆心 */
+function autoPulleysFor(pA, pB){
+  const out = [];
+  const dx = pB.x - pA.x, dy = pB.y - pA.y;
+  const L2 = dx*dx + dy*dy;
+  if(L2 < 1e-9) return out;
+  for(const o of W.objs){
+    if(!o || o.type !== "pulley") continue;
+    const t = ((o.x - pA.x)*dx + (o.y - pA.y)*dy) / L2;
+    if(t <= 0.04 || t >= 0.96) continue;            // 滑轮要落在两端之间
+    const px = pA.x + dx*t, py = pA.y + dy*t;
+    if(dist(px, py, o.x, o.y) < (o.r || 0) + 0.06) out.push({id:o.id, t:t});
+  }
+  out.sort((a,b)=>a.t-b.t);
+  return out.map(q=>q.id);
+}
+
 function ropeGeom(L){
-  const pl = L.pulleys || [];
+  let pl = L.pulleys || [];
   const pA = nodePos(L.a), pB = nodePos(L.b);
+  if(!pl.length && (!L.pts || L.pts.length <= 2)){
+    pl = autoPulleysFor(pA, pB);
+  }
   if(pl.length) return ropePath([pA, pB], pl);
   if(L.pts && L.pts.length >= 2){
     // 折线：保留中间拐点，首尾若挂在物体上则实时跟随
@@ -925,9 +969,10 @@ let physAcc = 0;           // 时间累积器
 /* ---------- 对象分类 ---------- */
 function isPin(o){
   if(!o) return false;
+  if(o.bind) return true;                            // 结合件没有独立自由度
   if(o.pin === true) return true;
   if(o.pin === false) return false;                // 显式解锁（自由刚体）
-  if(o.type === "shape") return !o.slide;          // 异形块默认固定槽；开启"可滑动"才参与动力学
+  if(o.type === "shape") return !o.slide && !o.free;   // 固定槽；可滑动 / 无约束 都参与动力学
   return false;
 }
 function isDyn(o){
@@ -936,7 +981,49 @@ function isDyn(o){
   return isBody(o) && (o.m||0) > 1e-9 && !isPin(o);
 }
 function isSolid(o){ return isBody(o) && (o.m||0) > 1e-9; }
-function invM(o){ return isDyn(o) ? 1/(o.m||1) : 0; }
+
+/* 与小车"结合为一体"后，异形块没有独立的动力学：质量、冲量、位移都归到小车。 */
+function physOwner(o){
+  if(o && o.bind){
+    const c = byId(o.bind);
+    if(c && c.type === "cart") return c;
+  }
+  return o;
+}
+/* 承载体的总质量（车身 + 所有结合件） */
+function totalMassOf(o){
+  const own = physOwner(o) || o;
+  let M = own.m || 0;
+  for(const s of W.objs){
+    if(s.bind && s.bind === own.id) M += (s.m || 0);
+  }
+  return M > 1e-9 ? M : 0;
+}
+function invM(o){
+  if(!o) return 0;
+  if(o.bind) return isDyn(physOwner(o)) ? 1/totalMassOf(o) : 0;
+  return isDyn(o) ? 1/totalMassOf(o) : 0;
+}
+/* 施加冲量：结合件与车身共享同一个动量（同时更新两者速度，便于读数一致） */
+function pushVel(o, jx, jy){
+  if(!o) return;
+  const im = invM(o);
+  if(im <= 0) return;
+  const t = physOwner(o);
+  if(!t) return;
+  t.vx = (t.vx||0) + jx*im; t.vy = (t.vy||0) + jy*im;
+  if(t !== o){ o.vx = t.vx; o.vy = t.vy; }
+}
+/* 施加位置修正：结合件与车身一起平移，保持相对位置不变 */
+function pushPos(o, dx, dy){
+  if(!o) return;
+  const im = invM(o);
+  if(im <= 0) return;
+  const t = physOwner(o);
+  if(!t) return;
+  t.x += dx*im; t.y += dy*im;
+  if(t !== o){ o.x += dx*im; o.y += dy*im; }
+}
 
 function norm(x, y){
   const d = Math.hypot(x, y);
@@ -946,7 +1033,7 @@ function norm(x, y){
 /* 重力 + 外力 */
 function accelOf(o){
   if(!isDyn(o)) return {ax:0, ay:0};
-  const m = o.m || 1;
+  const m = totalMassOf(o) || 1;         // 结合件质量计入车体
   return { ax:(o.fx||0)/m, ay:-W.g + (o.fy||0)/m };
 }
 
@@ -985,19 +1072,40 @@ function polyCenter(p){
   return { x:x/p.length, y:y/p.length };
 }
 
+/* ---------- 球的自转（仅"非质点"模式） ----------
+   实心球 I = 2/5·m·r²；质点模式下 invI 恒为 0，摩擦只改平动。 */
+function invI(o){
+  if(!o || o.type !== "ball") return 0;
+  if(W.pointMass) return 0;
+  const m = o.m || 0, r = o.r || 0;
+  if(m < 1e-9 || r < 1e-9) return 0;
+  return 1 / (0.4 * m * r * r);
+}
+
+/* 可滑动异形块：只有沿地面的切向（近似水平）一个自由度，
+   法向靠"贴地导轨"承担，因此接触冲量只在可行的方向上有响应。 */
+function slideLocked(o){ return !!(o && o.type === "shape" && o.slide && !o.bind && !o._onCart); }
+function dirW(o, dx, dy){
+  if(o && o._vLock && Math.abs(dy) > 0.5) return 0;    // 车被地面托住：竖直方向无自由度
+  return slideLocked(o) ? dx*dx : 1;
+}
+
 /* ---------- 通用接触求解 ----------
    n 由 B 指向 A；pen>0 为重叠深度；A/B 可为 null（静态） */
-function contactSolve(A, B, nx, ny, pen, e, mu){
-  const imA = A ? invM(A) : 0;
-  const imB = B ? invM(B) : 0;
+function contactSolve(A, B, nx, ny, pen, e, mu, vMin){
+  if(A && B && physOwner(A) === physOwner(B)) return 0;   // 同一刚体的两个部件不自碰
+  const imAr = A ? invM(A) : 0;
+  const imBr = B ? invM(B) : 0;
+  const imA = imAr * dirW(A, nx, ny);
+  const imB = imBr * dirW(B, nx, ny);
   const im = imA + imB;
   if(im < 1e-12) return 0;
 
   // 1) 位置投影（split impulse：只改位置，不改速度）
   if(pen > SLOP){
     const corr = (pen - SLOP) * POS_BIAS / im;
-    if(imA){ A.x += nx*corr*imA; A.y += ny*corr*imA; }
-    if(imB){ B.x -= nx*corr*imB; B.y -= ny*corr*imB; }
+    if(imA) pushPos(A, nx*corr, slideLocked(A) ? 0 : ny*corr);
+    if(imB) pushPos(B, -nx*corr, slideLocked(B) ? 0 : -ny*corr);
   }
 
   const vax = A ? (A.vx||0) : 0, vay = A ? (A.vy||0) : 0;
@@ -1007,22 +1115,34 @@ function contactSolve(A, B, nx, ny, pen, e, mu){
   const vn = (vbx - vax)*nx + (vby - vay)*ny;
   let jn = 0;
   if(vn > 0){
-    const eEff = (vn > BOUNCE_V) ? e : 0;      // 低速不弹，避免接触抖动
+    const eEff = (vn > (vMin === undefined ? BOUNCE_V : vMin)) ? e : 0;   // 低速不弹，避免接触抖动
     jn = (1 + eEff) * vn / im;
-    if(imA){ A.vx += nx*jn*imA; A.vy += ny*jn*imA; }
-    if(imB){ B.vx -= nx*jn*imB; B.vy -= ny*jn*imB; }
+    if(imAr) pushVel(A, nx*jn, slideLocked(A) ? 0 : ny*jn);
+    if(imBr) pushVel(B, -nx*jn, slideLocked(B) ? 0 : -ny*jn);
   }
 
   // 3) 切向摩擦（库仑，静摩擦上限 μ·jn）
+  //    非质点球：用接触点速度（含 ω×r），冲量同时改平动与自转 → 纯滚动时接触点速度归零
   if(jn > 0 && mu > 0){
     const tx = -ny, ty = nx;
-    const vt = (vbx - vax)*tx + (vby - vay)*ty;
-    let jt = vt / im;
+    const iIA = invI(A), iIB = invI(B);
+    const rax = A ? -nx*(A.r||0) : 0, ray = A ? -ny*(A.r||0) : 0;
+    const rbx = B ?  nx*(B.r||0) : 0, rby = B ?  ny*(B.r||0) : 0;
+    const wa = A ? (A.omg||0) : 0, wb = B ? (B.omg||0) : 0;
+    const vaxc = vax - wa*ray, vayc = vay + wa*rax;
+    const vBxc = vbx - wb*rby, vByc = vby + wb*rbx;
+    const vt = (vBxc - vaxc)*tx + (vByc - vayc)*ty;
+    const imAt = imAr * dirW(A, tx, ty), imBt = imBr * dirW(B, tx, ty);
+    const den = imAt + imBt + iIA*(rax*rax + ray*ray) + iIB*(rbx*rbx + rby*rby);
+    if(den < 1e-12) return jn;                // 切向没有可行自由度：不求解，避免 0/0 = NaN
+    let jt = vt / den;
     const lim = mu * jn;
     if(jt >  lim) jt =  lim;
     if(jt < -lim) jt = -lim;
-    if(imA){ A.vx += tx*jt*imA; A.vy += ty*jt*imA; }
-    if(imB){ B.vx -= tx*jt*imB; B.vy -= ty*jt*imB; }
+    if(imAr) pushVel(A, tx*jt, slideLocked(A) ? 0 : ty*jt);
+    if(imBr) pushVel(B, -tx*jt, slideLocked(B) ? 0 : -ty*jt);
+    if(iIA) A.omg = wa + iIA * (rax*(ty*jt) - ray*(tx*jt));
+    if(iIB) B.omg = wb + iIB * (rbx*(ty*jt) - rby*(tx*jt));
   }
   return jn;
 }
@@ -1036,14 +1156,17 @@ function slideGroundOf(o){
     if(g.type !== "ground") continue;
     const th = (g.tilt||0)*Math.PI/180;
     const nx = -Math.sin(th), ny = Math.cos(th);
-    const d = (o.x - g.x)*nx + (o.y - g.y)*ny;
-    if(d > -0.35 && d < bestD){ bestD = d; best = g; }
+    const off = supportAlong(o, nx, ny);                // 沿该地面法向：中心到最低点的距离
+    const d = (o.x - g.x)*nx + (o.y - g.y)*ny - off;   // 块底到地面的有符号间隙
+    if(d > -0.30 && d < 0.12 && d < bestD){ bestD = d; best = g; }
   }
   return best;
 }
 function solveSlideShapes(h){
   for(const o of W.objs){
     if(o.type !== "shape" || !o.slide || !isDyn(o)) continue;
+    const dc = passengerDeck(o);
+    if(dc){ o._onCart = dc.id; continue; }   // 坐在车面上：竖直与驱动都交给车面接触
     const g = slideGroundOf(o);
     if(!g) continue;
     const th = (g.tilt||0)*Math.PI/180;
@@ -1062,7 +1185,8 @@ function solveSlideShapes(h){
       if(s < minS) minS = s;
     }
     if(isFinite(minS)) o.y += -minS/ny;
-    o.vy = 0;
+    // 沿坡方向：vy 与 vx 同步（位置随之连续变化，而不是每子步被"瞬移"对齐）
+    o.vy = o.vx * Math.tan(th);
     o._onGround = true;
     o._N += (o.m || 0) * W.g * Math.cos(th);
     // 切向：重力沿坡分量（投影到水平轴）→ 斜面会让槽自己往下滑
@@ -1104,14 +1228,16 @@ function solveCarts(h){
   if(!carts.length) return;
   for(const o of W.objs){
     if(!isDyn(o) || o.type==="cart") continue;
-    if(o.type === "shape" && o.slide) continue;
     for(const c of carts){
       if(Math.abs(o.x - c.x) > c.w/2 + 0.02) continue;
       if(o.y < c.y) continue;
       const pen = (c.y + c.h/2) + supportAlong(o, 0, 1) - o.y;
       if(pen < -TOUCH) continue;
+      o._onCart = c.id;                        // 先登记"坐在车面上"，此时可滑块有两个自由度
       const muC = c.cartMu !== undefined ? c.cartMu : 0.2;
+      c._vLock = true;                         // 车竖直方向由地面承担，只把支撑力给载物
       const jn = contactSolve(o, c, 0, 1, Math.max(0, pen), 0, muC);
+      c._vLock = false;
       o._N += jn/h;
       o._onCart = c.id;
     }
@@ -1123,7 +1249,8 @@ function solveCarts(h){
 function wallRestitution(o, w){
   if(w.elastic === true) return 1;
   if(w.elastic === false) return 0;
-  return (W.collision==="elastic" && o.type==="ball") ? 1 : 0;
+  // 跟随场景：光滑的球和有弧面的异形块都按弹性处理（物块等仍按非弹性）
+  return (W.collision==="elastic" && (o.type==="ball" || o.type==="shape")) ? 1 : 0;
 }
 function solveWalls(h){
   const walls = W.objs.filter(o=>o.type==="wall");
@@ -1137,7 +1264,8 @@ function solveWalls(h){
       const s = (o.x - w.x)*nx - supportAlong(o, nx, 0);
       if(s > TOUCH) continue;
       const eW = wallRestitution(o, w);
-      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eW, w.mu||0.1);
+      const muW = (w.mu !== undefined ? w.mu : 0.1);
+      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eW, muW, 0.08);
       o._N += jn/h;
     }
   }
@@ -1309,7 +1437,8 @@ function solveRope(L, h){
   for(let i=0;i<pulls.length;i++){
     eDot += (pulls[i].o.vx||0)*pulls[i].ux + (pulls[i].o.vy||0)*pulls[i].uy;
   }
-  const over = g.len - L.L0;                    // >0 表示绳被拉长
+  if(!(L.L0 > 0)) L.L0 = g.seg;                 // 兜底：缺省取当前直线段总长
+  const over = g.seg - L.L0;                    // >0 表示绳被拉长（弧长锁定，不随摆角重排）
   if(over < -1e-4){ L._geom = g; return; }       // 松弛：绳不能推
 
   if(L.elastic){
@@ -1382,14 +1511,16 @@ function solveRod(o, h){
   if(im < 1e-12) return;
 
   const C = d - L;                                    // >0 被拉长
+  if(Math.abs(C) > 0.5){ o._bobId = null; return; }    // 摆锤离杆端太远：解除绑定，别硬拽
   const vn = (bob.vx||0)*nx + (bob.vy||0)*ny;         // 径向速度
   const bias = clamp(C*POS_BIAS/h, -0.6, 0.6);
   const lam = -(vn + bias) / im;                      // 双向：不做符号截断
   bob.vx += lam*nx*im; bob.vy += lam*ny*im;
 
   if(Math.abs(C) > 1e-4){
-    bob.x -= nx*C*POS_BIAS*0.9;
-    bob.y -= ny*C*POS_BIAS*0.9;
+    const corr = clamp(C, -0.04, 0.04);          // 单步最多挪 4 cm，防止一步瞬移
+    bob.x -= nx*corr*POS_BIAS*0.9;
+    bob.y -= ny*corr*POS_BIAS*0.9;
   }
   o.ang = Math.atan2(bob.y - e.a.y, bob.x - e.a.x);
   o._rodT = Math.abs(lam)/h;
@@ -1398,7 +1529,10 @@ function solveRod(o, h){
 /* ---------- 单个子步 ---------- */
 function substep(h){
   const dyn = W.objs.filter(o=>isDyn(o));
-  for(const o of dyn){ o._N = 0; o._onGround = false; o._onCart = null; }
+  for(const o of dyn){
+    o._N = 0; o._onGround = false; o._onCart = null;
+    if(o.omg) o.ang = (o.ang||0) + o.omg*h;     // 自转角（质点模式下 ω 恒为 0）
+  }
   for(let i=0;i<W.links.length;i++){
     const L = W.links[i];
     if(L.type === "rope") L._Tacc = 0;
@@ -1420,6 +1554,9 @@ function substep(h){
     }
   }
 
+  // 可滑动异形块先沿地面导轨对齐（在接触迭代之前，避免迭代中几何突变）
+  solveSlideShapes(h);
+
   // 约束迭代（接触 → 绳 → 杆）
   for(let it=0; it<ITER; it++){
     solveGrounds(h);
@@ -1435,7 +1572,6 @@ function substep(h){
       if(o.type === "rod") solveRod(o, h);
     }
   }
-  solveSlideShapes(h);
   // 张力（冲量/h，一个子步内累计）
   for(let i=0;i<W.links.length;i++){
     const L = W.links[i];
@@ -1454,6 +1590,11 @@ function substep(h){
     if(!isFinite(o.x) || !isFinite(o.y)){ o.x = o._x0||0; o.y = o._y0||0; o.vx = 0; o.vy = 0; }
     if(!isFinite(o.vx) || !isFinite(o.vy)){ o.vx = 0; o.vy = 0; }
   }
+
+  // 与小车结合的异形块：跟随车体，保持弧面与车面相切、两者相对静止
+  followBinds();
+  // 独立（未结合）的固定件坐在车面上：随车平移，不被车穿过
+  followPassengers(h);
 }
 
 /* ---------- 积分入口（固定步长 + 时间累积） ---------- */
@@ -1498,7 +1639,7 @@ function step(dt){
   const row = { t:T };
   for(const o of W.objs){
     if(!isBody(o)) continue;
-    row[o.id] = { x:o.x, y:o.y, v:Math.hypot(o.vx||0, o.vy||0) };
+    row[o.id] = { x:o.x, y:o.y, v:Math.hypot(o.vx||0, o.vy||0), w:o.omg||0 };
   }
   samples.push(row);
   if(samples.length > 2400) samples.shift();
@@ -1514,12 +1655,13 @@ function resetSim(){
   for(const o of W.objs){
     if(o._x0!==undefined){ o.x=o._x0; o.y=o._y0; o.vx=o._vx0||0; o.vy=o._vy0||0; }
     o.trail = [];
+    o.ang = o._ang0 || 0; o.omg = o._omg0 || 0;
     o._N = 0; o._onGround = false; o._onCart = null; o._bobId = null;
   }
   physAcc = 0;
   for(const L of W.links){
     L._T = 0;
-    if(L.type==="rope") L.L0 = ropeGeom(L).len;   // 位置还原后立即重算原长
+    if(L.type==="rope"){ const gg = ropeGeom(L); L.L0 = gg.seg; }   // 位置还原后立即重算原长
   }
   T = 0;
   samples = [];
@@ -1533,19 +1675,19 @@ function captureInitial(){
   }
   physAcc = 0;
   for(const L of W.links){
-    if(L.type==="rope"){ L.L0 = ropeGeom(L).len; L._T = 0; }
+    if(L.type==="rope"){ const gg = ropeGeom(L); L.L0 = gg.seg; L._T = 0; }
   }
 }
 
 /* SECTION: view transform */
-const cv = document.getElementById("cv");
+const cv = $("cv");
 const ctx = cv.getContext("2d");
-const chartCv = document.getElementById("chart");
+const chartCv = $("chart");
 const cctx = chartCv.getContext("2d");
 
 function resize(){
   const dpr = window.devicePixelRatio || 1;
-  const st = document.getElementById("stage");
+  const st = $("stage");
   const w = st.clientWidth, h = st.clientHeight;
   cv.width = Math.max(1, Math.floor(w*dpr));
   cv.height = Math.max(1, Math.floor(h*dpr));
@@ -1567,6 +1709,15 @@ function sy2wy(y){ return (W.view.oy - y)/W.view.s; }
 
 /* SECTION: render */
 function draw(){
+  const vis = dragVisualBegin();      // 拖动中的平滑跟随（临时改写绘制坐标）
+  try {
+    drawScene();
+    if(vis) drawDragTarget(vis);      // 目标落点虚影
+  } finally {
+    dragVisualEnd(vis);               // 无论如何都还原真实坐标
+  }
+}
+function drawScene(){
   const w = cv.clientWidth, h = cv.clientHeight;
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle = "#FCFDFF"; ctx.fillRect(0,0,w,h);
@@ -1577,6 +1728,7 @@ function draw(){
   W.objs.forEach(o=>{ if(o.type==="rod") drawRod(o); });
   W.objs.forEach(o=>{ if(o.type==="anchor") drawAnchorObj(o); });
   W.objs.forEach(o=>{ if(isBody(o)) drawBody(o); });
+  W.objs.forEach(o=>{ if(o.bind) drawBind(o); });
   W.objs.forEach(o=>{ if(o.type==="pulley") drawPulley(o); });
   W.links.forEach(L=>{ if(L.type!=="rope") return; drawRope(L); });
   W.objs.forEach(o=>{ if(isBody(o)&&W.trail) drawTrail(o); });
@@ -1629,7 +1781,7 @@ function drawGround(){
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(0,sy0); ctx.lineTo(w,sy1); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
-  ctx.fillStyle = "#F1F4F9"; ctx.fill();
+  ctx.fillStyle = (g && g.color) || "#F1F4F9"; ctx.fill();
   ctx.save(); ctx.clip();
   ctx.strokeStyle = "#D9E0EA"; ctx.lineWidth = 1.4;
   for(let i=-h;i<w+h;i+=9){
@@ -1686,116 +1838,122 @@ function drawAnchorObj(o){
 }
 
 function drawBody(o){
+  const sel = o.id === selId;
   ctx.save();
-  const sel = o.id===selId;
-  const fill = o.color || "#CFE0FF";
-  if(W.pointMass && (o.type==="ball")){
-    // 质点模式：小点 + 十字 + 虚线圆
-    const x = wx2sx(o.x), y = wy2sy(o.y);
-    ctx.setLineDash([3,3]);
-    ctx.strokeStyle = "#D6DEEA"; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(x,y,Math.max(4,o.r*W.view.s),0,7); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = sel ? "#2F6FED" : "#7C6BD6";
-    ctx.beginPath(); ctx.arc(x,y,3.4,0,7); ctx.fill();
-    ctx.strokeStyle = sel ? "#2F6FED" : "#7C6BD6"; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x-7,y); ctx.lineTo(x+7,y);
-    ctx.moveTo(x,y-7); ctx.lineTo(x,y+7);
-    ctx.stroke();
-    ctx.restore(); return;
-  }
-  if(o.type==="ball"){
-    const x=wx2sx(o.x), y=wy2sy(o.y), r=Math.max(3,o.r*W.view.s);
-    ctx.fillStyle = fill; ctx.strokeStyle = sel?"#2F6FED":"#F59E0B";
-    ctx.lineWidth = sel?2.6:2;
-    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#8A5A00"; ctx.beginPath(); ctx.arc(x,y,1.8,0,7); ctx.fill();
-  } else if(o.type==="cart"){
-    const x=wx2sx(o.x), y=wy2sy(o.y);
-    const w=o.w*W.view.s, h=o.h*W.view.s;
-    ctx.fillStyle = "#DDE7F6"; ctx.strokeStyle = sel?"#2F6FED":"#34495E";
-    ctx.lineWidth = sel?2.4:1.8;
-    roundRect(ctx, x-w/2, y-h/2, w, h, 3); ctx.fill(); ctx.stroke();
-    // 轮子
-    const wr = Math.max(4,(o.wr||0.09)*W.view.s);
-    const wy = y+h/2+wr*0.75;
-    [-0.3,0.3].forEach(k=>{
-      const wx0 = x + w*k;
-      ctx.fillStyle="#F2F5FA"; ctx.strokeStyle="#34495E"; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(wx0,wy,wr,0,7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle="#34495E"; ctx.beginPath(); ctx.arc(wx0,wy,wr*0.26,0,7); ctx.fill();
-      // 辐条表示转动
-      const a = (o.rot||0);
-      ctx.strokeStyle="#93A0B0"; ctx.lineWidth=1;
-      ctx.beginPath();
-      ctx.moveTo(wx0-wr*Math.cos(a), wy-wr*Math.sin(a));
-      ctx.lineTo(wx0+wr*Math.cos(a), wy+wr*Math.sin(a));
-      ctx.stroke();
-    });
-    ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="center";
-    ctx.fillText("小车 " + (o.m||0).toFixed(1)+"kg", x, y+3);
-  } else if(o.type==="shape"){
-    const p = polyOf(o);
-    ctx.beginPath();
-    p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
-    ctx.closePath();
-    ctx.fillStyle = "#E8EEF8"; ctx.fill();
-    ctx.strokeStyle = sel?"#2F6FED":"#34495E"; ctx.lineWidth = sel?2.6:2; ctx.stroke();
-    // 弧高亮
-    ctx.beginPath();
-    for(let i=1;i<=18;i++){
-      const q = p[Math.min(i, p.length-1)];
-      const sx=wx2sx(q.x), sy=wy2sy(q.y);
-      i===1?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy);
-    }
-    ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 2.4; ctx.stroke();
-    // 虚线（被切除处）
-    ctx.setLineDash([5,4]); ctx.strokeStyle="#B6C0CE"; ctx.lineWidth=1.3;
-    const xs=p.map(q=>q.x), ys=p.map(q=>q.y);
-    const x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
-    const y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
-    let cx0=x0, cy0=y1;
-    if(o.orient==="TR"||o.orient==="BR") cx0=x1;
-    if(o.orient==="BL"||o.orient==="BR") cy0=y0;
-    const R = Math.min(o.R, Math.min(o.w,o.h));
-    ctx.beginPath();
-    ctx.moveTo(wx2sx(cx0),wy2sy(cy0));
-    ctx.lineTo(wx2sx(cx0),wy2sy(cy0-R));
-    ctx.moveTo(wx2sx(cx0),wy2sy(cy0));
-    ctx.lineTo(wx2sx(cx0+R),wy2sy(cy0));
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // 球心轨迹
-    ctx.setLineDash([4,4]); ctx.strokeStyle="#2F6FED"; ctx.lineWidth=1; ctx.globalAlpha=.5;
-    const rBall = W.pointMass ? 0 : nearestBallR(o);
-    const rr = R - rBall;
-    const a0 = arcStartAngle(o.orient);
-    ctx.beginPath();
-    ctx.arc(wx2sx(cx0), wy2sy(cy0), Math.max(1,rr*W.view.s), a0, a0+Math.PI/2, o.orient==="TL"||o.orient==="BR");
-    ctx.stroke();
-    ctx.globalAlpha=1; ctx.setLineDash([]);
-    ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="right";
-    ctx.fillText("异形块", wx2sx(x1)-6, wy2sy(y0)-8);
-  } else if(o.type==="block"){
-    const x=wx2sx(o.x), y=wy2sy(o.y);
-    const w=o.w*W.view.s, h=o.h*W.view.s;
-    ctx.fillStyle = fill; ctx.strokeStyle = sel?"#2F6FED":"#2F6FED";
-    ctx.lineWidth = sel?2.6:1.8;
-    roundRect(ctx, x-w/2, y-h/2, w, h, 2); ctx.fill(); ctx.stroke();
-    if(W.pointMass){
-      ctx.setLineDash([3,3]); ctx.strokeStyle="#B6C0CE"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle="#2F6FED"; ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill();
-    }
-  }
+  if(o.type === "ball")       drawBallBody(o, sel);
+  else if(o.type === "cart")  drawCartBody(o, sel);
+  else if(o.type === "shape") drawShapeBody(o, sel);
+  else if(o.type === "block") drawBlockBody(o, sel);
   ctx.restore();
 }
 
-function nearestBallR(shape){
-  let r = 0.1;
-  return r;
+function drawBallBody(o, sel){
+
+  const x=wx2sx(o.x), y=wy2sy(o.y), r=Math.max(3,o.r*W.view.s);
+  const base = o.color || "#FFD9A8";
+  // 纯色填充：直接取色板里的颜色，不做渐变、不混白也不混黑
+  ctx.fillStyle = base;
+  ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  // 自转刻度（只在非质点模式出现，中性灰极淡，不改变球体本身颜色）
+  if(!W.pointMass && r > 6){
+    const a = (o.ang||0);
+    ctx.strokeStyle = "#7A8798";
+    ctx.globalAlpha = 0.22;
+    ctx.lineWidth = Math.max(1, r*0.09);
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(a)*r*0.30, y - Math.sin(a)*r*0.30);
+    ctx.lineTo(x + Math.cos(a)*r*0.80, y + Math.sin(a)*r*0.80);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  // 轮廓用中性灰：纯色球也能清楚看到边界，且不改动填充色
+  ctx.strokeStyle = sel ? "#2F6FED" : "#B4C0CF";
+  ctx.lineWidth = sel ? 2.6 : 1.8;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.stroke();
 }
+
+function drawCartBody(o, sel){
+
+  const x=wx2sx(o.x), y=wy2sy(o.y);
+  const w=o.w*W.view.s, h=o.h*W.view.s;
+  ctx.fillStyle = o.color || "#DDE7F6"; ctx.strokeStyle = sel?"#2F6FED":"#34495E";
+  ctx.lineWidth = sel?2.4:1.8;
+  roundRect(ctx, x-w/2, y-h/2, w, h, 3); ctx.fill(); ctx.stroke();
+  // 轮子
+  const wr = Math.max(4,(o.wr||0.09)*W.view.s);
+  const wy = y+h/2-wr-1;               // 轮心抬到车底边之上：轮子整体嵌在矩形内部（留 1px 内缩）
+  [-0.3,0.3].forEach(k=>{
+    const wx0 = x + w*k;
+    ctx.fillStyle="#F2F5FA"; ctx.strokeStyle="#34495E"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(wx0,wy,wr,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#34495E"; ctx.beginPath(); ctx.arc(wx0,wy,wr*0.26,0,7); ctx.fill();
+    // 辐条表示转动
+    const a = (o.rot||0);
+    ctx.strokeStyle="#93A0B0"; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(wx0-wr*Math.cos(a), wy-wr*Math.sin(a));
+    ctx.lineTo(wx0+wr*Math.cos(a), wy+wr*Math.sin(a));
+    ctx.stroke();
+  });
+  ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="center";
+  ctx.fillText("小车 " + (o.m||0).toFixed(1)+"kg", x, y+3);
+}
+
+function drawShapeBody(o, sel){
+
+  const p = polyOf(o);
+  ctx.beginPath();
+  p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
+  ctx.closePath();
+  ctx.fillStyle = o.color || "#E8EEF8"; ctx.fill();
+  ctx.strokeStyle = sel?"#2F6FED":"#34495E"; ctx.lineWidth = sel?2.6:2; ctx.stroke();
+  // 弧高亮
+  ctx.beginPath();
+  for(let i=1;i<=18;i++){
+    const q = p[Math.min(i, p.length-1)];
+    const sx=wx2sx(q.x), sy=wy2sy(q.y);
+    i===1?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy);
+  }
+  ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 2.4; ctx.stroke();
+  // 虚线（被切除处）
+  ctx.setLineDash([5,4]); ctx.strokeStyle="#B6C0CE"; ctx.lineWidth=1.3;
+  const xs=p.map(q=>q.x), ys=p.map(q=>q.y);
+  const x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  const y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+  let cx0=x0, cy0=y1;
+  if(o.orient==="TR"||o.orient==="BR") cx0=x1;
+  if(o.orient==="BL"||o.orient==="BR") cy0=y0;
+  const R = Math.min(o.R, Math.min(o.w,o.h));
+  ctx.beginPath();
+  ctx.moveTo(wx2sx(cx0),wy2sy(cy0));
+  ctx.lineTo(wx2sx(cx0),wy2sy(cy0-R));
+  ctx.moveTo(wx2sx(cx0),wy2sy(cy0));
+  ctx.lineTo(wx2sx(cx0+R),wy2sy(cy0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // 球心轨迹
+  ctx.setLineDash([4,4]); ctx.strokeStyle="#2F6FED"; ctx.lineWidth=1; ctx.globalAlpha=.5;
+  const rBall = (W.objs.find(b=>b.type==="ball")||{}).r || 0.18;
+  const rr = R - rBall;
+  const a0 = arcStartAngle(o.orient);
+  ctx.beginPath();
+  ctx.arc(wx2sx(cx0), wy2sy(cy0), Math.max(1,rr*W.view.s), a0, a0+Math.PI/2, o.orient==="TL"||o.orient==="BR");
+  ctx.stroke();
+  ctx.globalAlpha=1; ctx.setLineDash([]);
+  ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="right";
+  ctx.fillText("异形块", wx2sx(x1)-6, wy2sy(y0)-8);
+}
+
+function drawBlockBody(o, sel){
+  const fill = o.color || "#CFE0FF";
+
+  const x=wx2sx(o.x), y=wy2sy(o.y);
+  const w=o.w*W.view.s, h=o.h*W.view.s;
+  ctx.fillStyle = fill; ctx.strokeStyle = sel?"#2F6FED":"#2F6FED";
+  ctx.lineWidth = sel?2.6:1.8;
+  roundRect(ctx, x-w/2, y-h/2, w, h, 2); ctx.fill(); ctx.stroke();
+}
+
 function arcStartAngle(orient){
   // canvas 角度：y 向下
   if(orient==="TL") return Math.PI/2;
@@ -1814,7 +1972,7 @@ function roundRect(c,x,y,w,h,r){
 function drawPulley(o){
   const x=wx2sx(o.x), y=wy2sy(o.y), r=Math.max(6,o.r*W.view.s);
   ctx.save();
-  ctx.fillStyle="#F2F5FA"; ctx.strokeStyle="#34495E"; ctx.lineWidth=2.2;
+  ctx.fillStyle=o.color||"#F2F5FA"; ctx.strokeStyle="#34495E"; ctx.lineWidth=2.2;
   ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.stroke();
   ctx.strokeStyle="#C9D3E0"; ctx.lineWidth=1.1;
   ctx.beginPath(); ctx.arc(x,y,r*0.7,0,7); ctx.stroke();
@@ -1873,24 +2031,26 @@ function drawVectors(o){
   if(!isMass(o)) return;
   const x = wx2sx(o.x), y = wy2sy(o.y);
   ctx.save();
-  // 重力
+  // 小球：矢量从球面起笔，避免箭头穿过球体
+  const rr = (o.type === "ball") ? Math.max(0, (o.r||0)*W.view.s) : 0;
+  // 重力（整体平移出球体，长度保持不变）
   const gLen = Math.min(70, 16 + o.m*W.g*2.2);
   if(W.forces){
-    arrow(x,y,x,y+gLen,C_FORCE.g,2.4);
-    label("G", x+5, y+gLen+2, C_FORCE.g);
+    arrow(x, y+rr, x, y+rr+gLen, C_FORCE.g, 2.4);
+    label("G", x+5, y+rr+gLen+2, C_FORCE.g);
     // 支持力
     if(o._N > 0.1){
       const nLen = Math.min(64, 10 + o._N*2.0);
-      arrow(x,y,x,y-nLen,C_FORCE.n,2.4);
-      label("N", x+5, y-nLen-2, C_FORCE.n);
+      arrow(x, y-rr, x, y-rr-nLen, C_FORCE.n, 2.4);
+      label("N", x+5, y-rr-nLen-2, C_FORCE.n);
     }
     // 外力
     const fMag = Math.hypot(o.fx||0, o.fy||0);
     if(fMag > 0.01){
       const fLen = Math.min(80, 12 + fMag*2.2);
       const ux = (o.fx||0)/fMag, uy = -(o.fy||0)/fMag;
-      arrow(x,y,x+ux*fLen,y+uy*fLen,C_FORCE.ext,2.2);
-      label("F", x+ux*fLen+5, y+uy*fLen, C_FORCE.ext);
+      arrow(x+ux*rr, y+uy*rr, x+ux*(rr+fLen), y+uy*(rr+fLen), C_FORCE.ext, 2.2);
+      label("F", x+ux*(rr+fLen)+5, y+uy*(rr+fLen), C_FORCE.ext);
     }
   }
   // 速度
@@ -1899,8 +2059,8 @@ function drawVectors(o){
     if(sp > 0.02){
       const ux = o.vx/sp, uy = -(o.vy/sp);
       const vLen = Math.min(90, 14 + sp*11);
-      arrow(x,y,x+ux*vLen,y+uy*vLen,C_VEL,2.4);
-      label("v="+sp.toFixed(2), x+ux*vLen+5, y+uy*vLen+3, C_VEL);
+      arrow(x+ux*rr, y+uy*rr, x+ux*(rr+vLen), y+uy*(rr+vLen), C_VEL, 2.4);
+      label("v="+sp.toFixed(2), x+ux*(rr+vLen)+5, y+uy*(rr+vLen)+3, C_VEL);
     }
   }
   ctx.restore();
@@ -2078,7 +2238,8 @@ function drawChart(){
       const pts = data.map(r=>{
         const d = r[id]; if(!d) return null;
         const hgt = d.y - groundY(d.x);
-        const Ek = 0.5*o.m*d.v*d.v;
+        const om = d.w || 0;
+        const Ek = 0.5*o.m*d.v*d.v + (W.pointMass ? 0 : 0.2*o.m*(o.r||0)*(o.r||0)*om*om);
         const Ep = o.m*W.g*Math.max(0,hgt);
         return { x:r.t, y: Ek+Ep };
       }).filter(Boolean);
@@ -2121,7 +2282,7 @@ function drawChart(){
 }
 
 function renderChartInfo(){
-  const box = document.getElementById("chartInfo");
+  const box = $("chartInfo");
   const o = selId ? byId(selId) : null;
   const body = ensureRows(["读", "位", "能", "检"]);
   if(!o){
@@ -2133,7 +2294,8 @@ function renderChartInfo(){
   }
   const sp = Math.hypot(o.vx||0, o.vy||0);
   const hgt = Math.max(0, o.y - groundY(o.x));
-  const Ek = 0.5*(o.m||0)*sp*sp;
+  const om = (o.omg||0);
+  const Ek = 0.5*(o.m||0)*sp*sp + (W.pointMass ? 0 : 0.2*(o.m||0)*(o.r||0)*(o.r||0)*om*om);
   const Ep = (o.m||0)*W.g*hgt;
   body["读"].textContent = nameOf(o) + "　t = " + T.toFixed(2) + " s";
   body["位"].textContent = "x " + o.x.toFixed(2) + " m　y " + o.y.toFixed(2) + " m　v " + sp.toFixed(2) + " m/s";
@@ -2143,7 +2305,7 @@ function renderChartInfo(){
 }
 let H0_ = 0;
 function ensureRows(keys){
-  const box = document.getElementById("chartInfo");
+  const box = $("chartInfo");
   if(box.dataset.ready !== "1"){
     keys.forEach(k=>{
       const d = document.createElement("div");
@@ -2160,8 +2322,8 @@ function ensureRows(keys){
 
 /* SECTION: readout */
 function updateReadout(){
-  const tEl = document.getElementById("roTitle");
-  const bEl = document.getElementById("roBody");
+  const tEl = $("roTitle");
+  const bEl = $("roBody");
   const o = selId ? byId(selId) : null;
   if(!o){
     tEl.textContent = "实时数据";
@@ -2221,7 +2383,13 @@ cv.addEventListener("pointerdown", (e)=>{
     if(running){ /* 运行中可选中查看，不改参数 */ }
     else {
       pushUndo();
+      if(hit.type === "shape" && hit.bind){
+        unbindShape(hit);
+        toast("已拆开与小车的一体结合，可重新拖动");
+      }
       drag = { id:hit.id, dx:hit.x - mouse.wx, dy:hit.y - mouse.wy };
+      dragVis = { id:hit.id, vx:hit.x, vy:hit.y, t:performance.now() };
+      if(!dragRaf) dragRaf = requestAnimationFrame(dragAnimTick);
     }
     syncPanel(); draw();
   } else {
@@ -2241,8 +2409,23 @@ cv.addEventListener("pointermove", (e)=>{
     if(o){
       if(o.type==="ground"){ o.y = Math.round((mouse.wy - drag.dy)/0.05)*0.05; }
       else if(o.type==="wall"){ o.x = mouse.wx - drag.dx; }
-      else { o.x = mouse.wx + drag.dx; o.y = mouse.wy + drag.dy; }
-      if(isBody(o)) snapToSurface(o);
+      else {
+        const nxw = mouse.wx + drag.dx, nyw = mouse.wy + drag.dy;
+        if(o.type === "rod" && o.ax !== undefined){
+          o.ax += nxw - o.x; o.ay += nyw - o.y;      // 杆的位置由锚点决定，不跟着改就拖不动
+        }
+        o.x = nxw; o.y = nyw;
+        if(isBody(o)) settleDrag(o);
+        if(o.type === "cart") followBinds();
+        if(isBody(o)){
+          // 拖着已绑定的摆锤离开杆端，半径差太大就解绑，避免被杆硬拽回去
+          for(const rd of W.objs){
+            if(rd.type !== "rod" || rd._bobId !== o.id) continue;
+            const e = rodEnds(rd);
+            if(Math.abs(dist(o.x, o.y, e.a.x, e.a.y) - (rd.len||1)) > 0.5) rd._bobId = null;
+          }
+        }
+      }
     }
   } else if(wireMode){
     draw();
@@ -2255,8 +2438,14 @@ cv.addEventListener("pointermove", (e)=>{
   if(running) draw();
 });
 cv.addEventListener("pointerup", ()=>{
+  if(!running && drag){
+    const o = byId(drag.id);
+    if(o && o.type === "shape" && !o.bind && bindTargetFor(o))
+      toast("弧底已贴住小车车面，可在右侧「与小车结合」选择为一体");
+  }
   mouse.down = false; mouse.panning = false; drag = null;
-  if(!running) draw();
+  if(dragVis && !dragRaf) dragRaf = requestAnimationFrame(dragAnimTick);   // 收尾：平滑落位
+  if(!running){ syncPanel(); draw(); }                                     // 拖完把面板的 x/y 刷成新位置
 });
 cv.addEventListener("contextmenu", e=>e.preventDefault());
 cv.addEventListener("pointerleave", ()=>{ mouse.down=false; drag=null; });
@@ -2344,6 +2533,129 @@ function shapeTangency(o){
   return true;
 }
 
+/* ---------- 异形块与小车"结合为一体" ----------
+   结合后：弧面与车顶平面相切（弧沿竖直方向的最低点落在车面上），
+   异形块改为随小车走（pin、不再单独积分），两者保持相对静止。 */
+function cartDeck(c){ return c.y + (c.h||0)/2; }
+
+/* 弧沿竖直方向最低点相对 o.y 的偏移 */
+function arcBottomOff(o){
+  const R = Math.min(o.R, Math.min(o.w, o.h));
+  const cxs = o.x - o.w/2, cys = o.y + o.h/2;
+  let low = Infinity;
+  for(let i=0;i<=28;i++){
+    const a = -Math.PI/2 + (Math.PI/2)*(i/28);
+    let py = cys + R*Math.sin(a);
+    if(o.orient==="BL"||o.orient==="BR") py = 2*o.y - py;
+    if(py < low) low = py;
+  }
+  return isFinite(low) ? low - o.y : 0;
+}
+
+/* 弧底是否已贴住某辆小车（右侧"是否结合"的询问依据） */
+function bindTargetFor(o){
+  if(!o || o.type !== "shape") return null;
+  let best = null, bg = 1e9;
+  const lowY = o.y + arcBottomOff(o);
+  for(const c of W.objs){
+    if(c.type !== "cart") continue;
+    if(o.x < c.x - c.w/2 - 0.03 || o.x > c.x + c.w/2 + 0.03) continue;
+    const gap = lowY - cartDeck(c);
+    if(Math.abs(gap) > 0.12) continue;
+    if(Math.abs(gap) < bg){ bg = Math.abs(gap); best = c; }
+  }
+  return best;
+}
+
+function bindTo(o, c){
+  const Mc = c.m || 0, Ms = o.m || 0;
+  const Mt = Mc + Ms;
+  if(Mt > 1e-9){                          // 动量守恒：合成一体的共同速度
+    c.vx = ((c.vx||0)*Mc + (o.vx||0)*Ms)/Mt;
+    c.vy = ((c.vy||0)*Mc + (o.vy||0)*Ms)/Mt;
+  }
+  o.bind = c.id;
+  o.pin = true;                          // 不再独立积分：位置、速度都由小车决定
+  const lowY = o.y + arcBottomOff(o);
+  o.y += cartDeck(c) - lowY;             // 弧面与车面平面相切
+  o.x = clamp(o.x, c.x - c.w/2 + 0.03, c.x + c.w/2 - 0.03);
+  o._bx = o.x - c.x;                     // 车体坐标下的相对偏移
+  o._dy = o.y - cartDeck(c);
+  c.fx = (c.fx||0) + (o.fx||0);            // 外力也转到车体上
+  c.fy = (c.fy||0) + (o.fy||0);
+  o.fx = 0; o.fy = 0;
+  o.vx = c.vx; o.vy = c.vy;
+}
+
+function unbindShape(o){
+  delete o.bind; delete o.pin; delete o._bx; delete o._dy;
+}
+
+/* 每子步把结合件对齐到小车（保持相切 + 相对静止） */
+function followBinds(){
+  for(const o of W.objs){
+    if(!o.bind) continue;
+    const c = byId(o.bind);
+    if(!c || c.type !== "cart"){
+      delete o.bind; delete o.pin; delete o._bx; delete o._dy;
+      continue;
+    }
+    o.x = c.x + (o._bx || 0);
+    o.y = cartDeck(c) + (o._dy || 0);
+    o.vx = c.vx || 0; o.vy = c.vy || 0;
+  }
+}
+
+/* 独立（未结合）的物件正坐在哪辆车的车面上 */
+function passengerDeck(o){
+  const bottom = o.y - supportAlong(o, 0, 1);
+  for(const c of W.objs){
+    if(c.type !== "cart" || !isDyn(c)) continue;
+    if(o.x < c.x - c.w/2 - 0.02 || o.x > c.x + c.w/2 + 0.02) continue;
+    const gap = bottom - cartDeck(c);
+    if(gap < -0.04 || gap > 0.07) continue;   // 贴住车面才算"坐在车上"
+    return c;
+  }
+  return null;
+}
+
+/* 固定（不可推动）的独立件坐在车面上时：随车平移并保持相贴，车走开就留在原地 */
+function followPassengers(h){
+  for(const o of W.objs){
+    if(o.bind || !isPin(o)) continue;
+    if(o.type !== "shape" && o.type !== "block" && o.type !== "ball") continue;
+    const c = passengerDeck(o);
+    if(!c) continue;
+    o.x += (c.vx || 0) * h;
+    o.y = cartDeck(c) + supportAlong(o, 0, 1);
+    o.vx = c.vx || 0; o.vy = 0;
+    o._onCart = c.id;
+  }
+}
+
+/* 结合标记：车面焊带 + 相切点 */
+function drawBind(o){
+  const c = byId(o.bind);
+  if(!c) return;
+  const y = cartDeck(c);
+  const x0 = Math.max(o.x - o.w/2, c.x - c.w/2) + 0.02;
+  const x1 = Math.min(o.x + o.w/2, c.x + c.w/2) - 0.02;
+  if(x1 <= x0) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(47,125,50,.9)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(wx2sx(x0), wy2sy(y));
+  ctx.lineTo(wx2sx(x1), wy2sy(y));
+  ctx.stroke();
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = "rgba(47,125,50,.75)";
+  ctx.beginPath();
+  ctx.arc(wx2sx(o.x), wy2sy(y), 4.4, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 /* 吸附到异形块：取最近边界点，沿该处外法向把间隙归零（凹弧内的小球自然落进槽里） */
 function snapToShape(o, band){
   for(const s of W.objs){
@@ -2370,6 +2682,238 @@ function snapToShape(o, band){
     return true;
   }
   return false;
+}
+
+/* ---------- 拖动体验：平滑跟随 / 贴边吸附 / 穿模分离 ---------- */
+let dragVis = null, dragRaf = 0;
+
+/* 实体轴对齐包围盒（世界坐标） */
+function boundsOf(o){
+  if(o.type==="ball") return { x0:o.x-o.r, x1:o.x+o.r, y0:o.y-o.r, y1:o.y+o.r };
+  if(o.type==="block" || o.type==="cart")
+    return { x0:o.x-o.w/2, x1:o.x+o.w/2, y0:o.y-o.h/2, y1:o.y+o.h/2 };
+  const poly = polyOf(o);
+  if(!poly.length) return null;
+  let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+  for(let i=0;i<poly.length;i++){
+    const q = poly[i];
+    if(q.x < x0) x0 = q.x; if(q.x > x1) x1 = q.x;
+    if(q.y < y0) y0 = q.y; if(q.y > y1) y1 = q.y;
+  }
+  return { x0, x1, y0, y1 };
+}
+
+/* 是否已被地面吸附（贴在地面上）：用于"已落地物体优先、且保持不动" */
+function landedOnGround(o, tol){
+  const g = groundObj();
+  if(!g || !isBody(o)) return false;
+  const th = (g.tilt||0)*Math.PI/180;
+  const nx = -Math.sin(th), ny = Math.cos(th);
+  if(ny < 1e-6) return false;
+  const s = (o.x - g.x)*nx + (o.y - g.y)*ny - supportAlong(o, nx, ny);
+  return Math.abs(s) <= (tol === undefined ? 0.04 : tol);
+}
+
+/* 贴边吸附：拖到画布左右 / 上边缘附近时把轮廓对齐到边缘 */
+function snapToViewEdge(o, bandPx){
+  const b = boundsOf(o);
+  if(!b) return false;
+  const band = (bandPx === undefined ? 12 : bandPx) / W.view.s;
+  const wx0 = sx2wx(0), wx1 = sx2wx(cv.clientWidth), wy1 = sy2wy(0);
+  if(b.x0 - wx0 < band){ o.x += (wx0 - b.x0); return true; }
+  if(wx1 - b.x1 < band){ o.x += (wx1 - b.x1); return true; }
+  if(wy1 - b.y1 < band){ o.y += (wy1 - b.y1); return true; }
+  return false;
+}
+
+/* 邻接吸附：贴到别的实体边上；已落地的目标优先命中，且目标自身保持不动 */
+function snapToNeighborEdges(o, band){
+  const others = W.objs.filter(b=>b !== o && isBody(b));
+  if(!others.length) return false;
+  others.sort((a,b)=>(landedOnGround(b)?0:1) - (landedOnGround(a)?0:1));
+  const A = boundsOf(o);
+  if(!A) return false;
+  const tol = band === undefined ? 0.07 : band;
+  for(const b of others){
+    const B = boundsOf(b);
+    if(!B) continue;
+    const overlapX = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);
+    const overlapY = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
+    // 上下贴合：A 的底边贴 B 的顶边
+    const gapTop = A.y0 - B.y1;
+    if(overlapX > 0.04 && gapTop > -0.25 && Math.abs(gapTop) < tol){ o.y -= gapTop; return true; }
+    // 左右贴合
+    const gapRight = A.x0 - B.x1;     // A 在 B 右侧时的间隙
+    const gapLeft  = B.x0 - A.x1;     // A 在 B 左侧时的间隙
+    if(overlapY > 0.04){
+      if(Math.abs(gapRight) < tol){ o.x -= gapRight; return true; }
+      if(Math.abs(gapLeft)  < tol){ o.x += gapLeft;  return true; }
+    }
+  }
+  return false;
+}
+
+/* 顶点互陷：任一方顶点落在对方轮廓内（凹形轮廓也不会误判槽内物体） */
+function vertexInside(o, b){
+  const A = polyOf(o), B = polyOf(b);
+  if(A.length < 3 || B.length < 3) return false;
+  for(let i=0;i<A.length;i++) if(pointInPoly(A[i].x, A[i].y, B)) return true;
+  for(let i=0;i<B.length;i++) if(pointInPoly(B[i].x, B[i].y, A)) return true;
+  return false;
+}
+
+/* 单个实体的穿模推出：只移动待拖动的 o，其余物体保持不动 */
+function pushOutOf(o, b){
+  if(o.type === "ball" && b.type === "ball"){
+    const dx = o.x-b.x, dy = o.y-b.y, d = Math.hypot(dx,dy);
+    const need = o.r + b.r;
+    if(d < need - 1e-4){
+      const ux = d > 1e-6 ? dx/d : 1, uy = d > 1e-6 ? dy/d : 0;
+      o.x += ux*(need-d); o.y += uy*(need-d);
+      return true;
+    }
+    return false;
+  }
+  // 球 对 多边形：只有球心陷进实体、或球心到轮廓距离小于半径时才推出
+  if(o.type === "ball" && b.type !== "ball"){
+    const B = polyOf(b);
+    if(B.length < 3) return false;
+    let bd = Infinity, bx = 0, by = 0;
+    for(let i=0;i<B.length;i++){
+      const p1 = B[i], p2 = B[(i+1)%B.length];
+      const abx = p2.x-p1.x, aby = p2.y-p1.y, L2 = abx*abx + aby*aby;
+      let t = L2 > 1e-12 ? ((o.x-p1.x)*abx + (o.y-p1.y)*aby)/L2 : 0;
+      t = clamp(t, 0, 1);
+      const px = p1.x + abx*t, py = p1.y + aby*t;
+      const d = Math.hypot(o.x-px, o.y-py);
+      if(d < bd){ bd = d; bx = px; by = py; }
+    }
+    if(!isFinite(bd)) return false;
+    const inside = pointInPoly(o.x, o.y, B);
+    const need = o.r;
+    if(inside){
+      const ux = bd > 1e-6 ? (o.x-bx)/bd : 0, uy = bd > 1e-6 ? (o.y-by)/bd : 1;
+      o.x += ux*(bd+need); o.y += uy*(bd+need);
+      return true;
+    }
+    if(bd < need){
+      const ux = bd > 1e-6 ? (o.x-bx)/bd : 1, uy = bd > 1e-6 ? (o.y-by)/bd : 0;
+      o.x += ux*(need-bd); o.y += uy*(need-bd);
+      return true;
+    }
+    return false;
+  }
+  // 多边形 对 球：球心陷进块里、或块的顶点扎进球里
+  if(b.type === "ball" && o.type !== "ball"){
+    const A = polyOf(o);
+    if(A.length < 3) return false;
+    if(pointInPoly(b.x, b.y, A)){
+      const A2 = boundsOf(o), B2 = boundsOf(b);
+      if(!A2 || !B2) return false;
+      const ox = Math.min(A2.x1, B2.x1) - Math.max(A2.x0, B2.x0);
+      const oy = Math.min(A2.y1, B2.y1) - Math.max(A2.y0, B2.y0);
+      if(ox < oy){
+        const dir = (A2.x0+A2.x1) < (B2.x0+B2.x1) ? -1 : 1;
+        o.x += dir*Math.max(ox, 1e-3);
+      } else {
+        const dir = (A2.y0+A2.y1) < (B2.y0+B2.y1) ? -1 : 1;
+        o.y += dir*Math.max(oy, 1e-3);
+      }
+      return true;
+    }
+    let worst = null;
+    for(let i=0;i<A.length;i++){
+      const d = Math.hypot(A[i].x-b.x, A[i].y-b.y);
+      if(d < b.r - 1e-4 && (!worst || d < worst.d)) worst = { p:A[i], d };
+    }
+    if(worst){
+      const ux = (worst.p.x-b.x)/(worst.d || 1), uy = (worst.p.y-b.y)/(worst.d || 1);
+      o.x += ux*(b.r-worst.d); o.y += uy*(b.r-worst.d);
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+
+/* 拖动中反复消穿模：只推动待拖动的物体 */
+function separateDragged(o){
+  for(let k=0;k<10;k++){
+    let moved = false;
+    for(const b of W.objs){
+      if(b === o || !isBody(b)) continue;
+      if(pushOutOf(o, b)){ moved = true; break; }
+      if(vertexInside(o, b)){                       // 凹形互陷：沿远离方向逐步退出
+        const dx = o.x-b.x, dy = o.y-b.y, d = Math.hypot(dx,dy);
+        const ux = d > 1e-6 ? dx/d : 0, uy = d > 1e-6 ? dy/d : 1;
+        o.x += ux*0.04; o.y += uy*0.04;
+        moved = true; break;
+      }
+    }
+    if(!moved) break;
+  }
+}
+
+/* 拖动落位：先消穿模，再按 地面 → 邻接（已落地优先）→ 画布边缘 的优先级吸附 */
+function settleDrag(o){
+  separateDragged(o);              // 先消穿模（只推动待拖动的物体）
+  snapToViewEdge(o, 12);           // 画布边缘贴边（以水平对齐为主）
+  if(snapToSurface(o)) return;     // 地面 / 车面 / 弧面：最高优先
+  snapToNeighborEdges(o, 0.07);    // 其次贴到别的实体边（已落地者优先，目标自身不动）
+}
+
+/* 平滑跟随：把绘制坐标临时替换为滞后于目标的视觉坐标 */
+function dragVisualBegin(){
+  if(!dragVis) return null;
+  const o = byId(dragVis.id);
+  if(!o){ dragVis = null; return null; }
+  const now = performance.now();
+  const dt = clamp((now - dragVis.t)/1000, 0.001, 0.05);
+  dragVis.t = now;
+  const a = 1 - Math.exp(-dt*26);
+  dragVis.vx += (o.x - dragVis.vx)*a;
+  dragVis.vy += (o.y - dragVis.vy)*a;
+  if(Math.abs(o.x - dragVis.vx) < 0.002) dragVis.vx = o.x;
+  if(Math.abs(o.y - dragVis.vy) < 0.002) dragVis.vy = o.y;
+  const r = { o, tx:o.x, ty:o.y, vx:dragVis.vx, vy:dragVis.vy };
+  o.x = r.vx; o.y = r.vy;
+  return r;
+}
+function dragVisualEnd(r){
+  if(!r) return;
+  r.o.x = r.tx; r.o.y = r.ty;
+}
+/* 拖动期间持续重绘；松手后继续收敛到落点 */
+function dragAnimTick(){
+  dragRaf = 0;
+  draw();
+  if(drag){ dragRaf = requestAnimationFrame(dragAnimTick); return; }
+  const o = dragVis ? byId(dragVis.id) : null;
+  if(o && (Math.abs(dragVis.vx - o.x) > 3e-3 || Math.abs(dragVis.vy - o.y) > 3e-3)){
+    dragRaf = requestAnimationFrame(dragAnimTick); return;
+  }
+  if(dragVis){ dragVis = null; draw(); }
+}
+/* 目标落点虚影：虚线框 + 十字 */
+function drawDragTarget(r){
+  if(!r || !drag || !isBody(r.o)) return;
+  const o = r.o;
+  o.x = r.tx; o.y = r.ty;
+  const b = boundsOf(o);
+  o.x = r.vx; o.y = r.vy;
+  if(!b) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(47,125,50,.5)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5,4]);
+  ctx.strokeRect(wx2sx(b.x0), wy2sy(b.y1), (b.x1-b.x0)*W.view.s, (b.y1-b.y0)*W.view.s);
+  ctx.setLineDash([]);
+  const cx = wx2sx(r.tx), cy = wy2sy(r.ty);
+  ctx.beginPath();
+  ctx.moveTo(cx-4, cy); ctx.lineTo(cx+4, cy);
+  ctx.moveTo(cx, cy-4); ctx.lineTo(cx, cy+4);
+  ctx.stroke();
+  ctx.restore();
 }
 
 /* 添加元素 */
@@ -2400,7 +2944,7 @@ function startWire(){
   }
   wireMode = true;
   wirePts = null;
-  document.getElementById("hintBox").innerHTML =
+  $("hintBox").innerHTML =
     "<b>布线中</b>蓝点 = 可连接位置。滑轮只有圆心一个点，线会自动与轮缘相切。<br>点击蓝点起线，再点下一个点完成。<br>按 Esc 退出。";
   toast("布线模式：点击蓝点开始连接");
   draw();
@@ -2437,7 +2981,7 @@ function finishWire(a){
   wirePts = null;
   captureInitial();
   const g = ropeGeom(L);
-  L.L0 = g.len;
+  L.L0 = g.seg;
   toast("已连接，绳长 " + g.len.toFixed(2) + " m" + (via.length ? "（途经 " + via.length + " 个滑轮）" : ""));
   draw();
 }
@@ -2450,14 +2994,35 @@ function anchorToNode(anchor){
 
 /* SECTION: panel sync */
 const P = {
-  form: document.getElementById("pForm"),
-  empty: document.getElementById("pEmpty")
+  form: $("pForm"),
+  empty: $("pEmpty")
 };
+/* 面板行可见性：一张表说清「哪种对象看得到哪一行」 */
+const ROW_VIS = {
+  rowMass:  "body",            rowVel:   "body",            rowAng:    "body",
+  rowForce: "body",            rowFdir:  "body",
+  rowRadius:"ball pulley",     rowWH:    "block cart shape",
+  rowSlotR: "shape",           rowOrient:"shape",           rowTangent:"shape",
+  rowSlide: "shape",           rowBind:  "shape",
+  rowWallE: "wall",            rowMu:    "ground wall",     rowTilt:   "ground",
+  rowCartMu:"cart",            rowRodLen:"rod",             rowRodAng: "rod",
+  rowFixed: "pulley",
+};
+/* 有面的对象才给色板：墙、细杆、固定点都是纯线条 */
+const CAN_COLOR = "ball block shape cart ground pulley";
+
+const hitRule = (rule, t, hasMass) =>
+  rule === "body" ? hasMass : (" " + rule + " ").indexOf(" " + t + " ") >= 0;
+
+function applyRowVisibility(t, hasMass){
+  for(const id in ROW_VIS) $(id).classList.toggle("hidden", !hitRule(ROW_VIS[id], t, hasMass));
+  $("vRadiusNote").classList.toggle("hidden", t !== "ball");
+  $("lbRadius").textContent = t === "pulley" ? "滑轮半径" : "半径";
+}
+
 function syncPanel(){
   const o = selId ? byId(selId) : null;
-  const badge = document.getElementById("pBadge");
-  const title = document.getElementById("pTitle");
-  const modeBox = document.getElementById("pMode");
+  const badge = $("pBadge"), title = $("pTitle"), modeBox = $("pMode");
 
   if(!o){
     P.form.classList.add("hidden");
@@ -2465,7 +3030,7 @@ function syncPanel(){
     title.textContent = "属性";
     badge.textContent = "未选中";
     badge.className = "badge";
-    modeBox.classList.toggle("hidden", !W.pointMass);
+    modeBox.classList.remove("hidden");
     return;
   }
   P.empty.classList.add("hidden");
@@ -2473,123 +3038,120 @@ function syncPanel(){
   title.textContent = "属性 · " + nameOf(o);
   badge.textContent = running ? "运行中" : "已选中";
   badge.className = "badge" + (running ? " pu" : "");
-  modeBox.classList.toggle("hidden", !(W.pointMass && isBody(o)));
-  document.getElementById("lockTag").style.display = running ? "" : "none";
+  modeBox.classList.toggle("hidden", !isBody(o));
+  $("lockTag").style.display = running ? "" : "none";
 
-  const t = o.type;
-  const hasMass = isBody(o);
-  const show = (id, on) => document.getElementById(id).classList.toggle("hidden", !on);
+  const t = o.type, hasMass = isBody(o);
+  applyRowVisibility(t, hasMass);
+  syncPanelSize(o, t, hasMass);      // 质量、半径、宽高、形状专属、墙弹性、杆
+  syncPanelMotion(o, hasMass);       // 初速度、速度方向、外力、外力方向
+  syncPanelPosition(o);              // 位置
+  syncPanelColor(o, t);              // 颜色
+  syncPanelSurface(o, t);            // 摩擦、倾角、车面摩擦、滑轮是否固定
 
-  show("rowMass", hasMass);
-  show("rowRadius", t==="ball"||t==="pulley");
-  document.getElementById("lbRadius").textContent = t==="pulley" ? "滑轮半径" : "半径";
-  show("rowWH", t==="block"||t==="cart"||t==="shape");
-  show("rowSlotR", t==="shape");
-  show("rowOrient", t==="shape");
-  show("rowTangent", t==="shape");
-  show("rowSlide", t==="shape");
-  show("rowWallE", t==="wall");
-  show("rowMu", t==="ground"||t==="wall");
-  show("rowTilt", t==="ground");
-  show("rowCartMu", t==="cart");
-  show("rowFixed", t==="pulley");
-  document.getElementById("rowMass").style.display = hasMass ? "" : "none";
-  document.getElementById("rMass").style.display = hasMass ? "" : "none";
+  $("cForce").checked = W.forces;
+  $("cVel").checked = W.vels;
+  $("cTrail").checked = W.trail;
+  $("pNote").innerHTML = noteText(o);
+  syncNums();                        // 数字框回填（正在输入的那个不打断）
+}
 
-  const dim = (id, d) => document.getElementById(id).classList.toggle("dim", !!d);
-  // 质量
-  if(hasMass){
-    setRange("rMass", o.m, 0.01, 100, running);
-    document.getElementById("vMass").textContent = (o.m||0).toFixed(2) + " kg";
-  }
-  // 半径
-  if(t==="ball"){
-    const isPoint = W.pointMass;
+function syncPanelSize(o, t, hasMass){
+  if(hasMass) setRange("rMass", o.m, 0.01, 100, running);
+
+  if(t === "ball"){
     setRange("rRadius", o.r, 0.02, 1.5, running);
-    document.getElementById("vRadius").textContent = o.r.toFixed(2) + " m" + (isPoint?"（不参与计算）":"");
-    dim("vRadius", isPoint);
+    $("vRadiusNote").textContent =
+      W.pointMass ? "质点模式：只算平动，转动惯量不参与计算" : "实心球  I = 2/5·m·r²";
   }
-  if(t==="pulley"){
-    setRange("rRadius", o.r, 0.05, 0.8, running);
-    document.getElementById("vRadius").textContent = o.r.toFixed(2) + " m";
-  }
-  // 宽高
-  if(t==="block"||t==="cart"||t==="shape"){
+  if(t === "pulley") setRange("rRadius", o.r, 0.05, 0.8, running);
+
+  if(t === "block" || t === "cart" || t === "shape"){
     setRange("rW", o.w, 0.1, 4, running);
     setRange("rH", o.h, 0.1, 4, running);
-    document.getElementById("vW").textContent = o.w.toFixed(2) + " m";
-    document.getElementById("vH").textContent = o.h.toFixed(2) + " m";
   }
-  if(t==="shape"){
+
+  if(t === "shape"){
     setRange("rSlotR", o.R, 0.1, 4, running);
-    document.getElementById("vSlotR").textContent = o.R.toFixed(2) + " m";
-    document.getElementById("selOrient").value = o.orient;
-    document.getElementById("selOrient").disabled = running;
-    document.getElementById("selTangent").value = o.tangent ? "1" : "0";
-    document.getElementById("selTangent").disabled = running;
-    document.getElementById("selSlide").value = o.slide ? "1" : "0";
-    document.getElementById("selSlide").disabled = running;
+    $("selOrient").value = o.orient;
+    $("selOrient").disabled = running;
+    $("selTangent").value = o.tangent ? "1" : "0";
+    $("selSlide").value = o.free ? "2" : (o.slide ? "1" : "0");
+    $("selSlide").disabled = running;
+    $("selTangent").disabled = running || !!o.free;   // 无约束时贴地方式无意义
+    const nearC = o.bind ? byId(o.bind) : bindTargetFor(o);
+    $("selBind").value = o.bind ? "1" : "0";
+    $("selBind").disabled = running;
+    $("vBind").textContent = o.bind
+      ? "已结合：弧面与车面相切，二者保持相对静止"
+      : (nearC ? "检测到弧底贴住小车车面，可选择「结合为一体」" : "把弧底拖到小车车面上即可结合");
   }
-  if(t==="wall"){
-    document.getElementById("selWallE").value =
+
+  if(t === "wall"){
+    $("selWallE").value =
       o.elastic === true ? "1" : (o.elastic === false ? "0" : "auto");
-    document.getElementById("selWallE").disabled = running;
+    $("selWallE").disabled = running;
   }
-  // 初速度
-  if(hasMass){
-    const sp = Math.hypot(o.vx||0, o.vy||0);
-    setRange("rVel", sp, 0, 15, running);
-    document.getElementById("vVel").textContent = sp.toFixed(2) + " m/s";
-    const ang = Math.round(Math.atan2(o.vy||0, o.vx||0)*180/Math.PI);
-    setRange("rAng", ang, -180, 180, running);
-    document.getElementById("vAng").textContent = ang + "°";
-    const fm = Math.hypot(o.fx||0, o.fy||0);
-    setRange("rForce", fm, 0, 100, running);
-    document.getElementById("vForce").textContent = fm.toFixed(1) + " N";
-    const fa = Math.round(Math.atan2(o.fy||0, o.fx||0)*180/Math.PI);
-    setRange("rFdir", fa, -180, 180, running);
-    document.getElementById("vFdir").textContent = fa + "°";
+
+  if(t === "rod"){
+    setRange("rRodLen", o.len || 1.4, 0.4, 3, running);
+    setRange("rRodAng", Math.round((o.ang || 0) * 180 / Math.PI), -180, 180, running);
   }
-  // 位置
-  const nx = document.getElementById("nX"), ny = document.getElementById("nY");
+}
+
+function syncPanelMotion(o, hasMass){
+  if(!hasMass) return;
+
+  // 速度大小与方向（速度为 0 时保留上次方向，免得滑杆跳回 0°）
+  const sp = Math.hypot(o.vx || 0, o.vy || 0);
+  setRange("rVel", sp, 0, 15, running);
+  let ang = Math.round(Math.atan2(o.vy || 0, o.vx || 0) * 180 / Math.PI);
+  if(sp > 1e-6) o._ang = ang;
+  else if(o._ang !== undefined) ang = Math.round(o._ang);
+  setRange("rAng", ang, -180, 180, running);
+  $("nAng").value = ang; $("nAng").disabled = running;
+
+  // 外力大小与方向
+  const fm = Math.hypot(o.fx || 0, o.fy || 0);
+  setRange("rForce", fm, 0, 100, running);
+  let fa = Math.round(Math.atan2(o.fy || 0, o.fx || 0) * 180 / Math.PI);
+  if(fm > 1e-6) o._fdir = fa;
+  else if(o._fdir !== undefined) fa = Math.round(o._fdir);
+  setRange("rFdir", fa, -180, 180, running);
+  $("nFdir").value = fa; $("nFdir").disabled = running;
+}
+
+function syncPanelPosition(o){
+  const nx = $("nX"), ny = $("nY");
   nx.value = o.x.toFixed(2); ny.value = o.y.toFixed(2);
   nx.disabled = ny.disabled = running;
-  // 颜色
-  buildSwatches(o);
-  // 摩擦
-  if(t==="ground"||t==="wall"){
-    setRange("rMu", o.mu||0, 0, 1, running);
-    document.getElementById("vMu").textContent = (o.mu||0).toFixed(2);
-  }
-  if(t==="ground"){
-    setRange("rTilt", o.tilt||0, -30, 30, running);
-    document.getElementById("vTilt").textContent = (o.tilt||0) + "°";
-  }
-  if(t==="cart"){
-    setRange("rCartMu", o.cartMu||0, 0, 1, running);
-    document.getElementById("vCartMu").textContent = (o.cartMu||0).toFixed(2);
-  }
-  if(t==="pulley"){
-    document.getElementById("selFixed").value = String(o.fixed ? 1 : 0);
-    document.getElementById("selFixed").disabled = running;
-  }
-  // 显示选项（全局）
-  document.getElementById("cForce").checked = W.forces;
-  document.getElementById("cVel").checked = W.vels;
-  document.getElementById("cTrail").checked = W.trail;
-
-  // 提示
-  const note = document.getElementById("pNote");
-  note.innerHTML = noteText(o);
 }
+
+function syncPanelColor(o, t){
+  const on = hitRule(CAN_COLOR, t, true);
+  $("secColor").classList.toggle("hidden", !on);
+  $("rowColor").classList.toggle("hidden", !on);
+  if(on) buildSwatches(o);
+}
+
+function syncPanelSurface(o, t){
+  if(t === "ground" || t === "wall") setRange("rMu", o.mu || 0, 0, 1, running);
+  if(t === "ground") setRange("rTilt", o.tilt || 0, -30, 30, running);
+  if(t === "cart") setRange("rCartMu", o.cartMu || 0, 0, 1, running);
+  if(t === "pulley"){
+    $("selFixed").value = String(o.fixed ? 1 : 0);
+    $("selFixed").disabled = running;
+  }
+}
+
 function setRange(id, val, min, max, disabled){
-  const el = document.getElementById(id);
+  const el = $(id);
   el.min = min; el.max = max;
   el.value = clamp(val, min, max);
   el.disabled = !!disabled;
 }
 function buildSwatches(o){
-  const box = document.getElementById("colors");
+  const box = $("colors");
   if(box.dataset.built !== "1"){
     COLORS.forEach((c,i)=>{
       const d = document.createElement("div");
@@ -2609,19 +3171,24 @@ function buildSwatches(o){
   });
 }
 function noteText(o){
-  if(o.type==="ball" || o.type==="shape"){
-    if(W.pointMass){
-      return "<b>质点模式</b>球心轨迹就是弧本身，下滑高度 = R。<br>" +
-        "切到真实尺寸后高度变为 <span class='em'>R − r</span>，末速会变小。<br>" +
-        "这正是「忽略物体大小」的代价。";
-    }
-    return "<b>真实尺寸</b>球心沿半径 <span class='em'>R − r</span> 的圆弧运动，<br>" +
+  if(o.type==="shape"){
+    return "<b>弧面</b>球心沿半径 <span class='em'>R − r</span> 的圆弧运动，<br>" +
       "要求 r < R 才放得进槽里。<br>凹槽内支持力恒正，球不会脱离弧面。";
+  }
+  if(o.type==="ball"){
+    if(W.pointMass){
+      return "<b>质点计算</b>只算平动，球不自转：<br>" +
+        "沿弧面下滑末速 <span class='em'>v = √(2gh)</span>，h = R − r。<br>" +
+        "半径只决定几何，不进转动方程。";
+    }
+    return "<b>非质点计算</b>球会自转，凹面有静摩擦时纯滚动：<br>" +
+      "末速 <span class='em'>v = √(10gh/7)</span> ≈ 0.845 × 质点值。<br>" +
+      "球面刻度随 ω 转动，可直接看出在滚。";
   }
   if(o.type==="ground") return "<b>地面</b>摩擦系数影响是否能推动。<br>倾角为 0 表示水平。";
   if(o.type==="wall") return "<b>墙壁</b>竖直支持面，可设摩擦。<br>碰撞模式：弹性按 e=1 等速反弹，非弹性撞上即停。";
   if(o.type==="pulley") return "<b>滑轮</b>理想滑轮绳中张力处处相等。<br>定滑轮 F=G 只改方向；动滑轮 n=2、F=G/2。<br>绳必与轮缘相切。";
-  if(o.type==="rod") return "<b>细杆</b>可推可拉，与细线不同。<br>靠近杆端的物体会被约束成摆锤。";
+  if(o.type==="rod") return "<b>细杆</b>可推可拉，与细线不同。<br>靠近杆端的物体会被约束成摆锤。<br>杆本身可整体拖动；杆长与杆角在右侧调。";
   if(o.type==="cart") return "<b>小车</b>车面摩擦决定物块是否随之运动。<br>μ 不足时物块会相对滑动。";
   if(o.type==="block") return "<b>物块</b>拖动能改位置，吸附顺序：地面 → 车面 → 弧面。";
   return "";
@@ -2629,7 +3196,7 @@ function noteText(o){
 
 /* SECTION: bind panel inputs */
 function bindNum(id, fn){
-  const el = document.getElementById(id);
+  const el = $(id);
   el.addEventListener("input", ()=>{
     const o = byId(selId); if(!o || running) return;
     fn(o, parseFloat(el.value));
@@ -2637,7 +3204,7 @@ function bindNum(id, fn){
   });
 }
 function bindRange(id, fn){
-  const el = document.getElementById(id);
+  const el = $(id);
   el.addEventListener("input", ()=>{
     const o = byId(selId); if(!o || running) return;
     fn(o, parseFloat(el.value));
@@ -2645,28 +3212,58 @@ function bindRange(id, fn){
   });
 }
 bindRange("rMass", (o,v)=>{ o.m = v; });
+bindRange("rRodLen", (o,v)=>{ o.len = v; });
+bindRange("rRodAng", (o,v)=>{ o.ang = v*Math.PI/180; });
 bindRange("rRadius", (o,v)=>{ o.r = v; if(o.type==="pulley") o.r = clamp(v,0.05,0.8); });
-bindRange("rW", (o,v)=>{ o.w = v; if(o.tangent) shapeTangency(o); });
-bindRange("rH", (o,v)=>{ o.h = v; if(o.tangent) shapeTangency(o); });
+bindRange("rW", (o,v)=>{ o.w = v; if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
+bindRange("rH", (o,v)=>{ o.h = v; if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
 bindRange("rSlotR", (o,v)=>{ o.R = v; if(o.tangent) shapeTangency(o); });
+/* 方向记忆：速度/外力大小为 0 时也要记住上次设定的方向，
+   否则"先把方向拖到 180°、再把大小调大"会被强制拉回 0°（向右）。 */
+function velAngOf(o){
+  if(o._ang !== undefined) return o._ang*Math.PI/180;
+  if(Math.hypot(o.vx||0, o.vy||0) > 1e-6) return Math.atan2(o.vy, o.vx);
+  return 0;
+}
+function forceAngOf(o){
+  if(o._fdir !== undefined) return o._fdir*Math.PI/180;
+  if(Math.hypot(o.fx||0, o.fy||0) > 1e-6) return Math.atan2(o.fy, o.fx);
+  return 0;
+}
 bindRange("rVel", (o,v)=>{
-  const sp = Math.hypot(o.vx||0, o.vy||0);
-  const ang = sp>1e-6 ? Math.atan2(o.vy,o.vx) : 0;
-  o.vx = v*Math.cos(ang); o.vy = v*Math.sin(ang);
+  const a = velAngOf(o);
+  o.vx = v*Math.cos(a); o.vy = v*Math.sin(a);
 });
 bindRange("rAng", (o,v)=>{
+  o._ang = v;
   const sp = Math.hypot(o.vx||0, o.vy||0);
   const r = v*Math.PI/180;
   o.vx = sp*Math.cos(r); o.vy = sp*Math.sin(r);
 });
 bindRange("rForce", (o,v)=>{
-  const fm = Math.hypot(o.fx||0, o.fy||0);
-  const ang = fm>1e-6 ? Math.atan2(o.fy,o.fx) : 0;
-  o.fx = v*Math.cos(ang); o.fy = v*Math.sin(ang);
+  const a = forceAngOf(o);
+  o.fx = v*Math.cos(a); o.fy = v*Math.sin(a);
 });
 bindRange("rFdir", (o,v)=>{
+  o._fdir = v;
   const fm = Math.hypot(o.fx||0, o.fy||0);
   const r = v*Math.PI/180;
+  o.fx = fm*Math.cos(r); o.fy = fm*Math.sin(r);
+});
+bindNum("nAng", (o,v)=>{
+  if(!isFinite(v)) return;
+  const d = clamp(v, -180, 180);
+  o._ang = d;
+  const sp = Math.hypot(o.vx||0, o.vy||0);
+  const r = d*Math.PI/180;
+  o.vx = sp*Math.cos(r); o.vy = sp*Math.sin(r);
+});
+bindNum("nFdir", (o,v)=>{
+  if(!isFinite(v)) return;
+  const d = clamp(v, -180, 180);
+  o._fdir = d;
+  const fm = Math.hypot(o.fx||0, o.fy||0);
+  const r = d*Math.PI/180;
   o.fx = fm*Math.cos(r); o.fy = fm*Math.sin(r);
 });
 bindRange("rMu", (o,v)=>{ o.mu = v; });
@@ -2675,46 +3272,109 @@ bindRange("rTilt", (o,v)=>{
   W.objs.forEach(b=>{ if(b.type==="shape" && b.tangent) shapeTangency(b); });
 });
 bindRange("rCartMu", (o,v)=>{ o.cartMu = v; });
-bindNum("nX", (o,v)=>{ o.x = v; });
-bindNum("nY", (o,v)=>{ o.y = v; });
-document.getElementById("selOrient").addEventListener("change", (e)=>{
+/* 数值栏输入框：改数字等于拖滑块（复用同一套 bindRange 逻辑） */
+const NUM_LINKS = [
+  ["nMass","rMass",2],["nRadius","rRadius",2],["nW","rW",2],["nH","rH",2],
+  ["nSlotR","rSlotR",2],["nVel","rVel",2],["nForce","rForce",1],
+  ["nMu","rMu",2],["nTilt","rTilt",0],["nCartMu","rCartMu",2],
+  ["nRodLen","rRodLen",2],["nRodAng","rRodAng",0]
+];
+function syncNums(){
+  for(const [nid, rid, dec] of NUM_LINKS){
+    const a = $(nid), b = $(rid);
+    if(!a || !b) continue;
+    const v = parseFloat(b.value);
+    if(document.activeElement !== a && isFinite(v)) a.value = v.toFixed(dec);
+    a.disabled = b.disabled;
+    if(isFinite(parseFloat(b.min))) a.min = parseFloat(b.min);
+    if(isFinite(parseFloat(b.max))) a.max = parseFloat(b.max);
+    if(b.step) a.step = b.step;
+  }
+}
+function linkNumbers(){
+  for(const [nid, rid, dec] of NUM_LINKS){
+    const a = $(nid), b = $(rid);
+    if(!a || !b) continue;
+    const push = ()=>{
+      const o = byId(selId); if(!o || running) return;
+      const v = parseFloat(a.value);
+      if(!isFinite(v)) return;
+      const mn = parseFloat(b.min), mx = parseFloat(b.max);
+      b.value = clamp(v, isFinite(mn)?mn:-1e9, isFinite(mx)?mx:1e9);
+      b.dispatchEvent(new Event("input"));      // 走滑块原来的处理
+    };
+    a.addEventListener("input", push);
+    a.addEventListener("change", push);
+    a.addEventListener("blur", ()=>{
+      const v = parseFloat(b.value);
+      if(isFinite(v)) a.value = v.toFixed(dec);
+    });
+  }
+}
+linkNumbers();
+bindNum("nX", (o,v)=>{ o.x = v; if(o.type==="cart") followBinds(); });
+bindNum("nY", (o,v)=>{ o.y = v; if(o.type==="cart") followBinds(); });
+$("selOrient").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
   pushUndo(); o.orient = e.target.value;
   if(o.tangent) shapeTangency(o);
   captureInitial(); syncPanel(); draw();
 });
-document.getElementById("selTangent").addEventListener("change", (e)=>{
+$("selTangent").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
   pushUndo(); o.tangent = e.target.value==="1";
   if(o.tangent) shapeTangency(o);
   captureInitial(); syncPanel(); draw();
 });
-document.getElementById("selSlide").addEventListener("change", (e)=>{
+$("selSlide").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
-  pushUndo(); o.slide = e.target.value==="1";
+  const v = e.target.value;
+  pushUndo();
+  delete o.pin;                       // 固定是隐式的（!slide && !free），先清掉显式标记
+  o.slide = (v === "1");
+  o.free  = (v === "2");
   if(o.slide){
     o.tangent = true; o.vy = 0;      // 可滑动＝沿地面导轨贴着走，故默认保持相切
     shapeTangency(o);
     toast("异形块已改为可滑动：会被小球推动，摩擦由地面 μ 决定");
+  } else if(o.free){
+    toast("异形块已改为无约束：只由重力与碰撞决定运动，既不贴地也不钉死");
+    o.tangent = false;
+  } else {
+    toast("异形块已改回固定：停在原地，不会被推动");
   }
   captureInitial(); syncPanel(); draw();
 });
-document.getElementById("selWallE").addEventListener("change", (e)=>{
+$("selBind").addEventListener("change", (e)=>{
+  const o = byId(selId); if(!o||running) return;
+  if(e.target.value === "1"){
+    const c = bindTargetFor(o);
+    if(!c){ toast("先让异形块的弧底贴到小车车面上", "warn"); syncPanel(); return; }
+    pushUndo(); bindTo(o, c);
+    toast("已与小车结合：弧面与车面相切，两者保持相对静止");
+  } else {
+    if(!o.bind){ syncPanel(); return; }
+    pushUndo(); unbindShape(o);
+    toast("已拆开：异形块恢复为独立物体");
+  }
+  captureInitial(); syncPanel(); draw();
+});
+$("selWallE").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
   pushUndo();
   const v = e.target.value;
   if(v==="auto") delete o.elastic; else o.elastic = (v==="1");
   captureInitial(); syncPanel(); draw();
 });
-document.getElementById("selFixed").addEventListener("change", (e)=>{
+$("selFixed").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
   pushUndo(); o.fixed = parseInt(e.target.value,10); captureInitial(); draw();
 });
-document.getElementById("cForce").addEventListener("change", e=>{ W.forces = e.target.checked; draw(); });
-document.getElementById("cVel").addEventListener("change", e=>{ W.vels = e.target.checked; draw(); });
-document.getElementById("cTrail").addEventListener("change", e=>{ W.trail = e.target.checked; draw(); });
-document.getElementById("btnDup").addEventListener("click", duplicateSel);
-document.getElementById("btnDel").addEventListener("click", deleteSel);
+$("cForce").addEventListener("change", e=>{ W.forces = e.target.checked; draw(); });
+$("cVel").addEventListener("change", e=>{ W.vels = e.target.checked; draw(); });
+$("cTrail").addEventListener("change", e=>{ W.trail = e.target.checked; draw(); });
+$("btnDup").addEventListener("click", duplicateSel);
+$("btnDel").addEventListener("click", deleteSel);
 
 /* SECTION: object ops */
 function duplicateSel(){
@@ -2748,20 +3408,20 @@ function deleteSel(){
 /* SECTION: run control */
 function setRunning(on){
   running = on;
-  const b = document.getElementById("btnStart");
+  const b = $("btnStart");
   if(on){ b.textContent = "暂停"; b.className = "btn pri run"; }
   else if(T>0 && T<W.dur){ b.textContent = "继续"; b.className = "btn pri pause"; }
   else { b.textContent = "开始"; b.className = "btn pri"; }
-  document.getElementById("modeEdit").classList.toggle("on", !on);
-  document.getElementById("modeRun").classList.toggle("on", on);
+  $("modeEdit").classList.toggle("on", !on);
+  $("modeRun").classList.toggle("on", on);
   syncPanel();
   syncButtons();
 }
 function syncButtons(){
-  document.getElementById("btnUndo").disabled = undoStack.length===0;
-  document.getElementById("btnRedo").disabled = redoStack.length===0;
-  document.getElementById("btnStep").disabled = false;
-  document.getElementById("btnStart").disabled = !W.objs.some(o=>isMass(o));
+  $("btnUndo").disabled = undoStack.length===0;
+  $("btnRedo").disabled = redoStack.length===0;
+  $("btnStep").disabled = false;
+  $("btnStart").disabled = !W.objs.some(o=>isMass(o));
 }
 function startOrPause(){
   if(!W.objs.some(o=>isMass(o))){ toast("场景里还没有可动的物体","warn"); return; }
@@ -2820,10 +3480,10 @@ function goEdit(){
 
 /* SECTION: env box */
 function refreshEnv(){
-  const box = document.getElementById("envBox");
+  const box = $("envBox");
   const rows = [
     ["g", W.g.toFixed(1) + " m/s²"],
-    ["尺寸", W.pointMass ? "质点显示（碰撞仍按实际尺寸）" : "真实尺寸"],
+    ["计算", W.pointMass ? "质点（只算平动）" : "非质点（球自转/滚动）"],
     ["碰撞", W.collision==="elastic" ? "完全弹性 e=1" : "完全非弹性 e=0"],
     ["积分", W.integrator==="euler" ? "半隐式欧拉" : (W.integrator==="rk4" ? "RK4" : "速度 Verlet（辛）")],
     ["物体", W.objs.filter(o=>isBody(o)).length + " 个｜连线 " + W.links.length + " 条"]
@@ -2838,7 +3498,7 @@ function refreshEnv(){
 
 /* SECTION: toast */
 function toast(msg, kind){
-  const box = document.getElementById("toasts");
+  const box = $("toasts");
   const d = document.createElement("div");
   d.className = "toast" + (kind ? " " + kind : "");
   d.textContent = msg;
@@ -2852,8 +3512,8 @@ const PRESETS = [
   { key:"freefall", name:"自由落体", desc:"同一高度同时释放，忽略尺寸后同时落地",
     build(W2){
       addObjRaw(W2,"ground",0,0,{mu:0.3,tilt:0});
-      addObjRaw(W2,"ball",-1.2,3.2,{r:0.12,m:0.5});
-      addObjRaw(W2,"ball",-0.4,3.2,{r:0.2,m:2.0});
+      addObjRaw(W2,"ball",-1.2,3.2,{r:0.18,m:0.5});
+      addObjRaw(W2,"ball",-0.4,3.2,{r:0.26,m:2.0});
     }},
   { key:"slope", name:"斜面下滑", desc:"斜面倾角与摩擦对下滑加速度的影响",
     build(W2){
@@ -2864,20 +3524,20 @@ const PRESETS = [
     build(W2){
       addObjRaw(W2,"ground",0,0,{mu:0.0,tilt:0});
       addObjRaw(W2,"shape",0.6,0,{w:1.6,h:1.6,R:1.5,orient:"TL",m:2.0,wallMu:0.0,tangent:true});
-      addObjRaw(W2,"ball",1.4,1.75,{r:0.12,m:0.5});
+      addObjRaw(W2,"ball",1.4,1.75,{r:0.18,m:0.5});
     }},
   { key:"collision", name:"两球碰撞", desc:"完全弹性与完全非弹性对比",
     build(W2){
       addObjRaw(W2,"ground",0,0,{mu:0.05,tilt:0});
-      addObjRaw(W2,"ball",-2.0,0.25,{r:0.25,m:1.0,vx:3.0});
-      addObjRaw(W2,"ball",1.6,0.25,{r:0.25,m:1.0});
+      addObjRaw(W2,"ball",-2.0,0.28,{r:0.28,m:1.0,vx:3.0});
+      addObjRaw(W2,"ball",1.6,0.28,{r:0.28,m:1.0});
     }},
   { key:"pulley", name:"滑轮与悬挂", desc:"理想滑轮绳中张力处处相等",
     build(W2){
       addObjRaw(W2,"ground",0,0,{mu:0.3,tilt:0});
       addObjRaw(W2,"anchor",-0.5,3.4,{});
       addObjRaw(W2,"pulley",0.9,3.4,{r:0.2,fixed:1});
-      addObjRaw(W2,"rod",-0.5,3.4,{len:1.4,ang:0});
+      addObjRaw(W2,"rod",-0.5,4.3,{len:1.4,ang:0});
       addObjRaw(W2,"block",-1.4,0.3,{w:0.5,h:0.5,m:1.0});
       addObjRaw(W2,"block",1.3,2.1,{w:0.4,h:0.4,m:0.5});
     }},
@@ -2891,7 +3551,7 @@ const PRESETS = [
     build(W2){
       addObjRaw(W2,"ground",0,0,{mu:0.3,tilt:0});
       addObjRaw(W2,"rod",0,3.6,{len:2.0});
-      addObjRaw(W2,"ball",1.4,3.6,{r:0.16,m:0.8});
+      addObjRaw(W2,"ball",1.4,3.6,{r:0.20,m:0.8});
     }}
 ];
 function addObjRaw(W2, type, x, y, extra){
@@ -2933,7 +3593,7 @@ function loadPreset(key){
   if(key==="pulley"){
     const rod = W.objs.find(o=>o.type==="rod");
     const pu = W.objs.find(o=>o.type==="pulley");
-    if(rod && pu){ rod.len = 1.4; rod.ang = 0; rod.ax = -0.5; rod.ay = 3.4; pu.x = 0.9; pu.y = 3.4; }
+    if(rod && pu){ rod.len = 1.4; rod.ang = 0; rod.ax = -0.5; rod.ay = 4.3; pu.x = 0.9; pu.y = 3.4; }
     const blocks = W.objs.filter(o=>o.type==="block");
     if(blocks[1]){ blocks[1].x = 1.1; blocks[1].y = 2.4; }
     if(blocks[0]){ blocks[0].y = groundY(blocks[0].x) + 0.25; }
@@ -2953,7 +3613,7 @@ function loadPreset(key){
   if(key==="pendulum"){
     const rod = W.objs.find(o=>o.type==="rod");
     const ball = W.objs.find(o=>o.type==="ball");
-    if(rod){ rod.len = 2.0; rod.ang = Math.PI/3; rod.ax = 0; rod.ay = 3.6; }
+    if(rod){ rod.len = 2.0; rod.ang = -Math.PI/3; rod.ax = 0; rod.ay = 3.6; }
     if(ball && rod){ ball.x = rod.ax + rod.len*Math.cos(rod.ang); ball.y = rod.ay + rod.len*Math.sin(rod.ang); }
   }
   selId = null;
@@ -2965,17 +3625,17 @@ function loadPreset(key){
 }
 
 /* SECTION: modal */
-const modal = document.getElementById("modal");
+const modal = $("modal");
 function openModal(title, buildBody, buildFoot){
-  document.getElementById("mTitle").textContent = title;
-  const b = document.getElementById("mBody"); b.textContent = "";
-  const f = document.getElementById("mFoot"); f.textContent = "";
+  $("mTitle").textContent = title;
+  const b = $("mBody"); b.textContent = "";
+  const f = $("mFoot"); f.textContent = "";
   buildBody(b);
   if(buildFoot) buildFoot(f);
   modal.classList.remove("hidden");
 }
 function closeModal(){ modal.classList.add("hidden"); }
-document.getElementById("mClose").addEventListener("click", closeModal);
+$("mClose").addEventListener("click", closeModal);
 modal.addEventListener("click", e=>{ if(e.target===modal) closeModal(); });
 
 function showPresets(){
@@ -3084,28 +3744,28 @@ function exportImage(){
 }
 
 /* SECTION: events */
-document.getElementById("btnStart").addEventListener("click", startOrPause);
-document.getElementById("btnStep").addEventListener("click", doStep);
-document.getElementById("btnReset").addEventListener("click", doReset);
-document.getElementById("modeEdit").addEventListener("click", goEdit);
-document.getElementById("modeRun").addEventListener("click", ()=>{ if(running) setRunning(false); else startOrPause(); });
-document.getElementById("selSpeed").addEventListener("change", (e)=>{ speed = parseFloat(e.target.value); });
-document.getElementById("swGrid").addEventListener("click", ()=>{
+$("btnStart").addEventListener("click", startOrPause);
+$("btnStep").addEventListener("click", doStep);
+$("btnReset").addEventListener("click", doReset);
+$("modeEdit").addEventListener("click", goEdit);
+$("modeRun").addEventListener("click", ()=>{ if(running) setRunning(false); else startOrPause(); });
+$("selSpeed").addEventListener("change", (e)=>{ speed = parseFloat(e.target.value); });
+$("swGrid").addEventListener("click", ()=>{
   W.grid = !W.grid;
-  document.getElementById("swGrid").classList.toggle("on", W.grid);
+  $("swGrid").classList.toggle("on", W.grid);
   draw();
 });
-document.getElementById("swPoint").addEventListener("click", ()=>{
+$("swPoint").addEventListener("click", ()=>{
   W.pointMass = !W.pointMass;
-  const el = document.getElementById("swPoint");
+  const el = $("swPoint");
   el.classList.toggle("on", W.pointMass);
-  document.getElementById("pMode").classList.toggle("hidden", !W.pointMass);
+  $("pMode").classList.toggle("hidden", !W.pointMass);
   refreshEnv(); syncPanel(); draw();
   if(running) toast("切换尺寸模式会改变结果，建议重置后重跑", "warn");
-  else toast(W.pointMass ? "质点显示：外观简化，物理仍按实际尺寸" : "真实尺寸：显示完整外形");
+  else toast(W.pointMass ? "质点计算：球不自转，末速 √(2gh)" : "非质点计算：球自转，纯滚动末速 √(10gh/7)");
 });
-document.getElementById("btnUndo").addEventListener("click", doUndo);
-document.getElementById("btnRedo").addEventListener("click", doRedo);
+$("btnUndo").addEventListener("click", doUndo);
+$("btnRedo").addEventListener("click", doRedo);
 function doUndo(){
   if(!undoStack.length) return;
   redoStack.push(snapshot());
@@ -3131,11 +3791,11 @@ function applySnap(s){
     syncPanel(); draw(); drawChart(); refreshEnv(); syncButtons();
   }catch(e){}
 }
-document.getElementById("btnSave").addEventListener("click", saveLocal);
-document.getElementById("btnLoad").addEventListener("click", loadLocal);
-document.getElementById("btnImg").addEventListener("click", exportImage);
-document.getElementById("btnJson").addEventListener("click", showJson);
-document.getElementById("btnPreset").addEventListener("click", showPresets);
+$("btnSave").addEventListener("click", saveLocal);
+$("btnLoad").addEventListener("click", loadLocal);
+$("btnImg").addEventListener("click", exportImage);
+$("btnJson").addEventListener("click", showJson);
+$("btnPreset").addEventListener("click", showPresets);
 
 document.querySelectorAll(".card[data-add]").forEach(card=>{
   card.addEventListener("click", ()=>{
@@ -3147,7 +3807,7 @@ document.querySelectorAll(".card[data-add]").forEach(card=>{
     e.dataTransfer.setData("text/plain", card.dataset.add);
   });
 });
-const stage = document.getElementById("stage");
+const stage = $("stage");
 stage.addEventListener("dragover", e=>e.preventDefault());
 stage.addEventListener("drop", e=>{
   e.preventDefault();
@@ -3178,7 +3838,7 @@ document.addEventListener("keydown", (e)=>{
   if(e.key==="Delete" || e.key==="Backspace"){ e.preventDefault(); deleteSel(); return; }
   if(e.key==="Escape"){ 
     if(wireMode){ wireMode=false; wirePts=null; toast("已退出布线模式"); 
-      document.getElementById("hintBox").innerHTML =
+      $("hintBox").innerHTML =
         "<b>小提示</b>点击元素卡片即可添加到画面中心，也可以直接拖进去。<br>拖动物体改位置（靠近地面 / 车面 / 弧面会自动吸附），双击打开属性，Delete 删除。";
       draw(); }
     closeModal();
@@ -3192,7 +3852,7 @@ function boot(){
   resize();
   loadPreset("slot");
   refreshEnv();
-  document.getElementById("swPoint").classList.add("on");
+  $("swPoint").classList.add("on");
   setRunning(false);
   draw(); drawChart();
   setInterval(()=>{ if(!running) updateReadout(); }, 400);
