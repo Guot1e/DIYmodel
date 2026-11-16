@@ -178,6 +178,44 @@ input[type=number]:focus,select:focus{outline:none;border-color:var(--blue)}
 .cinfo .k{font-size:8px;color:var(--txt3)}
 .cinfo .e{color:#B26A00}
 
+/* SECTION: shape editor */
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{
+  flex:1 1 auto;min-width:80px;height:30px;border-radius:8px;background:#F5F7FB;
+  border:1px solid var(--line);font-size:9.5px;color:var(--txt2);
+}
+.presets button:hover{background:#EEF4FF;border-color:#C9DBFA;color:var(--blue)}
+.presets button.on{background:var(--blue-l);border-color:var(--blue);color:var(--blue);font-weight:700}
+#edWrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#FCFDFF}
+#edZoom{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
+#edZoom button{width:24px;height:24px;border-radius:7px;border:1px solid var(--line);
+  background:rgba(255,255,255,.94);color:var(--txt2);font:600 13px/1 system-ui;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+#edZoom button:hover{background:var(--blue-l);border-color:#C9DBFA;color:var(--blue)}
+#edZoom button svg{width:13px;height:13px;display:block}
+#edCv{display:block;width:100%;height:288px;touch-action:none;cursor:crosshair}
+.edhint{font-size:8.5px;color:var(--txt3);line-height:1.7}
+.edhint b{color:var(--blue)}
+/* 边长输入：贴在每条边旁边的浮动小框 */
+#edLens{position:absolute;inset:0;pointer-events:none;z-index:1}
+.edlen{position:absolute;display:flex;align-items:center;gap:1px;padding:0 3px;height:17px;
+  border:1px solid #DCE4F2;border-radius:6px;background:rgba(255,255,255,.94);
+  box-shadow:0 1px 3px rgba(28,52,84,.08);pointer-events:auto;
+  transform:translate(-50%,-50%);white-space:nowrap}
+.edlen .ax{flex:0 0 auto;color:var(--blue);font-weight:700;font-size:8px;line-height:1}
+.edlen input{width:34px;height:15px;border:0;background:transparent;text-align:right;padding:0;
+  font-size:9.5px;color:var(--txt);font-family:inherit;-moz-appearance:textfield}
+.edlen input::-webkit-outer-spin-button,.edlen input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.edlen input:focus{outline:none;color:var(--blue);font-weight:700}
+.edlen .unit{color:var(--txt3);font-size:8px;line-height:1}
+
+/* 长度单位选择条 */
+.ubar{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:7px 14px;border-bottom:1px solid var(--line);font-size:10.5px;color:var(--txt2)}
+.ubar select{height:22px;border:1px solid var(--line);border-radius:6px;background:#fff;
+  font-size:10.5px;color:var(--txt);font-family:inherit;padding:0 4px}
+.ubar span{white-space:nowrap}
+
 /* SECTION: modal */
 .modal{position:fixed;inset:0;background:rgba(16,24,36,.42);z-index:100;
   display:flex;align-items:center;justify-content:center;padding:20px}
@@ -244,6 +282,10 @@ body::after{
 }
 @media (max-width:820px){
   body::after{right:10px;bottom:8px;font-size:12px;letter-spacing:.06em}
+}
+@media (max-width:560px){
+  .modal{padding:10px}
+  #edCv{height:222px}
 }
 </style>
 </head>
@@ -314,7 +356,11 @@ body::after{
       </div>
       <div class="card" data-add="shape">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 19 A15 15 0 0 0 19 4 L21 4 L21 19 Z" fill="#E8EEF8" stroke="#34495E" stroke-width="1.3"/><path d="M4 19 A15 15 0 0 0 19 4" fill="none" stroke="#7C6BD6" stroke-width="1.7"/></svg>
-        <div><div class="cn">异形块</div><div class="cd">1/4 弧槽</div></div>
+        <div><div class="cn">1/4弧槽</div><div class="cd">凹弧面</div></div>
+      </div>
+      <div class="card" data-add="poly">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 20 L3 8 L11 8 L11 4 L21 4 L21 20 Z" fill="#D7E4FB" stroke="#2F6FED" stroke-width="1.6" stroke-linejoin="round"/><circle cx="3" cy="20" r="1.7" fill="#2F6FED"/><circle cx="11" cy="8" r="1.7" fill="#2F6FED"/><circle cx="11" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="20" r="1.7" fill="#2F6FED"/></svg>
+        <div><div class="cn">自定义形状</div><div class="cd">三角 L 形</div></div>
       </div>
     </div>
 
@@ -379,6 +425,11 @@ body::after{
       <div class="badge" id="pBadge">未选中</div>
     </div>
 
+    <div class="ubar">
+      <span>长度单位</span>
+      <select id="selUnit"><option value="m">米 m</option><option value="cm">厘米 cm</option></select>
+    </div>
+
     <div class="pmode" id="pMode">
       <div class="t"><span>●</span>计算模型（外观不变）</div>
       <div class="d" id="pModeD">小球始终画成实心球；这里只切「算不算自转」。质点＝只算平动。</div>
@@ -389,20 +440,20 @@ body::after{
     <div id="pForm" class="hidden">
       <div class="sec">初始条件<span class="tag" id="lockTag">开始后锁定</span></div>
 
-      <div class="row" id="rowMass"><label>质量 kg</label><input type="range" id="rMass" min="0.01" max="100" step="0.01"><span class="numwrap"><input type="number" id="nMass" step="0.01" style="width:48px"></span></div>
+      <div class="row" id="rowMass"><label>质量 kg</label><input type="range" id="rMass" min="0.01" max="100" step="0.01"><span class="numwrap"><input type="number" id="nMass" step="0.01" style="width:56px"></span></div>
 
-      <div class="row" id="rowRadius"><label id="lbRadius">半径 m</label><input type="range" id="rRadius" min="0.02" max="1.5" step="0.01"><span class="numwrap"><input type="number" id="nRadius" step="0.01" style="width:48px"></span></div>
+      <div class="row" id="rowRadius"><label id="lbRadius" data-len="半径">半径 m</label><input type="range" id="rRadius" min="0.02" max="1.5" step="0.01"><span class="numwrap"><input type="number" id="nRadius" step="0.01" style="width:56px"></span></div>
       <div class="note" id="vRadiusNote" style="margin:0 0 6px"></div>
 
       <div id="rowWH">
-        <div class="row"><label>宽 m</label><input type="range" id="rW" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nW" step="0.02" style="width:48px"></span></div>
-        <div class="row"><label>高 m</label><input type="range" id="rH" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nH" step="0.02" style="width:48px"></span></div>
+        <div class="row"><label data-len="宽">宽 m</label><input type="range" id="rW" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nW" step="0.02" style="width:56px"></span></div>
+        <div class="row"><label data-len="高">高 m</label><input type="range" id="rH" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nH" step="0.02" style="width:56px"></span></div>
       </div>
 
-      <div class="row" id="rowRodLen"><label>杆长 m</label><input type="range" id="rRodLen" min="0.4" max="3" step="0.05"><span class="numwrap"><input type="number" id="nRodLen" step="0.05" style="width:48px"></span></div>
-      <div class="row" id="rowRodAng"><label>杆角 °</label><input type="range" id="rRodAng" min="-180" max="180" step="1"><span class="numwrap"><input type="number" id="nRodAng" step="1" style="width:48px"></span></div>
+      <div class="row" id="rowRodLen"><label data-len="杆长">杆长 m</label><input type="range" id="rRodLen" min="0.4" max="3" step="0.05"><span class="numwrap"><input type="number" id="nRodLen" step="0.05" style="width:56px"></span></div>
+      <div class="row" id="rowRodAng"><label>杆角 °</label><input type="range" id="rRodAng" min="-180" max="180" step="1"><span class="numwrap"><input type="number" id="nRodAng" step="1" style="width:56px"></span></div>
 
-      <div class="row" id="rowSlotR"><label>槽半径 R m</label><input type="range" id="rSlotR" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nSlotR" step="0.02" style="width:48px"></span></div>
+      <div class="row" id="rowSlotR"><label data-len="槽半径 R">槽半径 R m</label><input type="range" id="rSlotR" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nSlotR" step="0.02" style="width:56px"></span></div>
 
       <div class="row" id="rowOrient"><label>槽朝向</label>
         <select id="selOrient" style="width:130px">
@@ -434,7 +485,7 @@ body::after{
       </div>
       <div class="note" id="vBind" style="margin:0 0 8px"></div>
 
-      <div id="rowVel"><div class="row"><label>初速度 m/s</label><input type="range" id="rVel" min="0" max="15" step="0.05"><span class="numwrap"><input type="number" id="nVel" step="0.05" style="width:48px"></span></div></div>
+      <div id="rowVel"><div class="row"><label>初速度 m/s</label><input type="range" id="rVel" min="0" max="15" step="0.05"><span class="numwrap"><input type="number" id="nVel" step="0.05" style="width:56px"></span></div></div>
       <div id="rowAng"><div class="row"><label>速度方向 °</label><input type="range" id="rAng" min="-180" max="180" step="1">
         <span class="numwrap">
           <input type="number" id="nAng" step="1" min="-180" max="180" style="width:52px">
@@ -442,7 +493,7 @@ body::after{
         </span>
       </div></div>
 
-      <div id="rowForce"><div class="row"><label>外力 F N</label><input type="range" id="rForce" min="0" max="100" step="0.5"><span class="numwrap"><input type="number" id="nForce" step="0.5" style="width:48px"></span></div></div>
+      <div id="rowForce"><div class="row"><label>外力 F N</label><input type="range" id="rForce" min="0" max="100" step="0.5"><span class="numwrap"><input type="number" id="nForce" step="0.5" style="width:56px"></span></div></div>
       <div id="rowFdir"><div class="row"><label>外力方向 °</label><input type="range" id="rFdir" min="-180" max="180" step="1">
         <span class="numwrap">
           <input type="number" id="nFdir" step="1" min="-180" max="180" style="width:52px">
@@ -463,19 +514,39 @@ body::after{
         <div class="swatches" id="colors"></div>
       </div>
 
-      <div class="row" id="rowMu"><label>摩擦系数 μ</label><input type="range" id="rMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nMu" step="0.01" style="width:48px"></span></div>
+      <div class="row" id="rowMu"><label>摩擦系数 μ</label><input type="range" id="rMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nMu" step="0.01" style="width:56px"></span></div>
 
       <div class="row" id="rowWallE"><label>碰撞模式</label>
         <select id="selWallE" style="width:130px">
-          <option value="auto">跟随场景（小球/异形块弹）</option>
+          <option value="auto">跟随场景（小球/1/4弧槽弹）</option>
           <option value="0">非弹性（贴住不弹）</option>
           <option value="1">弹性（等速反弹）</option>
         </select>
       </div>
 
-      <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:48px"></span></div>
+      <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:56px"></span></div>
 
-      <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><input type="range" id="rCartMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nCartMu" step="0.01" style="width:48px"></span></div>
+      <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><input type="range" id="rCartMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nCartMu" step="0.01" style="width:56px"></span></div>
+      <div class="row" id="rowTopMu"><label>顶面摩擦 μ</label><input type="range" id="rTopMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nTopMu" step="0.01" style="width:56px"></span></div>
+
+      <div id="rowBlockShape">
+        <div class="row"><label>形状</label>
+          <select id="selBlockShape" style="width:130px">
+            <option value="rect">矩形</option>
+            <option value="rtri">直角三角形</option>
+            <option value="tri">等腰三角</option>
+            <option value="lshape">L 形</option>
+            <option value="trap">梯形</option>
+            <option value="tshape">T 形</option>
+            <option value="step">台阶形</option>
+            <option value="custom">自定义（顶点编辑）</option>
+          </select>
+        </div>
+        <div class="row"><label>顶点编辑</label>
+          <button class="btn" id="btnEditShape" style="width:130px;justify-content:center">编辑形状…</button>
+        </div>
+        <div class="note" id="vPolyInfo" style="margin:0 0 8px"></div>
+      </div>
 
       <div class="row" id="rowFixed"><label>类型</label>
         <select id="selFixed" style="width:130px">
@@ -537,6 +608,17 @@ const C_VEL = "#2F6FED";
 const C_ANCHOR = "#2F6FED";
 const GRAV_DEFAULT = 9.8;
 
+/* 预设形状：局部坐标（米，y 向上）。物块与自定义形状都用它做一键换形状 */
+const SHAPE_PRESETS = [
+  { key:"rect",   name:"矩形",     verts:[[-0.5,-0.5],[0.5,-0.5],[0.5,0.5],[-0.5,0.5]] },
+  { key:"rtri",   name:"直角三角形", verts:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5]] },
+  { key:"tri",    name:"等腰三角",  verts:[[-0.55,-0.5],[0.55,-0.5],[0,0.5]] },
+  { key:"lshape", name:"L 形",      verts:[[-0.5,-0.5],[0.5,-0.5],[0.5,0.0],[0.0,0.0],[0.0,0.5],[-0.5,0.5]] },
+  { key:"trap",   name:"梯形",      verts:[[-0.6,-0.5],[0.6,-0.5],[0.35,0.5],[-0.35,0.5]] },
+  { key:"tshape", name:"T 形",      verts:[[-0.5,-0.5],[0.5,-0.5],[0.5,0.0],[0.18,0.0],[0.18,0.5],[-0.18,0.5],[-0.18,0.0],[-0.5,0.0]] },
+  { key:"step",   name:"台阶形",    verts:[[-0.5,-0.5],[0.5,-0.5],[0.5,-0.05],[-0.05,-0.05],[-0.05,0.5],[-0.5,0.5]] }
+];
+
 let uid = 1;
 const nid = () => "o" + (uid++);
 
@@ -551,7 +633,7 @@ function emptyWorld(){
     objs: [],
     links: [],
     view: { ox: 60, oy: 0, s: 120 },
-    trail: true, forces: true, vels: true, grid: true
+    trail: true, forces: true, vels: true, grid: true, unitLen: "m"
   };
 }
 let W = emptyWorld();
@@ -582,10 +664,11 @@ function pushUndo(){
 
 /* SECTION: object factory */
 const DEF = {
-  block: { type:"block", w:0.6, h:0.6, m:1.0 },
+  block: { type:"block", w:0.6, h:0.6, m:1.0, topMu:0.15 },
   ball:  { type:"ball",  r:0.18, m:0.5 },
   cart:  { type:"cart",  w:1.2, h:0.32, m:2.0, cartMu:0.2, wr:0.09 },
   shape: { type:"shape", w:1.0, h:1.0, R:0.9, orient:"TL", m:1.5, wallMu:0.2 },
+  poly:  { type:"poly",  verts:null, w:0.8, h:0.6, m:1.0, wallMu:0.2, topMu:0.15 },
   rope:  { type:"rope",  elastic:false },
   rod:   { type:"rod",   len:1.4 },
   ground:{ type:"ground", mu:0.3, tilt:0 },
@@ -603,7 +686,7 @@ function makeObj(type, x, y){
   o.color = DEFC[type] || COLORS[Math.floor(Math.random()*4)];
   o.vx = 0; o.vy = 0;
   o.fx = 0; o.fy = 0;        // 外力
-  o.ang = 0;                 // 朝向（异形块/滑轮/细杆）
+  o.ang = 0;                 // 朝向（1/4弧槽/滑轮/细杆）
   o.omg = 0;
   return o;
 }
@@ -613,7 +696,7 @@ const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
 const dist = (ax,ay,bx,by) => Math.hypot(ax-bx, ay-by);
 
 function isBody(o){
-  return o && (o.type==="block"||o.type==="ball"||o.type==="cart"||o.type==="shape");
+  return o && (o.type==="block"||o.type==="ball"||o.type==="cart"||o.type==="shape"||o.type==="poly");
 }
 function isMass(o){ return isBody(o) && (o.m||0) > 1e-9; }
 
@@ -623,7 +706,7 @@ function rectPts(o){
   return [ {x:x-hw,y:y-hh}, {x:x+hw,y:y-hh}, {x:x+hw,y:y+hh}, {x:x-hw,y:y+hh} ];
 }
 
-/* 异形块实体轮廓：矩形挖去 1/4 圆，弧面朝外 */
+/* 1/4弧槽实体轮廓：矩形挖去 1/4 圆，弧面朝外 */
 function shapePts(o, seg){
   seg = seg || 18;
   const {x,y,w,h} = o;
@@ -653,12 +736,94 @@ function shapePts(o, seg){
   return out;
 }
 
+/* 自定义多边形：verts 为相对模型中心的局部坐标（米，y 向上），旋转 ang 后输出世界坐标 */
+function polyWorld(o){
+  const vs = o.verts;
+  if(!vs || vs.length < 3) return [];
+  const c = Math.cos(o.ang || 0), s = Math.sin(o.ang || 0);
+  return vs.map(v=>({ x:o.x + v[0]*c - v[1]*s, y:o.y + v[0]*s + v[1]*c }));
+}
+/* 旋转后（仍以中心为原点）的局部坐标，供面积/包围盒使用 */
+function polyLocal(o){
+  const vs = o.verts || [];
+  const c = Math.cos(o.ang || 0), s = Math.sin(o.ang || 0);
+  return vs.map(v=>({ x:v[0]*c - v[1]*s, y:v[0]*s + v[1]*c }));
+}
+
+/* 把顶点缩放到以包围盒中心为原点、正好占满 w×h 的轮廓。
+   物块不旋转，因此用 bbox 居中比质心居中更直观：宽高滑杆 = 轮廓的实际外框。 */
+function normalizeToBox(vs, w, h){
+  const p = vs.map(v=>({ x:(v.x !== undefined ? v.x : v[0]), y:(v.y !== undefined ? v.y : v[1]) }));
+  let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+  p.forEach(q=>{
+    x0=Math.min(x0,q.x); x1=Math.max(x1,q.x);
+    y0=Math.min(y0,q.y); y1=Math.max(y1,q.y);
+  });
+  const mx = (x0+x1)/2, my = (y0+y1)/2;
+  const sx = (x1-x0) || 1, sy = (y1-y0) || 1;
+  const kx = (w || 1)/sx, ky = (h || 1)/sy;
+  return p.map(q=>[
+    +((q.x-mx)*kx).toFixed(4),
+    +((q.y-my)*ky).toFixed(4)
+  ]);
+}
+
 /* 世界多边形（考虑旋转，用于滑轮/杆等无自动形状者） */
 function polyOf(o){
-  if(o.type==="block") return rectPts(o);
+  if(o.type==="block") return (o.verts && o.verts.length >= 3) ? polyWorld(o) : rectPts(o);
   if(o.type==="shape") return shapePts(o, 28);
   if(o.type==="cart")  return rectPts(o);
+  if(o.type==="poly")  return polyWorld(o);
   return [];
+}
+
+/* ---------- 凹多边形三角剖分（耳切法） ---------- */
+function ptInTri(px,py,a,b,c){
+  const d1 = (px-b.x)*(a.y-b.y) - (a.x-b.x)*(py-b.y);
+  const d2 = (px-c.x)*(b.y-c.y) - (b.x-c.x)*(py-c.y);
+  const d3 = (px-a.x)*(c.y-a.y) - (c.x-a.x)*(py-a.y);
+  const neg = (d1 < -1e-9) || (d2 < -1e-9) || (d3 < -1e-9);
+  const pos = (d1 >  1e-9) || (d2 >  1e-9) || (d3 >  1e-9);
+  return !(neg && pos);
+}
+function triangulate(poly){
+  const p = ensureCCW(poly.slice());
+  const idx = p.map((_,i)=>i);
+  const tris = [];
+  let guard = 0;
+  while(idx.length > 3 && guard++ < 400){
+    let cut = false;
+    for(let i=0;i<idx.length;i++){
+      const i0 = idx[(i-1+idx.length)%idx.length], i1 = idx[i], i2 = idx[(i+1)%idx.length];
+      const a = p[i0], b = p[i1], c = p[i2];
+      const cross = (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+      if(cross <= 1e-12) continue;                    // 凹角（或退化），不是耳朵
+      let hasInside = false;
+      for(const j of idx){
+        if(j===i0||j===i1||j===i2) continue;
+        if(ptInTri(p[j].x, p[j].y, a, b, c)){ hasInside = true; break; }
+      }
+      if(hasInside) continue;
+      tris.push([a,b,c]);
+      idx.splice(i,1);
+      cut = true;
+      break;
+    }
+    if(!cut) break;                                   // 退化保护
+  }
+  if(idx.length === 3) tris.push([p[idx[0]], p[idx[1]], p[idx[2]]]);
+  return tris;
+}
+/* 多边形是否为凹多边形 */
+function isConcave(poly){
+  const p = ensureCCW(poly.slice());
+  let neg = 0, pos = 0;
+  for(let i=0;i<p.length;i++){
+    const a=p[i], b=p[(i+1)%p.length], c=p[(i+2)%p.length];
+    const cr = (b.x-a.x)*(c.y-b.y) - (b.y-a.y)*(c.x-b.x);
+    if(cr > 1e-9) pos++; else if(cr < -1e-9) neg++;
+  }
+  return pos > 0 && neg > 0;
 }
 
 /* 点是否在凸多边形内 */
@@ -669,6 +834,17 @@ function pointInPoly(px,py,poly){
     if(((a.y>py)!==(b.y>py)) && (px < (b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x)) inside = !inside;
   }
   return inside;
+}
+
+/* 点到多边形轮廓的最短距离（命中容差用） */
+function polyEdgeDist(px, py, poly){
+  let dmin = Infinity;
+  for(let i=0;i<poly.length;i++){
+    const a = poly[i], b = poly[(i+1)%poly.length];
+    const d = segDist(px, py, a.x, a.y, b.x, b.y);
+    if(d < dmin) dmin = d;
+  }
+  return dmin;
 }
 
 /* 最近点（用于拖动/命中） */
@@ -697,12 +873,20 @@ function hitTest(wx, wy){
     }
     if(o.type==="ball"){ if(dist(wx,wy,o.x,o.y) < o.r+pad) return o; continue; }
     if(isBody(o)){
-      if(pointInPoly(wx,wy,polyOf(o))) return o;
+      const poly = polyOf(o);
+      if(!poly.length) continue;
+      // 自定义轮廓的几何中心常正好落在边或凹角上（三角斜边、L 形内角），
+      // 只判"点在内部"会让物块点不中也拖不动 —— 边上留一点容差
+      if(pointInPoly(wx,wy,poly)) return o;
+      if(polyEdgeDist(wx,wy,poly) < pad + 0.02) return o;
     }
   }
   if(selId){
     const s = byId(selId);
-    if(s && isBody(s) && pointInPoly(wx,wy,polyOf(s))) return s;
+    if(s && isBody(s)){
+      const poly = polyOf(s);
+      if(poly.length && (pointInPoly(wx,wy,poly) || polyEdgeDist(wx,wy,poly) < pad + 0.02)) return s;
+    }
   }
   return null;
 }
@@ -760,6 +944,9 @@ function anchorsOf(o){
     // 弧两端
     push(p[1].x,p[1].y,"槽起点");
     push(p[p.length-3].x,p[p.length-3].y,"槽终点");
+  } else if(o.type==="poly"){
+    const p = polyWorld(o);
+    p.forEach((q,i)=>push(q.x,q.y,"顶点"+(i+1)));
   } else if(o.type==="anchor"||o.type==="pulley"){
     push(o.x,o.y, o.type==="pulley"?"滑轮圆心":"固定点");
   } else if(o.type==="rod"){
@@ -953,7 +1140,7 @@ function ropeGeom(L){
       位置投影使用 split impulse，只改位置不改速度，不向系统注入能量
    3) 绳：单向约束（只拉不推），张力沿几何方向；支持滑轮雅可比（动滑轮）
    4) 杆：双向距离约束（可推可拉），不再靠瞬移
-   5) 地面（含倾角）、墙、车面、异形弧面统一走同一套接触模型
+   5) 地面（含倾角）、墙、车面、1/4弧槽弧面统一走同一套接触模型
    ========================================================================== */
 const SIM_H     = 1/480;   // 固定子步长
 const MAX_SUB   = 300;     // 单帧最多子步（防卡顿后爆步）
@@ -982,7 +1169,7 @@ function isDyn(o){
 }
 function isSolid(o){ return isBody(o) && (o.m||0) > 1e-9; }
 
-/* 与小车"结合为一体"后，异形块没有独立的动力学：质量、冲量、位移都归到小车。 */
+/* 与小车"结合为一体"后，1/4弧槽没有独立的动力学：质量、冲量、位移都归到小车。 */
 function physOwner(o){
   if(o && o.bind){
     const c = byId(o.bind);
@@ -1040,13 +1227,19 @@ function accelOf(o){
 /* 物体沿方向 (nx,ny) 的支撑半宽（含倾角、含球/多边形） */
 function supportAlong(o, nx, ny){
   if(o.type==="ball" || o.type==="pulley") return o.r || 0;
-  if(o.type==="block" || o.type==="cart") return Math.abs(nx)*o.w/2 + Math.abs(ny)*o.h/2;
+  if((o.type==="block" || o.type==="cart") && !(o.verts && o.verts.length >= 3))
+    return Math.abs(nx)*o.w/2 + Math.abs(ny)*o.h/2;
   const poly = polyOf(o);
   if(!poly.length) return 0;
+  // 自定义形状（元素库 poly）顶点是"质心居中"，上下不对称：法向 n 由表面指向物体外侧，
+  // 中心到最低点的距离是沿 -n 的最大投影。取 +n 会拿到最高点，整个形状被抬高、底边悬空。
+  // 其它轮廓（矩形 bbox 归一化的物块、1/4弧槽的矩形＋弧）顶底对称，沿用 +n 的旧约定。
+  const flip = o.type === "poly";
   let m = 0;
   for(let i=0;i<poly.length;i++){
     const d = (poly[i].x - o.x)*nx + (poly[i].y - o.y)*ny;
-    if(d > m) m = d;
+    const dd = flip ? -d : d;
+    if(dd > m) m = dd;
   }
   return m;
 }
@@ -1082,7 +1275,7 @@ function invI(o){
   return 1 / (0.4 * m * r * r);
 }
 
-/* 可滑动异形块：只有沿地面的切向（近似水平）一个自由度，
+/* 可滑动1/4弧槽：只有沿地面的切向（近似水平）一个自由度，
    法向靠"贴地导轨"承担，因此接触冲量只在可行的方向上有响应。 */
 function slideLocked(o){ return !!(o && o.type === "shape" && o.slide && !o.bind && !o._onCart); }
 function dirW(o, dx, dy){
@@ -1147,8 +1340,8 @@ function contactSolve(A, B, nx, ny, pen, e, mu, vMin){
   return jn;
 }
 
-/* ---------- 可滑动异形块：沿地面导轨滑动 ----------
-   异形块是"槽"，默认钉死；开 slide 后按刚体参与动量交换，
+/* ---------- 可滑动1/4弧槽：沿地面导轨滑动 ----------
+   1/4弧槽是"槽"，默认钉死；开 slide 后按刚体参与动量交换，
    竖向锁在"弧底与地面相切"的高度，切向受地面 μ 的库仑摩擦。 */
 function slideGroundOf(o){
   let best = null, bestD = 1e9;
@@ -1208,7 +1401,8 @@ function solveGrounds(h){
   if(!gs.length) return;
   for(const o of W.objs){
     if(!isDyn(o)) continue;
-    if(o.type === "shape" && o.slide) continue;      // 可滑动异形块走"贴地导轨"，不走点接触
+    if(o.type === "shape" && o.slide) continue;      // 可滑动1/4弧槽走"贴地导轨"，不走点接触
+    // 地面是支撑面：除小球外落地即停，避免 e=1 下无限弹跳（对象之间的碰撞才是完全弹性）
     const eG = (W.collision==="elastic" && o.type==="ball") ? 1 : 0;
     for(const g of gs){
       const th = (g.tilt||0)*Math.PI/180;
@@ -1236,6 +1430,7 @@ function solveCarts(h){
       o._onCart = c.id;                        // 先登记"坐在车面上"，此时可滑块有两个自由度
       const muC = c.cartMu !== undefined ? c.cartMu : 0.2;
       c._vLock = true;                         // 车竖直方向由地面承担，只把支撑力给载物
+      // 车面也是支撑面：物块放上去要跟着车走，不弹
       const jn = contactSolve(o, c, 0, 1, Math.max(0, pen), 0, muC);
       c._vLock = false;
       o._N += jn/h;
@@ -1249,8 +1444,8 @@ function solveCarts(h){
 function wallRestitution(o, w){
   if(w.elastic === true) return 1;
   if(w.elastic === false) return 0;
-  // 跟随场景：光滑的球和有弧面的异形块都按弹性处理（物块等仍按非弹性）
-  return (W.collision==="elastic" && (o.type==="ball" || o.type==="shape")) ? 1 : 0;
+  // 跟随场景：默认所有物体撞墙都是完全弹性（小球、物块、小车、弧槽、自定义形状一视同仁）
+  return W.collision==="elastic" ? 1 : 0;
 }
 function solveWalls(h){
   const walls = W.objs.filter(o=>o.type==="wall");
@@ -1272,7 +1467,7 @@ function solveWalls(h){
 }
 
 /* ---------- 球 vs 多边形 ---------- */
-function ballPolyContact(b, obj, h, e){
+function ballPolyContact(b, obj, h, e, vMin){
   const raw = polyOf(obj);
   if(raw.length < 3) return;
   const poly = ensureCCW(raw);
@@ -1307,8 +1502,9 @@ function ballPolyContact(b, obj, h, e){
     pen = r - dBest;
   }
 
-  const mu = obj.wallMu !== undefined ? obj.wallMu : 0.15;
-  const jn = contactSolve(b, obj, nx, ny, Math.max(0, pen), e, mu);
+  const onTop = obj.type === "block" && ny > 0.7 && obj.topMu !== undefined;
+  const mu = onTop ? obj.topMu : (obj.wallMu !== undefined ? obj.wallMu : 0.15);
+  const jn = contactSolve(b, obj, nx, ny, Math.max(0, pen), e, mu, vMin);
   b._N = (b._N||0) + jn/h;
 }
 
@@ -1345,15 +1541,38 @@ function satMTV(pa, pb){
   return best;
 }
 
-function polyPolyContact(A, B, h, e){
+function polyPolyContact(A, B, h, e, vMin){
   const pa = ensureCCW(polyOf(A));
   const pb = ensureCCW(polyOf(B));
   if(pa.length < 3 || pb.length < 3) return;
+
+  // 凹多边形先三角剖分，逐片做分离轴（SAT 只对凸形状成立）
+  const ca = isConcave(pa), cb = isConcave(pb);
+  if(ca || cb){
+    const ta = ca ? triangulate(pa) : [pa];
+    const tb = cb ? triangulate(pb) : [pb];
+    let used = 0;
+    for(const qa of ta){
+      for(const qb of tb){
+        const r = convexPolyContact(A, B, qa, qb, h, e, vMin);
+        if(r) used++;
+        if(used >= 6) return;        // 同帧接触点过多会抖动，限量
+      }
+    }
+    return;
+  }
+  convexPolyContact(A, B, pa, pb, h, e, vMin);
+}
+
+function convexPolyContact(A, B, pa, pb, h, e, vMin){
   const mtv = satMTV(pa, pb);
-  if(!mtv) return;
-  const mu = Math.min(A.wallMu!==undefined?A.wallMu:0.15, B.wallMu!==undefined?B.wallMu:0.15);
-  const jn = contactSolve(A, B, mtv.nx, mtv.ny, mtv.pen, e, mu);
+  if(!mtv) return false;
+  let mu = Math.min(A.wallMu!==undefined?A.wallMu:0.15, B.wallMu!==undefined?B.wallMu:0.15);
+  if(mtv.ny >  0.7 && (B.type === "block"||B.type === "poly") && B.topMu !== undefined) mu = B.topMu;
+  if(mtv.ny < -0.7 && (A.type === "block"||A.type === "poly") && A.topMu !== undefined) mu = A.topMu;
+  const jn = contactSolve(A, B, mtv.nx, mtv.ny, mtv.pen, e, mu, vMin);
   A._N = (A._N||0) + jn/h;
+  return true;
 }
 
 /* ---------- 刚体之间 ---------- */
@@ -1361,6 +1580,8 @@ function solveBodies(h){
   const list = W.objs.filter(o=>isSolid(o));
   if(list.length < 2) return;
   const e = W.collision==="elastic" ? 1 : 0;
+  // 物体之间：门槛压到 0.25 m/s，平时静止/轻压不会抖，但明确一撞就能看出反弹
+  const VMIN_PAIR = 0.25;
   for(let i=0;i<list.length;i++){
     for(let j=i+1;j<list.length;j++){
       const A = list[i], B = list[j];
@@ -1378,7 +1599,7 @@ function solveBodies(h){
       if(A.type==="ball" && B.type==="ball"){
         const d = dist(A.x,A.y,B.x,B.y), rr = (A.r||0)+(B.r||0);
         if(d < rr && d > 1e-9){
-          const jn = contactSolve(A,B, (A.x-B.x)/d, (A.y-B.y)/d, rr-d, e, 0.06);
+          const jn = contactSolve(A,B, (A.x-B.x)/d, (A.y-B.y)/d, rr-d, e, 0.06, VMIN_PAIR);
           A._N = (A._N||0) + jn/h;
         }
         continue;
@@ -1386,11 +1607,11 @@ function solveBodies(h){
       if(A.type==="ball" || B.type==="ball"){
         const ball  = A.type==="ball" ? A : B;
         const other = A.type==="ball" ? B : A;
-        // 异形块是"导轨"：球与它之间不设反弹，只沿表面切向滑动
-        ballPolyContact(ball, other, h, other.type === "shape" ? 0 : e);
+        // 1/4弧槽是"导轨"：球与它之间不设反弹，只沿表面切向滑动
+        ballPolyContact(ball, other, h, other.type === "shape" ? 0 : e, VMIN_PAIR);
         continue;
       }
-      polyPolyContact(A, B, h, e);
+      polyPolyContact(A, B, h, e, VMIN_PAIR);
     }
   }
 }
@@ -1554,7 +1775,7 @@ function substep(h){
     }
   }
 
-  // 可滑动异形块先沿地面导轨对齐（在接触迭代之前，避免迭代中几何突变）
+  // 可滑动1/4弧槽先沿地面导轨对齐（在接触迭代之前，避免迭代中几何突变）
   solveSlideShapes(h);
 
   // 约束迭代（接触 → 绳 → 杆）
@@ -1591,7 +1812,7 @@ function substep(h){
     if(!isFinite(o.vx) || !isFinite(o.vy)){ o.vx = 0; o.vy = 0; }
   }
 
-  // 与小车结合的异形块：跟随车体，保持弧面与车面相切、两者相对静止
+  // 与小车结合的1/4弧槽：跟随车体，保持弧面与车面相切、两者相对静止
   followBinds();
   // 独立（未结合）的固定件坐在车面上：随车平移，不被车穿过
   followPassengers(h);
@@ -1843,7 +2064,32 @@ function drawBody(o){
   if(o.type === "ball")       drawBallBody(o, sel);
   else if(o.type === "cart")  drawCartBody(o, sel);
   else if(o.type === "shape") drawShapeBody(o, sel);
+  else if(o.type === "poly")  drawPolyBody(o, sel);
   else if(o.type === "block") drawBlockBody(o, sel);
+  ctx.restore();
+}
+
+/* 自定义多边形：填充 + 轮廓；凹角处标小圆点，便于学生看出是 L 形而非两个矩形 */
+function drawPolyBody(o, sel){
+  const p = polyWorld(o);
+  if(p.length < 3) return;
+  ctx.save();
+  ctx.beginPath();
+  p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
+  ctx.closePath();
+  ctx.fillStyle = o.color || "#D7E4FB";
+  ctx.fill();
+  ctx.strokeStyle = sel ? "#2F6FED" : "#2F6FED";
+  ctx.lineWidth = sel ? 2.8 : 1.9;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  // 顶点小圆点（编辑态才显示，运行中保持干净）
+  if(!running && p.length <= 14){
+    ctx.fillStyle = "#FFFFFF"; ctx.strokeStyle = "#2F6FED"; ctx.lineWidth = 1.4;
+    p.forEach(q=>{
+      ctx.beginPath(); ctx.arc(wx2sx(q.x), wy2sy(q.y), 2.4, 0, 7); ctx.fill(); ctx.stroke();
+    });
+  }
   ctx.restore();
 }
 
@@ -1941,10 +2187,12 @@ function drawShapeBody(o, sel){
   ctx.stroke();
   ctx.globalAlpha=1; ctx.setLineDash([]);
   ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="right";
-  ctx.fillText("异形块", wx2sx(x1)-6, wy2sy(y0)-8);
+  ctx.fillText("1/4弧槽", wx2sx(x1)-6, wy2sy(y0)-8);
 }
 
 function drawBlockBody(o, sel){
+  // 自定义轮廓：和多边形对象用同一套画法（填充色仍取 o.color）
+  if(o.verts && o.verts.length >= 3){ drawPolyBody(o, sel); return; }
   const fill = o.color || "#CFE0FF";
 
   const x=wx2sx(o.x), y=wy2sy(o.y);
@@ -2036,8 +2284,11 @@ function drawVectors(o){
   // 重力（整体平移出球体，长度保持不变）
   const gLen = Math.min(70, 16 + o.m*W.g*2.2);
   if(W.forces){
-    arrow(x, y+rr, x, y+rr+gLen, C_FORCE.g, 2.4);
-    label("G", x+5, y+rr+gLen+2, C_FORCE.g);
+    // 1/4弧槽是"导轨"，本身不作为受力对象展示重力
+    if(o.type !== "shape"){
+      arrow(x, y+rr, x, y+rr+gLen, C_FORCE.g, 2.4);
+      label("G", x+5, y+rr+gLen+2, C_FORCE.g);
+    }
     // 支持力
     if(o._N > 0.1){
       const nLen = Math.min(64, 10 + o._N*2.0);
@@ -2134,8 +2385,8 @@ function drawAnchors(){
   ctx.restore();
 }
 function nameOf(o){
-  const n = { block:"物块", ball:"小球", cart:"小车", shape:"异形块", rope:"细线",
-    rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮" };
+  const n = { block:"物块", ball:"小球", cart:"小车", shape:"1/4弧槽", poly:"自定义形状",
+    rope:"细线", rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮" };
   return n[o.type] || o.type;
 }
 function drawWirePreview(){
@@ -2477,24 +2728,32 @@ function groundSeat(o, band){
   if(ny < 1e-6) return false;
   const s = (o.x - g.x)*nx + (o.y - g.y)*ny - supportAlong(o, nx, ny);
   const lim = band === undefined ? 0.6 : band;
-  if(s > lim || s < -0.6) return false;
+  // 深陷容差随物体尺寸放大：固定 0.6 m 会让大尺寸物块/自定义轮廓一拖到地面就被判“陷太深”而拒绝吸附
+  const deep = supportAlong(o, nx, ny) + 0.3;
+  if(s > lim || s < -deep) return false;
   o.y += -s/ny;
   return true;
 }
-/* 自动吸附链条：地面（最高优先）→ 小车车面 → 异形块表面 */
+/* 自动吸附链条：地面（最高优先）→ 小车车面 → 1/4弧槽表面 */
 function snapToSurface(o){
   if(o.type==="shape" && o.tangent){
-    if(shapeTangency(o)){ o.vy = 0; return; }
+    if(shapeTangency(o)){ o.vy = 0; return true; }
   }
-  if(!onCartSpan(o) && groundSeat(o, 0.25)){ o.vy = 0; return; }
-  if(snapToCart(o, 0.18)){ o.vy = 0; return; }
-  if(snapToShape(o, 0.18)){ o.vy = 0; return; }
+  if(!onCartSpan(o) && groundSeat(o, 0.25)){ o.vy = 0; return true; }
+  if(snapToCart(o, 0.18)){ o.vy = 0; return true; }
+  if(snapToShape(o, 0.18)){ o.vy = 0; return true; }
+  return false;
 }
 /* 物体是否正处在某辆小车的车面上方（此时地面被车挡住，不参与吸附） */
 function onCartSpan(o){
+  // 判据用"物体底部"而不是中心：大尺寸 / 自定义轮廓中心离地很高，
+  // 只比中心会把它在车旁的地面误判成"在车面上方"，于是跳过地面吸附、被吸到车顶
+  const bottom = o.y - supportAlong(o, 0, 1);
+  // 底部贴近车顶（含略低一点、正要压上去的位置）才算"在车面上方"；
+  // 完全在车旁 / 沉到车下方的物体走地面吸附
+  const near = c=>bottom > (c.y + c.h/2) - 0.08;
   return W.objs.some(c=>c.type==="cart" && c!==o &&
-    o.x > c.x - c.w/2 + 0.02 && o.x < c.x + c.w/2 - 0.02 &&
-    o.y > c.y + c.h/2 + 0.02);
+    o.x > c.x - c.w/2 + 0.02 && o.x < c.x + c.w/2 - 0.02 && near(c));
 }
 /* 吸附到小车车面 */
 function snapToCart(o, band){
@@ -2503,14 +2762,15 @@ function snapToCart(o, band){
     if(o.x < c.x - c.w/2 + 0.02 || o.x > c.x + c.w/2 - 0.02) continue;
     const top = c.y + c.h/2;
     if(o.y <= top + 1e-6) continue;
-    const gap = (o.y - supportAlong(o, 0, 1)) - top;
-    if(gap > band || gap < -0.2) continue;
+    const sa = supportAlong(o, 0, 1);
+    const gap = (o.y - sa) - top;
+    if(gap > band || gap < -(sa + 0.2)) continue;
     o.y -= gap;
     return true;
   }
   return false;
 }
-/* 异形块"弧底与地面相切"：把弧沿地面法向的最低点放到地面平面上 */
+/* 1/4弧槽"弧底与地面相切"：把弧沿地面法向的最低点放到地面平面上 */
 function shapeTangency(o){
   const g = groundObj();
   if(!g || o.type !== "shape") return false;
@@ -2533,9 +2793,9 @@ function shapeTangency(o){
   return true;
 }
 
-/* ---------- 异形块与小车"结合为一体" ----------
+/* ---------- 1/4弧槽与小车"结合为一体" ----------
    结合后：弧面与车顶平面相切（弧沿竖直方向的最低点落在车面上），
-   异形块改为随小车走（pin、不再单独积分），两者保持相对静止。 */
+   1/4弧槽改为随小车走（pin、不再单独积分），两者保持相对静止。 */
 function cartDeck(c){ return c.y + (c.h||0)/2; }
 
 /* 弧沿竖直方向最低点相对 o.y 的偏移 */
@@ -2656,7 +2916,7 @@ function drawBind(o){
   ctx.restore();
 }
 
-/* 吸附到异形块：取最近边界点，沿该处外法向把间隙归零（凹弧内的小球自然落进槽里） */
+/* 吸附到1/4弧槽：取最近边界点，沿该处外法向把间隙归零（凹弧内的小球自然落进槽里） */
 function snapToShape(o, band){
   for(const s of W.objs){
     if(s.type !== "shape" || s === o) continue;
@@ -2677,7 +2937,7 @@ function snapToShape(o, band){
     if(!isFinite(bd) || bd < 1e-6) continue;
     const nx = (o.x-bx)/bd, ny = (o.y-by)/bd;
     const gap = bd - supportAlong(o, nx, ny);
-    if(gap > band || gap < -0.5) continue;
+    if(gap > band || gap < -(supportAlong(o, nx, ny) + 0.5)) continue;
     o.x -= gap*nx; o.y -= gap*ny;
     return true;
   }
@@ -2922,6 +3182,11 @@ function addObj(type, wx, wy){
     if(W.objs.some(o=>o.type===type)){ toast("地面和墙壁各只允许一个", "warn"); return; }
   }
   if(type==="rope"){ startWire(); return; }
+  if(type==="poly"){
+    if(running){ toast("运行中不能新增形状，请先重置", "warn"); return; }
+    openShapeEditor({ mode:"new", x:wx, y:wy });
+    return;
+  }
   pushUndo();
   const o = makeObj(type, wx, wy);
   if(type==="ground"){ o.y = wy; o.x = wx; }
@@ -3001,11 +3266,13 @@ const P = {
 const ROW_VIS = {
   rowMass:  "body",            rowVel:   "body",            rowAng:    "body",
   rowForce: "body",            rowFdir:  "body",
-  rowRadius:"ball pulley",     rowWH:    "block cart shape",
+  rowRadius:"ball pulley",     rowWH:    "block cart shape poly",
   rowSlotR: "shape",           rowOrient:"shape",           rowTangent:"shape",
   rowSlide: "shape",           rowBind:  "shape",
   rowWallE: "wall",            rowMu:    "ground wall",     rowTilt:   "ground",
-  rowCartMu:"cart",            rowRodLen:"rod",             rowRodAng: "rod",
+  rowCartMu:"cart",            rowTopMu: "block",           rowBlockShape:"block poly",
+  rowRodLen:"rod",
+  rowRodAng: "rod",
   rowFixed: "pulley",
 };
 /* 有面的对象才给色板：墙、细杆、固定点都是纯线条 */
@@ -3017,7 +3284,8 @@ const hitRule = (rule, t, hasMass) =>
 function applyRowVisibility(t, hasMass){
   for(const id in ROW_VIS) $(id).classList.toggle("hidden", !hitRule(ROW_VIS[id], t, hasMass));
   $("vRadiusNote").classList.toggle("hidden", t !== "ball");
-  $("lbRadius").textContent = t === "pulley" ? "滑轮半径" : "半径";
+  $("lbRadius").dataset.len = t === "pulley" ? "滑轮半径" : "半径";
+  $("lbRadius").textContent = $("lbRadius").dataset.len + " " + lenUnit();
 }
 
 function syncPanel(){
@@ -3066,7 +3334,16 @@ function syncPanelSize(o, t, hasMass){
   }
   if(t === "pulley") setRange("rRadius", o.r, 0.05, 0.8, running);
 
-  if(t === "block" || t === "cart" || t === "shape"){
+  if(t === "poly" && o.verts && o.verts.length >= 3 &&
+     (o.w === undefined || o.h === undefined)){
+    let bx0=Infinity, bx1=-Infinity, by0=Infinity, by1=-Infinity;
+    o.verts.forEach(v=>{
+      bx0=Math.min(bx0,v[0]); bx1=Math.max(bx1,v[0]);
+      by0=Math.min(by0,v[1]); by1=Math.max(by1,v[1]);
+    });
+    o.w = +(bx1-bx0).toFixed(3); o.h = +(by1-by0).toFixed(3);
+  }
+  if(t === "block" || t === "cart" || t === "shape" || t === "poly"){
     setRange("rW", o.w, 0.1, 4, running);
     setRange("rH", o.h, 0.1, 4, running);
   }
@@ -3123,7 +3400,9 @@ function syncPanelMotion(o, hasMass){
 
 function syncPanelPosition(o){
   const nx = $("nX"), ny = $("nY");
-  nx.value = o.x.toFixed(2); ny.value = o.y.toFixed(2);
+  const k = lenK(), d = lenDec();
+  nx.value = (o.x*k).toFixed(d); ny.value = (o.y*k).toFixed(d);
+  nx.step = ny.step = lenUnit() === "cm" ? 1 : 0.01;
   nx.disabled = ny.disabled = running;
 }
 
@@ -3138,6 +3417,22 @@ function syncPanelSurface(o, t){
   if(t === "ground" || t === "wall") setRange("rMu", o.mu || 0, 0, 1, running);
   if(t === "ground") setRange("rTilt", o.tilt || 0, -30, 30, running);
   if(t === "cart") setRange("rCartMu", o.cartMu || 0, 0, 1, running);
+  if(t === "block") setRange("rTopMu", o.topMu !== undefined ? o.topMu : 0.15, 0, 1, running);
+
+  if(t === "block" || t === "poly"){
+    const hasV = !!(o.verts && o.verts.length >= 3);
+    const key = t === "poly" ? "custom" : (hasV ? (o._shapeKey || "custom") : "rect");
+    $("selBlockShape").value = key;
+    $("selBlockShape").disabled = running;
+    $("btnEditShape").disabled = running;
+    if(hasV){
+      const area = Math.abs(polyArea(ensureCCW(polyWorld(o))));
+      $("vPolyInfo").innerHTML = "轮廓 " + o.verts.length + " 个顶点 · 面积 " + area.toFixed(3) + " m²" +
+        (t === "block" ? " · 外框 " + o.w.toFixed(2) + " × " + o.h.toFixed(2) + " m" : "");
+    }else{
+      $("vPolyInfo").innerHTML = "矩形 · 面积 " + (o.w*o.h).toFixed(3) + " m²";
+    }
+  }
   if(t === "pulley"){
     $("selFixed").value = String(o.fixed ? 1 : 0);
     $("selFixed").disabled = running;
@@ -3190,7 +3485,9 @@ function noteText(o){
   if(o.type==="pulley") return "<b>滑轮</b>理想滑轮绳中张力处处相等。<br>定滑轮 F=G 只改方向；动滑轮 n=2、F=G/2。<br>绳必与轮缘相切。";
   if(o.type==="rod") return "<b>细杆</b>可推可拉，与细线不同。<br>靠近杆端的物体会被约束成摆锤。<br>杆本身可整体拖动；杆长与杆角在右侧调。";
   if(o.type==="cart") return "<b>小车</b>车面摩擦决定物块是否随之运动。<br>μ 不足时物块会相对滑动。";
-  if(o.type==="block") return "<b>物块</b>拖动能改位置，吸附顺序：地面 → 车面 → 弧面。";
+  if(o.type==="block") return "<b>物块</b>拖动能改位置，吸附顺序：地面 → 车面 → 弧面。<br>" +
+    "压在它顶面上的球或物块，按「顶面摩擦 μ」受力。<br>" +
+    "形状可在右侧改成直角三角形、L 形等，点「编辑形状…」还能拖顶点自定义。";
   return "";
 }
 
@@ -3199,7 +3496,8 @@ function bindNum(id, fn){
   const el = $(id);
   el.addEventListener("input", ()=>{
     const o = byId(selId); if(!o || running) return;
-    fn(o, parseFloat(el.value));
+    const k = (id === "nX" || id === "nY") ? lenK() : 1;
+    fn(o, parseFloat(el.value) / k);
     captureInitial(); syncPanel(); draw();
   });
 }
@@ -3215,8 +3513,8 @@ bindRange("rMass", (o,v)=>{ o.m = v; });
 bindRange("rRodLen", (o,v)=>{ o.len = v; });
 bindRange("rRodAng", (o,v)=>{ o.ang = v*Math.PI/180; });
 bindRange("rRadius", (o,v)=>{ o.r = v; if(o.type==="pulley") o.r = clamp(v,0.05,0.8); });
-bindRange("rW", (o,v)=>{ o.w = v; if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
-bindRange("rH", (o,v)=>{ o.h = v; if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
+bindRange("rW", (o,v)=>{ o.w = v; if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h); if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
+bindRange("rH", (o,v)=>{ o.h = v; if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h); if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
 bindRange("rSlotR", (o,v)=>{ o.R = v; if(o.tangent) shapeTangency(o); });
 /* 方向记忆：速度/外力大小为 0 时也要记住上次设定的方向，
    否则"先把方向拖到 180°、再把大小调大"会被强制拉回 0°（向右）。 */
@@ -3272,23 +3570,96 @@ bindRange("rTilt", (o,v)=>{
   W.objs.forEach(b=>{ if(b.type==="shape" && b.tangent) shapeTangency(b); });
 });
 bindRange("rCartMu", (o,v)=>{ o.cartMu = v; });
+bindRange("rTopMu", (o,v)=>{ o.topMu = v; });
+/* ---------- 形状：模板一键切换 + 顶点编辑 ---------- */
+const SHAPE_LABEL = { rect:"矩形", rtri:"直角三角形", tri:"等腰三角", lshape:"L 形",
+                      trap:"梯形", tshape:"T 形", step:"台阶形", custom:"自定义" };
+
+function applyBlockShape(o, key){
+  if(!o || !isBody(o)) return;
+  if(running){ toast("运行中不能改形状，请先重置", "warn"); syncPanel(); return; }
+  if(key === "custom"){
+    openShapeEditor({ mode:"edit", obj:o, startKey: (o.verts ? (o._shapeKey || "rect") : "rect") });
+    syncPanel();          // 取消编辑时下拉也要和对象真实形状一致
+    return;
+  }
+  pushUndo();
+  if(key === "rect" && o.type === "block"){
+    o.verts = null;                       // 矩形：回到最快的路径
+  }else{
+    const pre = SHAPE_PRESETS.find(q=>q.key === key) || SHAPE_PRESETS[0];
+    const w = (o.type === "block" ? o.w : 1.2), h = (o.type === "block" ? o.h : 1.2);
+    o.verts = normalizeToBox(pre.verts, w, h);
+  }
+  o._shapeKey = key;
+  snapToSurface(o);
+  captureInitial(); syncPanel(); draw();
+  if(typeof refreshEnv === "function") refreshEnv();
+  toast("已切换形状：" + (SHAPE_LABEL[key] || key));
+}
+$("selBlockShape").addEventListener("change", (e)=>{
+  const o = byId(selId);
+  applyBlockShape(o, e.target.value);
+});
+$("btnEditShape").addEventListener("click", ()=>{
+  const o = byId(selId);
+  if(!o) return;
+  if(running){ toast("运行中不能改形状，请先重置", "warn"); return; }
+  openShapeEditor({ mode:"edit", obj:o, startKey: (o.verts ? (o._shapeKey || "custom") : "rect") });
+});
+
+/* 长度单位切换：米 / 厘米（内部始终用米，界面换算） */
+function applyUnit(){
+  renderLenLabels();
+  const sel = $("selUnit");
+  if(sel) sel.value = lenUnit();
+  syncNums();
+  if(edState && edState.lensBox){
+    edState.lensBox.querySelectorAll(".unit").forEach(u=>{ u.textContent = lenUnit(); });
+    edState.lensBox.querySelectorAll("input").forEach(ip=>{
+      ip.step = lenUnit() === "cm" ? 5 : 0.05;
+      ip.min = lenUnit() === "cm" ? 5 : 0.05;
+    });
+    syncEdgeValues();
+  }
+}
+$("selUnit").addEventListener("change", (e)=>{
+  W.unitLen = e.target.value;
+  applyUnit();
+});
+
 /* 数值栏输入框：改数字等于拖滑块（复用同一套 bindRange 逻辑） */
 const NUM_LINKS = [
   ["nMass","rMass",2],["nRadius","rRadius",2],["nW","rW",2],["nH","rH",2],
   ["nSlotR","rSlotR",2],["nVel","rVel",2],["nForce","rForce",1],
-  ["nMu","rMu",2],["nTilt","rTilt",0],["nCartMu","rCartMu",2],
+  ["nMu","rMu",2],["nTilt","rTilt",0],["nCartMu","rCartMu",2],["nTopMu","rTopMu",2],
   ["nRodLen","rRodLen",2],["nRodAng","rRodAng",0]
 ];
+/* 长度类字段：内部一律用米，界面按当前单位换算显示 */
+const LEN_FIELDS = { nW:1, nH:1, nRadius:1, nSlotR:1, nRodLen:1 };
+function lenUnit(){ return (W && W.unitLen === "cm") ? "cm" : "m"; }
+function lenK(){ return lenUnit() === "cm" ? 100 : 1; }
+function lenDec(){ return lenUnit() === "cm" ? 1 : 2; }
+function renderLenLabels(){
+  const u = lenUnit();
+  document.querySelectorAll("[data-len]").forEach(el=>{
+    el.textContent = el.dataset.len + " " + u;
+  });
+}
 function syncNums(){
   for(const [nid, rid, dec] of NUM_LINKS){
     const a = $(nid), b = $(rid);
     if(!a || !b) continue;
+    const isLen = !!LEN_FIELDS[nid];
+    const k = isLen ? lenK() : 1;
+    const d = isLen ? lenDec() : dec;
     const v = parseFloat(b.value);
-    if(document.activeElement !== a && isFinite(v)) a.value = v.toFixed(dec);
+    if(document.activeElement !== a && isFinite(v)) a.value = (v*k).toFixed(d);
     a.disabled = b.disabled;
-    if(isFinite(parseFloat(b.min))) a.min = parseFloat(b.min);
-    if(isFinite(parseFloat(b.max))) a.max = parseFloat(b.max);
-    if(b.step) a.step = b.step;
+    const mn = parseFloat(b.min), mx = parseFloat(b.max);
+    if(isFinite(mn)) a.min = (mn*k).toFixed(isLen ? 0 : 3);
+    if(isFinite(mx)) a.max = (mx*k).toFixed(isLen ? 0 : 3);
+    if(b.step) a.step = (parseFloat(b.step)*k);
   }
 }
 function linkNumbers(){
@@ -3299,15 +3670,19 @@ function linkNumbers(){
       const o = byId(selId); if(!o || running) return;
       const v = parseFloat(a.value);
       if(!isFinite(v)) return;
+      const isLen = !!LEN_FIELDS[nid];
+      const k = isLen ? lenK() : 1;
       const mn = parseFloat(b.min), mx = parseFloat(b.max);
-      b.value = clamp(v, isFinite(mn)?mn:-1e9, isFinite(mx)?mx:1e9);
+      b.value = clamp(v/k, isFinite(mn)?mn:-1e9, isFinite(mx)?mx:1e9);
       b.dispatchEvent(new Event("input"));      // 走滑块原来的处理
     };
     a.addEventListener("input", push);
     a.addEventListener("change", push);
     a.addEventListener("blur", ()=>{
       const v = parseFloat(b.value);
-      if(isFinite(v)) a.value = v.toFixed(dec);
+      const isLen = !!LEN_FIELDS[nid];
+      const k = isLen ? lenK() : 1;
+      if(isFinite(v)) a.value = (v*k).toFixed(isLen ? lenDec() : dec);
     });
   }
 }
@@ -3336,12 +3711,12 @@ $("selSlide").addEventListener("change", (e)=>{
   if(o.slide){
     o.tangent = true; o.vy = 0;      // 可滑动＝沿地面导轨贴着走，故默认保持相切
     shapeTangency(o);
-    toast("异形块已改为可滑动：会被小球推动，摩擦由地面 μ 决定");
+    toast("1/4弧槽已改为可滑动：会被小球推动，摩擦由地面 μ 决定");
   } else if(o.free){
-    toast("异形块已改为无约束：只由重力与碰撞决定运动，既不贴地也不钉死");
+    toast("1/4弧槽已改为无约束：只由重力与碰撞决定运动，既不贴地也不钉死");
     o.tangent = false;
   } else {
-    toast("异形块已改回固定：停在原地，不会被推动");
+    toast("1/4弧槽已改回固定：停在原地，不会被推动");
   }
   captureInitial(); syncPanel(); draw();
 });
@@ -3349,13 +3724,13 @@ $("selBind").addEventListener("change", (e)=>{
   const o = byId(selId); if(!o||running) return;
   if(e.target.value === "1"){
     const c = bindTargetFor(o);
-    if(!c){ toast("先让异形块的弧底贴到小车车面上", "warn"); syncPanel(); return; }
+    if(!c){ toast("先让1/4弧槽的弧底贴到小车车面上", "warn"); syncPanel(); return; }
     pushUndo(); bindTo(o, c);
     toast("已与小车结合：弧面与车面相切，两者保持相对静止");
   } else {
     if(!o.bind){ syncPanel(); return; }
     pushUndo(); unbindShape(o);
-    toast("已拆开：异形块恢复为独立物体");
+    toast("已拆开：1/4弧槽恢复为独立物体");
   }
   captureInitial(); syncPanel(); draw();
 });
@@ -3567,7 +3942,9 @@ function loadPreset(key){
   const p = PRESETS.find(x=>x.key===key);
   if(!p) return;
   pushUndo();
+  const prevUnit = (W && W.unitLen) || "m";
   W = emptyWorld();
+  W.unitLen = prevUnit;
   W.view = {ox: window.innerWidth*0.18, oy: 0, s: 110};
   p.build(W);
   // 让地面/地面上的物体对齐
@@ -3622,6 +3999,606 @@ function loadPreset(key){
   setRunning(false);
   syncPanel(); draw(); drawChart(); refreshEnv();
   toast("已载入预设：" + p.name);
+}
+
+/* SECTION: shape editor */
+let edState = null;   // {verts, target, scale, ox, oy, sel, dragging, canvas}
+
+/* 面积重心：把模型原点放在质心附近，转动与吸附更自然 */
+function polyCentroidArea(p){
+  let a = 0, cx = 0, cy = 0;
+  for(let i=0;i<p.length;i++){
+    const q = p[i], r = p[(i+1)%p.length];
+    const cr = q.x*r.y - r.x*q.y;
+    a += cr; cx += (q.x + r.x)*cr; cy += (q.y + r.y)*cr;
+  }
+  a *= 0.5;
+  if(Math.abs(a) < 1e-12){
+    let sx=0, sy=0;
+    p.forEach(q=>{ sx+=q.x; sy+=q.y; });
+    return { x:sx/p.length, y:sy/p.length, area:0 };
+  }
+  return { x:cx/(6*a), y:cy/(6*a), area:Math.abs(a) };
+}
+
+/* 居中 + 归一化：最长边缩放为 maxSize 米 */
+function normalizeVerts(vs, maxSize){
+  const p = vs.map(v=>({x:v[0], y:v[1]}));
+  const c = polyCentroidArea(p);
+  let out = p.map(q=>[q.x-c.x, q.y-c.y]);
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  out.forEach(v=>{ x0=Math.min(x0,v[0]); x1=Math.max(x1,v[0]); y0=Math.min(y0,v[1]); y1=Math.max(y1,v[1]); });
+  const span = Math.max(x1-x0, y1-y0) || 1;
+  const k = (maxSize || 1.2) / span;
+  return out.map(v=>[+(v[0]*k).toFixed(4), +(v[1]*k).toFixed(4)]);
+}
+
+function openShapeEditor(target){
+  const isNew = target.mode === "new";
+  const obj = isNew ? null : target.obj;
+  let verts;
+  if(obj && obj.verts && obj.verts.length >= 3) verts = obj.verts.map(v=>[v[0], v[1]]);
+  else {
+    const st = SHAPE_PRESETS.find(q=>q.key === (target.startKey || "lshape")) || SHAPE_PRESETS[3];
+    verts = st.verts.map(v=>[v[0], v[1]]);
+  }
+  const startKey = (obj && obj.verts && obj.verts.length >= 3) ? "custom" : (target.startKey || "lshape");
+  edState = { verts, target, sel:-1, dragging:null, scale:0, ox:0, oy:0, canvas:null,
+    curPreset:startKey, axis:[], lensBox:null };
+
+  openModal(isNew ? "设计自定义形状" : "编辑形状 · " + (obj ? nameOf(obj) : ""), (body)=>{
+    const pTitle = document.createElement("div");
+    pTitle.className = "edhint";
+    pTitle.innerHTML = "先选一个模板，再拖动顶点微调 —— 三角、L 形、台阶都能直接改出来。";
+    body.appendChild(pTitle);
+
+    const wrapPr = document.createElement("div");
+    wrapPr.className = "presets";
+    SHAPE_PRESETS.forEach(p=>{
+      const b = document.createElement("button");
+      b.textContent = p.name;
+      b.dataset.key = p.key;
+      if(p.key === edState.curPreset) b.classList.add("on");
+      b.addEventListener("click", ()=>{
+        edState.verts = p.verts.map(v=>[v[0], v[1]]);
+        edState.sel = -1;
+        edState.curPreset = p.key;
+        wrapPr.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+        b.classList.add("on");
+        fitEditorScale(); refreshEditorAxis(); renderEdgeList(); drawEditor();
+      });
+      wrapPr.appendChild(b);
+    });
+    body.appendChild(wrapPr);
+
+    const wrap = document.createElement("div");
+    wrap.id = "edWrap";
+    const edcv = document.createElement("canvas");
+    edcv.id = "edCv";
+    wrap.appendChild(edcv);
+
+    // 左上角缩放按钮：放大 / 缩小 / 适应视野
+    const zbox = document.createElement("div");
+    zbox.id = "edZoom";
+    const zoomBtn = (svg, tip, fn)=>{
+      const b = document.createElement("button");
+      b.innerHTML = svg;
+      b.title = tip;
+      b.addEventListener("click", fn);
+      zbox.appendChild(b);
+    };
+    zoomBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M10.5 7.5v6M7.5 10.5h6M15.4 15.4l4.6 4.6"/></svg>', "放大", ()=>zoomEditor(1.25));
+    zoomBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M7.5 10.5h6M15.4 15.4l4.6 4.6"/></svg>', "缩小", ()=>zoomEditor(0.8));
+    zoomBtn('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>', "适应视野", ()=>{ fitEditorScale(); drawEditor(); });
+    wrap.appendChild(zbox);
+
+    body.appendChild(wrap);
+
+    const tools = document.createElement("div");
+    tools.className = "presets";
+    const mk = (txt, fn)=>{
+      const b = document.createElement("button");
+      b.textContent = txt;
+      b.addEventListener("click", fn);
+      tools.appendChild(b);
+    };
+    mk("左右翻转", ()=>{ edState.verts = edState.verts.map(v=>[-v[0], v[1]]).reverse(); fitEditorScale(); refreshEditorAxis(); renderEdgeList(); drawEditor(); });
+    mk("上下翻转", ()=>{ edState.verts = edState.verts.map(v=>[v[0], -v[1]]).reverse(); fitEditorScale(); refreshEditorAxis(); renderEdgeList(); drawEditor(); });
+    mk("旋转 90°", ()=>{ edState.verts = edState.verts.map(v=>[-v[1], v[0]]); fitEditorScale(); refreshEditorAxis(); renderEdgeList(); drawEditor(); });
+    mk("顶点对齐网格", ()=>{
+      edState.verts = edState.verts.map(v=>[Math.round(v[0]*4)/4, Math.round(v[1]*4)/4]);
+      refreshEditorAxis(); renderEdgeList(); drawEditor();
+    });
+    mk("恢复默认", ()=>{
+      edState.verts = SHAPE_PRESETS[3].verts.map(v=>[v[0], v[1]]);
+      fitEditorScale(); refreshEditorAxis(); renderEdgeList(); drawEditor();
+    });
+    body.appendChild(tools);
+
+    // 边长输入框覆盖层：贴在每条边旁边，随缩放/拖动实时跟随
+    const lens = document.createElement("div");
+    lens.id = "edLens";
+    edState.lensBox = lens;
+    wrap.appendChild(lens);
+
+    const hint = document.createElement("div");
+    hint.className = "edhint";
+    hint.innerHTML = "拖动<b>蓝色顶点</b>改形状，原本水平 / 竖直的边会锁住方向；点边上的<b>＋</b>插入顶点；<b>双击顶点</b>删除（至少 3 个）。每条边旁边的白色小框可直接键入<b>边长</b>，单位跟随右侧「长度单位」。";
+    body.appendChild(hint);
+
+    const info = document.createElement("div");
+    info.className = "note";
+    info.id = "edInfo";
+    body.appendChild(info);
+
+    requestAnimationFrame(()=>{
+      bindEditorCanvas(edcv);
+      fitEditorScale();
+      refreshEditorAxis();
+      renderEdgeList();
+      drawEditor();
+    });
+  }, (foot)=>{
+    const ok = document.createElement("button");
+    ok.className = "btn pri";
+    ok.textContent = isNew ? "添加到场景" : "保存形状";
+    ok.addEventListener("click", applyShapeEditor);
+    foot.appendChild(ok);
+  });
+}
+
+/* ---------- 边长编辑：轴向锁定 + 每条边长度输入 ---------- */
+
+/* 每条边的方向标记：h 水平、v 竖直、"" 斜边（容差 2.5°） */
+function refreshEditorAxis(){
+  const ed = edState;
+  if(!ed) return;
+  const n = ed.verts.length, ax = [];
+  const tol = Math.sin(2.5*Math.PI/180);
+  for(let i=0;i<n;i++){
+    const a = ed.verts[i], b = ed.verts[(i+1)%n];
+    const dx = b[0]-a[0], dy = b[1]-a[1], len = Math.hypot(dx,dy);
+    if(len < 1e-6){ ax.push(""); continue; }
+    if(Math.abs(dy) <= len*tol + 1e-9) ax.push("h");
+    else if(Math.abs(dx) <= len*tol + 1e-9) ax.push("v");
+    else ax.push("");
+  }
+  ed.axis = ax;
+}
+
+/* 边长输入框：贴在每条边外侧，随缩放/拖动跟随 */
+function renderEdgeList(){
+  const ed = edState;
+  if(!ed || !ed.lensBox) return;
+  const box = ed.lensBox, n = ed.verts.length;
+  if(box.children.length === n){      // 数量没变就只刷新数值与位置，不重建（不抢焦点）
+    syncEdgeValues();
+    layoutEdgeInputs();
+    return;
+  }
+  box.textContent = "";
+  for(let i=0;i<n;i++){
+    const row = document.createElement("div"); row.className = "edlen"; row.dataset.edge = String(i);
+    const ax = document.createElement("span"); ax.className = "ax";
+    const ip = document.createElement("input");
+    ip.type = "number"; ip.step = lenUnit() === "cm" ? "5" : "0.05";
+    ip.min = lenUnit() === "cm" ? "5" : "0.05";
+    ip.dataset.edge = String(i);
+    const unit = document.createElement("span"); unit.className = "unit"; unit.textContent = lenUnit();
+    row.appendChild(ax); row.appendChild(ip); row.appendChild(unit);
+    box.appendChild(row);
+    ip.value = (edgeLen(i)*lenK()).toFixed(lenDec());
+    ip.addEventListener("keydown", (e)=>{ if(e.key === "Enter") ip.blur(); });
+    ip.addEventListener("change", ()=>{
+      const v = parseFloat(ip.value);
+      const m = v / lenK();
+      if(!isFinite(v) || m <= 0.02){
+        toast("边长要大于 " + (2*lenK()).toFixed(lenUnit()==="cm"?0:2) + " " + lenUnit(), "warn");
+        ip.value = (edgeLen(i)*lenK()).toFixed(lenDec());
+        return;
+      }
+      const before = edgeLen(i);
+      applyEdgeLen(i, m);
+      refreshEditorAxis(); renderEdgeList(); drawEditor();
+      const after = edgeLen(i);
+      if(Math.abs(after - m) > 0.02 && Math.abs(before - after) > 1e-3)
+        toast("相邻的水平/竖直边要保持方向，这条边实际为 " +
+          (after*lenK()).toFixed(lenDec()) + " " + lenUnit(), "warn");
+    });
+  }
+  syncEdgeValues();
+  layoutEdgeInputs();
+}
+
+/* 把每个输入框摆到对应边的外侧中点 */
+function layoutEdgeInputs(){
+  const ed = edState;
+  if(!ed || !ed.canvas || !ed.lensBox) return;
+  const n = ed.verts.length;
+  const kids = ed.lensBox.children;
+  if(kids.length !== n) return;
+  const cw = ed.canvas.clientWidth || 440, ch = ed.canvas.clientHeight || 288;
+  // 用多边形绕向定"外侧"，L 形、台阶形的凹边也不会把标签摆到形状里面
+  const ccw = polyArea(ed.verts.map(v=>({x:v[0], y:v[1]})) ) > 0;
+  for(let i=0;i<n;i++){
+    const a = edToPx(ed.verts[i]), b = edToPx(ed.verts[(i+1)%n]);
+    const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+    const la = ed.verts[i], lb = ed.verts[(i+1)%n];
+    let nx = ccw ? (lb[1]-la[1]) : -(lb[1]-la[1]);
+    let ny = ccw ? -(lb[0]-la[0]) : (lb[0]-la[0]);
+    const nl = Math.hypot(nx, ny) || 1;
+    nx /= nl; ny /= nl;
+    const px = clamp(mx + nx*17, 26, cw-26);
+    const py = clamp(my - ny*14, 12, ch-12);   // 屏幕 y 与局部 y 反向
+    const el = kids[i];
+    el.style.left = px.toFixed(1) + "px";
+    el.style.top = py.toFixed(1) + "px";
+  }
+}
+
+function edgeLen(i){
+  const ed = edState;
+  if(!ed) return 0;
+  const n = ed.verts.length, a = ed.verts[i], b = ed.verts[(i+1)%n];
+  return Math.hypot(b[0]-a[0], b[1]-a[1]);
+}
+
+/* 只刷新输入框数值与方向标记，不重建 DOM（拖动过程中避免抢焦点） */
+function syncEdgeValues(){
+  const ed = edState;
+  if(!ed || !ed.lensBox) return;
+  Array.from(ed.lensBox.children).forEach(row=>{
+    const i = +row.dataset.edge;
+    const ip = row.querySelector("input"), ax = row.querySelector(".ax");
+    if(ax) ax.textContent = ed.axis[i] === "h" ? "=" : ed.axis[i] === "v" ? "|" : "";
+    if(ip && document.activeElement !== ip) ip.value = (edgeLen(i)*lenK()).toFixed(lenDec());
+  });
+}
+
+/* 改一条边长：两端各移一半，位移沿"水平/竖直"链传播，链上每条边保持原方向 */
+function applyEdgeLen(i, target){
+  const ed = edState;
+  if(!ed) return;
+  const vs = ed.verts, n = vs.length;
+  const a = vs[i], b = vs[(i+1)%n];
+  const len = Math.hypot(b[0]-a[0], b[1]-a[1]);
+  if(len < 1e-6) return;
+  const ux = (b[0]-a[0])/len, uy = (b[1]-a[1])/len;
+  const half = (target - len)/2;
+  const startAx = ed.axis[i] || "";
+  let hx = ux*half, hy = uy*half;
+  if(startAx === "h") hy = 0;
+  if(startAx === "v") hx = 0;
+  const seen = {};
+  seen[i] = true; seen[(i+1)%n] = true;
+  shiftChain(i, -hx, -hy, -1, startAx, seen);
+  shiftChain((i+1)%n, hx, hy, +1, startAx, seen);
+}
+
+function shiftChain(idx, vx, vy, dir, stopAxis, seen){
+  const ed = edState, vs = ed.verts, n = vs.length;
+  vs[idx] = [+(vs[idx][0]+vx).toFixed(4), +(vs[idx][1]+vy).toFixed(4)];
+  seen[idx] = true;
+  let cur = idx, guard = 0;
+  while(guard++ <= n){
+    const nxt = (cur + dir + n) % n;
+    const e = dir > 0 ? cur : nxt;
+    const ax = ed.axis[e];
+    if(!ax) break;                                  // 斜边吸收形变
+    if(stopAxis && ax === stopAxis) break;          // 遇到平行边，别绕回去
+    if(seen[nxt]) break;
+    const dx2 = ax === "v" ? vx : 0;                // 该边只吃自身方向的位移
+    const dy2 = ax === "h" ? vy : 0;
+    if(Math.abs(dx2) < 1e-9 && Math.abs(dy2) < 1e-9) break;
+    vs[nxt] = [+(vs[nxt][0]+dx2).toFixed(4), +(vs[nxt][1]+dy2).toFixed(4)];
+    seen[nxt] = true;
+    vx = dx2; vy = dy2;
+    cur = nxt;
+  }
+}
+
+/* 拖动顶点时的位移传播：水平边只传 y、竖直边只传 x，方向不会被拖歪 */
+function propagateVertex(i, dx, dy){
+  const ed = edState;
+  if(!ed) return;
+  const n = ed.verts.length;
+  const seen = {}; seen[i] = true;
+  const walk = (from, dir, ix, iy)=>{
+    let cur = from, vx = ix, vy = iy, guard = 0;
+    while(guard++ <= n){
+      const nxt = (cur + dir + n) % n;
+      const e = dir > 0 ? cur : nxt;
+      const ax = ed.axis[e];
+      if(!ax) break;
+      if(seen[nxt]) break;
+      const mx = ax === "v" ? vx : 0;
+      const my = ax === "h" ? vy : 0;
+      if(Math.abs(mx) < 1e-9 && Math.abs(my) < 1e-9) break;
+      ed.verts[nxt] = [+(ed.verts[nxt][0]+mx).toFixed(4), +(ed.verts[nxt][1]+my).toFixed(4)];
+      seen[nxt] = true;
+      vx = mx; vy = my;
+      cur = nxt;
+    }
+  };
+  if(Math.abs(dx) > 1e-9){ walk(i, -1, dx, 0); walk(i, +1, dx, 0); }
+  if(Math.abs(dy) > 1e-9){ walk(i, -1, 0, dy); walk(i, +1, 0, dy); }
+}
+
+function fitEditorScale(){
+  const ed = edState;
+  if(!ed || !ed.canvas) return;
+  const cw = ed.canvas.clientWidth || 440;
+  const ch = ed.canvas.clientHeight || 288;
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  ed.verts.forEach(v=>{
+    x0=Math.min(x0,v[0]); x1=Math.max(x1,v[0]);
+    y0=Math.min(y0,v[1]); y1=Math.max(y1,v[1]);
+  });
+  const spanX = Math.max(0.4, x1-x0), spanY = Math.max(0.4, y1-y0);
+  ed.scale = clamp(Math.min((cw-90)/spanX, (ch-70)/spanY), 20, 400);
+  ed.ox = cw/2; ed.oy = ch/2;
+}
+function edToPx(v){
+  const ed = edState;
+  return { x: ed.ox + v[0]*ed.scale, y: ed.oy - v[1]*ed.scale };
+}
+function edToLocal(px, py){
+  const ed = edState;
+  return [ (px-ed.ox)/ed.scale, (ed.oy-py)/ed.scale ];
+}
+
+/* 以画布内某点 (px,py) 为锚点缩放，锚点处的形状位置保持不动 */
+function zoomAt(px, py, k){
+  const ed = edState;
+  if(!ed) return;
+  const w = edToLocal(px, py);
+  const ns = clamp(ed.scale * k, 6, 900);
+  ed.scale = ns;
+  ed.ox = px - w[0]*ns;
+  ed.oy = py + w[1]*ns;
+  drawEditor();
+}
+function zoomEditor(k){
+  const ed = edState;
+  if(!ed || !ed.canvas) return;
+  zoomAt((ed.canvas.clientWidth || 440)/2, (ed.canvas.clientHeight || 288)/2, k);
+}
+
+function drawEditor(){
+  const ed = edState;
+  if(!ed || !ed.canvas) return;
+  const c = ed.canvas;
+  const dpr = window.devicePixelRatio || 1;
+  const cw = c.clientWidth || 440, ch = c.clientHeight || 288;
+  if(c.width !== Math.floor(cw*dpr) || c.height !== Math.floor(ch*dpr)){
+    c.width = Math.floor(cw*dpr); c.height = Math.floor(ch*dpr);
+  }
+  const g = c.getContext("2d");
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,cw,ch);
+  g.fillStyle = "#FCFDFF"; g.fillRect(0,0,cw,ch);
+
+  const s = ed.scale;
+  const step = s > 120 ? 0.25 : (s > 60 ? 0.5 : 1);
+  g.strokeStyle = "#EFF2F7"; g.lineWidth = 1;
+  g.beginPath();
+  for(let x=-24;x<=24;x++){
+    const px = Math.round(ed.ox + x*step*s)+.5;
+    if(px<0||px>cw) continue;
+    g.moveTo(px,0); g.lineTo(px,ch);
+  }
+  for(let y=-24;y<=24;y++){
+    const py = Math.round(ed.oy - y*step*s)+.5;
+    if(py<0||py>ch) continue;
+    g.moveTo(0,py); g.lineTo(cw,py);
+  }
+  g.stroke();
+  g.strokeStyle = "#E1E8F2"; g.lineWidth = 1.2;
+  g.beginPath();
+  g.moveTo(0, Math.round(ed.oy)+.5); g.lineTo(cw, Math.round(ed.oy)+.5);
+  g.moveTo(Math.round(ed.ox)+.5, 0); g.lineTo(Math.round(ed.ox)+.5, ch);
+  g.stroke();
+
+  const pts = ed.verts.map(v=>edToPx(v));
+  g.beginPath();
+  pts.forEach((p,i)=>{ i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y); });
+  g.closePath();
+  g.fillStyle = "rgba(207,224,255,.75)";
+  g.fill();
+  g.strokeStyle = "#2F6FED"; g.lineWidth = 2; g.lineJoin = "round";
+  g.stroke();
+
+  g.font = "600 11px system-ui"; g.textAlign = "center"; g.textBaseline = "middle";
+  for(let i=0;i<pts.length;i++){
+    const a = pts[i], b = pts[(i+1)%pts.length];
+    const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+    g.beginPath(); g.arc(mx,my,7,0,7);
+    g.fillStyle = "#FFFFFF"; g.fill();
+    g.strokeStyle = "#9AB4E8"; g.lineWidth = 1.2; g.stroke();
+    g.fillStyle = "#5B82C8"; g.fillText("＋", mx, my+0.5);
+  }
+  pts.forEach((p,i)=>{
+    const on = ed.sel === i;
+    g.beginPath(); g.arc(p.x,p.y, on?7.5:6, 0, 7);
+    g.fillStyle = on ? "#2F6FED" : "#FFFFFF";
+    g.fill();
+    g.strokeStyle = "#2F6FED"; g.lineWidth = 2; g.stroke();
+  });
+
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  ed.verts.forEach(v=>{
+    x0=Math.min(x0,v[0]); x1=Math.max(x1,v[0]);
+    y0=Math.min(y0,v[1]); y1=Math.max(y1,v[1]);
+  });
+  g.fillStyle = "#A7B3C2"; g.font = "8.5px system-ui"; g.textAlign = "left"; g.textBaseline = "alphabetic";
+  const uu = lenUnit(), kk = lenK(), dd = lenDec();
+  g.fillText("宽 " + ((x1-x0)*kk).toFixed(dd) + " " + uu + "　高 " + ((y1-y0)*kk).toFixed(dd) + " " + uu, 10, ch-10);
+
+  const info = document.getElementById("edInfo");
+  if(info){
+    const poly = ed.verts.map(v=>({x:v[0], y:v[1]}));
+    const cc = isConcave(poly);
+    const area = Math.abs(polyArea(poly));
+    info.innerHTML = "<b>顶点数 " + ed.verts.length + "　面积 " + area.toFixed(3) + " m²</b><br>" +
+      (cc
+        ? "这是<b>凹多边形</b>（L 形、台阶形都属此类）。<br>碰撞已按三角剖分处理，缺口处不会误判穿透。"
+        : "这是<b>凸多边形</b>（三角、矩形、梯形）。<br>碰撞按标准分离轴求解，最稳定。") +
+      "<br>顶点上限 12 个，拖动时请保持边不自交。";
+  }
+  layoutEdgeInputs();
+}
+
+function bindEditorCanvas(edcv){
+  if(!edState) return;
+  edState.canvas = edcv;          // 必须挂上，否则 fitEditorScale / drawEditor 直接 return，画布永远空白
+  const pos = (e)=>{
+    const r = edcv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  const pickVertex = (p)=>{
+    let hit = -1, bd = 14;
+    edState.verts.forEach((v,i)=>{
+      const q = edToPx(v);
+      const d = Math.hypot(q.x-p.x, q.y-p.y);
+      if(d < bd){ bd = d; hit = i; }
+    });
+    return hit;
+  };
+  edcv.addEventListener("pointerdown", (e)=>{
+    edcv.setPointerCapture(e.pointerId);
+    const p = pos(e), ed = edState;
+    if(!ed) return;
+    const hit = pickVertex(p);
+    if(hit >= 0){
+      refreshEditorAxis();
+      ed.dragging = { idx:hit, snap:ed.verts.map(v=>[v[0], v[1]]) };
+      ed.sel = hit;
+      drawEditor();
+      return;
+    }
+    const pts = ed.verts.map(v=>edToPx(v));
+    for(let i=0;i<pts.length;i++){
+      const a = pts[i], b = pts[(i+1)%pts.length];
+      if(Math.hypot((a.x+b.x)/2-p.x, (a.y+b.y)/2-p.y) < 10){
+        if(ed.verts.length >= 12){ toast("最多 12 个顶点", "warn"); return; }
+        const la = ed.verts[i], lb = ed.verts[(i+1)%ed.verts.length];
+        ed.verts.splice(i+1, 0, [(la[0]+lb[0])/2, (la[1]+lb[1])/2]);
+        refreshEditorAxis();
+        ed.dragging = { idx:i+1, snap:ed.verts.map(v=>[v[0], v[1]]) };
+        ed.sel = i+1;
+        renderEdgeList();
+        drawEditor();
+        return;
+      }
+    }
+  });
+  edcv.addEventListener("pointermove", (e)=>{
+    const ed = edState;
+    if(!ed || !ed.dragging) return;
+    const dg = ed.dragging;
+    const snap = dg.snap;
+    const n = snap.length, i = dg.idx;
+    const p = pos(e);
+    const l = edToLocal(p.x, p.y);
+    let x = l[0], y = l[1];
+    // 吸附：拖到接近相邻顶点的同一条水平/竖直线上时自动对齐（7 px 内）
+    const eps = 7/ed.scale;
+    [-1, 1].forEach(k=>{
+      const q = snap[(i+k+n)%n];
+      if(Math.abs(y - q[1]) < eps) y = q[1];
+      if(Math.abs(x - q[0]) < eps) x = q[0];
+    });
+    const dx = x - snap[i][0], dy = y - snap[i][1];
+    ed.verts = snap.map(v=>[v[0], v[1]]);
+    ed.verts[i] = [+x.toFixed(4), +y.toFixed(4)];
+    propagateVertex(i, dx, dy);     // 原本水平/竖直的边整体平移，方向不变
+    syncEdgeValues();
+    drawEditor();
+  });
+  edcv.addEventListener("pointerup", ()=>{
+    const ed = edState;
+    if(!ed) return;
+    if(ed.dragging){
+      ed.dragging = null;
+      refreshEditorAxis(); renderEdgeList(); drawEditor();
+    }
+  });
+  // 滚轮缩放：以光标为锚点，光标下的几何位置保持不动
+  edcv.addEventListener("wheel", (e)=>{
+    if(!edState) return;
+    e.preventDefault();
+    const p = pos(e);
+    zoomAt(p.x, p.y, e.deltaY < 0 ? 1.12 : 1/1.12);
+  }, { passive:false });
+  // 覆盖层上的输入框也要能滚轮缩放，否则滚到框上就缩放失灵
+  if(edState.lensBox){
+    edState.lensBox.addEventListener("wheel", (e)=>{
+      if(!edState) return;
+      e.preventDefault();
+      const r = edcv.getBoundingClientRect();
+      zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1/1.12);
+    }, { passive:false });
+  }
+  edcv.addEventListener("dblclick", (e)=>{
+    const ed = edState;
+    if(!ed) return;
+    const hit = pickVertex(pos(e));
+    if(hit >= 0){
+      if(ed.verts.length <= 3){ toast("至少保留 3 个顶点", "warn"); return; }
+      ed.verts.splice(hit,1);
+      ed.sel = -1;
+      refreshEditorAxis(); renderEdgeList();
+      drawEditor();
+    }
+  });
+}
+
+function applyShapeEditor(){
+  const ed = edState;
+  if(!ed) return;
+  if(ed.verts.length < 3){ toast("至少需要 3 个顶点", "err"); return; }
+  const poly = ed.verts.map(v=>({x:v[0], y:v[1]}));
+  if(Math.abs(polyArea(poly)) < 1e-4){ toast("形状面积太小，请调整顶点", "err"); return; }
+
+  const t = ed.target;
+  // 编辑器里的尺寸就是米：用它当对象的外框
+  let bx0=Infinity, bx1=-Infinity, by0=Infinity, by1=-Infinity;
+  ed.verts.forEach(v=>{
+    bx0=Math.min(bx0,v[0]); bx1=Math.max(bx1,v[0]);
+    by0=Math.min(by0,v[1]); by1=Math.max(by1,v[1]);
+  });
+  const bw = Math.max(0.05, bx1-bx0), bh = Math.max(0.05, by1-by0);
+
+  if(t.mode === "edit"){
+    const o = byId(t.obj.id);
+    if(o){
+      pushUndo();
+      if(o.type === "block"){
+        o.verts = normalizeToBox(ed.verts, o.w, o.h);
+        o._shapeKey = "custom";
+      }else{
+        o.w = +bw.toFixed(3); o.h = +bh.toFixed(3);
+        o.verts = normalizeToBox(ed.verts, o.w, o.h);
+      }
+      snapToSurface(o);
+      captureInitial(); syncPanel(); draw();
+      if(typeof refreshEnv === "function") refreshEnv();
+      toast("形状已更新");
+    }
+  } else {
+    pushUndo();
+    const o = makeObj("poly", t.x, t.y);
+    o.w = +bw.toFixed(3); o.h = +bh.toFixed(3);
+    o.verts = normalizeToBox(ed.verts, o.w, o.h);
+    snapToSurface(o);
+    o._vx0 = 0; o._vy0 = 0;
+    W.objs.push(o);
+    selId = o.id;
+    captureInitial(); syncPanel(); draw(); refreshEnv();
+    toast("自定义形状已添加，拖动可改位置");
+  }
+  edState = null;
+  closeModal();
 }
 
 /* SECTION: modal */
