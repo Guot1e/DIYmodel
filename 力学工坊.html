@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>力学工坊 · 初中物理力学模型 DIY</title>
 <style>
+  /* 拖拽删除区：浅红 */
+  #btnTrash{
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:9px;
+    background:#ffe4e4; border:1.5px solid #f3bcbc; cursor:pointer;
+    transition:background .12s ease, border-color .12s ease, transform .12s ease;
+    margin-left:2px; user-select:none;
+  }
+  #btnTrash:hover{ background:#ffd6d6; border-color:#eda8a8; }
+  #btnTrash.hot{ background:#ffc2c2; border-color:#e07b7b; transform:scale(1.08); }
+  #btnTrash:active{ background:#ffb3b3; border-color:#d96b6b; transform:scale(.95); }
 /* SECTION: base */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -333,6 +344,14 @@ body::after{
   <button class="btn" id="btnLoad">载入</button>
   <button class="btn" id="btnImg">导出图片</button>
   <button class="btn" id="btnJson">场景 JSON</button>
+  <div id="btnTrash" title="点击＝删除选中的物体；也可把物体拖到这里删除">
+    <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M9 7V5h6v2" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M6 7l1 13h10l1-13" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <path d="M10 10v7M14 10v7" stroke="#c96a6a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    </svg>
+  </div>
 </header>
 
 <!-- SECTION: workspace -->
@@ -370,6 +389,10 @@ body::after{
         <svg width="24" height="24" viewBox="0 0 24 24"><line x1="5" y1="6" x2="18" y2="18" stroke="#5A6675" stroke-width="1.8"/></svg>
         <div><div class="cn">细线</div><div class="cd">布线模式</div></div>
       </div>
+      <div class="card" data-add="spring">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 18 L6 18 L7.5 13 L10.5 23 L13.5 13 L16.5 23 L18 18 L21 18" fill="none" stroke="#7C6BD6" stroke-width="1.6"/></svg>
+        <div><div class="cn">弹簧</div><div class="cd">可拉可压</div></div>
+      </div>
       <div class="card" data-add="rod">
         <svg width="24" height="24" viewBox="0 0 24 24"><line x1="4" y1="19" x2="18" y2="6" stroke="#34495E" stroke-width="3.2" stroke-linecap="round"/><circle cx="4" cy="19" r="1.8" fill="#fff" stroke="#34495E" stroke-width="1.3"/></svg>
         <div><div class="cn">细杆</div><div class="cd">可推可拉</div></div>
@@ -381,6 +404,10 @@ body::after{
       <div class="card" data-add="ground">
         <svg width="24" height="24" viewBox="0 0 24 24"><line x1="2" y1="14" x2="22" y2="14" stroke="#34495E" stroke-width="2"/><line x1="5" y1="17" x2="2" y2="21" stroke="#9AA7B8" stroke-width="1.2"/><line x1="11" y1="17" x2="8" y2="21" stroke="#9AA7B8" stroke-width="1.2"/><line x1="17" y1="17" x2="14" y2="21" stroke="#9AA7B8" stroke-width="1.2"/></svg>
         <div><div class="cn">地面</div><div class="cd">摩擦 θ</div></div>
+      </div>
+      <div class="card" data-add="deck">
+        <svg width="24" height="24" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="4" fill="#E9EEF6" stroke="#34495E" stroke-width="1.6"/><line x1="5" y1="15" x2="3" y2="20" stroke="#9AA7B8" stroke-width="1.2"/><line x1="12" y1="15" x2="10" y2="20" stroke="#9AA7B8" stroke-width="1.2"/><line x1="19" y1="15" x2="17" y2="20" stroke="#9AA7B8" stroke-width="1.2"/></svg>
+        <div><div class="cn">平台</div><div class="cd">桌面 / 台面</div></div>
       </div>
       <div class="card" data-add="wall">
         <svg width="24" height="24" viewBox="0 0 24 24"><line x1="8" y1="2" x2="8" y2="22" stroke="#34495E" stroke-width="2"/><line x1="11" y1="5" x2="15" y2="2" stroke="#9AA7B8" stroke-width="1.2"/><line x1="11" y1="11" x2="15" y2="8" stroke="#9AA7B8" stroke-width="1.2"/><line x1="11" y1="17" x2="15" y2="14" stroke="#9AA7B8" stroke-width="1.2"/></svg>
@@ -525,6 +552,8 @@ body::after{
       </div>
 
       <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:56px"></span></div>
+      <div class="row" id="rowBelt"><label>带速 v<sub>t</sub></label><input type="number" id="nBelt" step="0.1" style="width:56px"><span style="font-size:11px;color:#8a94a3">m/s　0=普通地面</span></div>
+      <div class="row hidden" id="rowSpringK"><label>弹力系数 k</label><input type="range" id="rSpringK" min="5" max="300" step="1"><span class="numwrap"><input type="number" id="nSpringK" min="5" max="300" step="1" style="width:56px"></span><span style="font-size:11px;color:#8a94a3">N/m</span></div>
 
       <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><input type="range" id="rCartMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nCartMu" step="0.01" style="width:56px"></span></div>
       <div class="row" id="rowTopMu"><label>顶面摩擦 μ</label><input type="range" id="rTopMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nTopMu" step="0.01" style="width:56px"></span></div>
@@ -641,7 +670,9 @@ let T = 0;                 // 模拟时刻
 let running = false;
 let speed = 1;
 let selId = null;
+let selLink = null;         // 选中的连线（弹簧）：选中弹簧后右侧才出现「弹力系数 k」
 let wireMode = false;      // 布线中
+let wireKind = "rope";     // 本次布线建的是细线还是弹簧
 let wirePts = null;        // 正在画的绳：{pts:[], cur:{x,y}, toPulley:[], ...}
 let hoverDot = null;       // 悬停的锚点
 let chartTab = "xt";
@@ -672,6 +703,7 @@ const DEF = {
   rope:  { type:"rope",  elastic:false },
   rod:   { type:"rod",   len:1.4 },
   ground:{ type:"ground", mu:0.3, tilt:0 },
+  deck:  { type:"deck",   w:2.4, h:0.14, mu:0.2, tilt:0 },
   wall:  { type:"wall",  mu:0.1 },
   anchor:{ type:"anchor" },
   pulley:{ type:"pulley", r:0.18, fixed:1, m:0.2 }
@@ -682,7 +714,7 @@ function makeObj(type, x, y){
   const o = Object.assign({}, d);
   o.id = nid();
   o.x = x; o.y = y;
-  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA" };
+  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA", deck:"#E9EEF6" };
   o.color = DEFC[type] || COLORS[Math.floor(Math.random()*4)];
   o.vx = 0; o.vy = 0;
   o.fx = 0; o.fy = 0;        // 外力
@@ -734,6 +766,78 @@ function shapePts(o, seg){
   };
   let out = pts.map(M);
   return out;
+}
+
+/* 1/4弧槽的圆弧圆心与半径（与 shapePts 的镜像规则一致）。
+   用来区分"落在凹弧面上（导轨，顺弧滑）"与"撞在外侧实体壁（正常碰撞）。" */
+function shapeArcGeom(o){
+  const x0 = o.x - o.w/2, y0 = o.y - o.h/2;
+  let cx = x0, cy = y0 + o.h;
+  if(o.orient === "TR" || o.orient === "BR") cx = 2*o.x - cx;
+  if(o.orient === "BL" || o.orient === "BR") cy = 2*o.y - cy;
+  return { cx, cy, R: Math.min(o.R, Math.min(o.w, o.h)) };
+}
+
+/* 1/4弧槽凹弧腔的解析接触。
+   折线近似的 SAT 在每段交界处法向突变，物块滑过时会一顿一顿地跳；
+   这里改用"圆心径向的连续法向"+"矩形四边半平面"，沿弧滑动时法向平滑变化。 */
+function shapeBowlContact(A, S, h, vMin){
+  const g = shapeArcGeom(S);
+  const sx = (S.orient === "TR" || S.orient === "BR") ? -1 : 1;
+  const sy = (S.orient === "BL" || S.orient === "BR") ? -1 : 1;
+  const x0 = S.x - S.w/2, x1 = S.x + S.w/2, y0 = S.y - S.h/2, y1 = S.y + S.h/2;
+  const mu = (S.wallMu !== undefined ? S.wallMu : 0.15);
+  const isBall = A.type === "ball";
+  // 内壁弹性：法向速度 > 3.0 m/s（约合 46cm 落差）才算"砸上去"，按 e=1 反弹；
+  // 顺着弧面滑下时法向速度远低于它，仍是不弹跳的平滑导轨。
+  const eArc = (W.collision === "elastic") ? 1 : 0;
+  const ARC_V = 3.0;
+  const rad = isBall ? (A.r || 0) : 0;
+  const pts = isBall ? [{ x:A.x, y:A.y }] : polyOf(A);
+  if(!pts || pts.length < 1) return;
+
+  // 1) 弧面：顶点/球心不许越过半径，法向始终指向圆心（连续）
+  let best = -1e9, bnx = 0, bny = 0;
+  for(let i=0;i<pts.length;i++){
+    const dx = pts[i].x - g.cx, dy = pts[i].y - g.cy;
+    const d = Math.hypot(dx, dy);
+    if(d < 1e-9) continue;
+    if(dx*sx < -0.02 || dy*sy > 0.02) continue;        // 只处理真正落在弧段角度范围内的点
+    const pen = d + rad - g.R;
+    if(pen > best){ best = pen; bnx = -dx/d; bny = -dy/d; }
+  }
+  if(best > -TOUCH) contactSolve(A, S, bnx, bny, Math.max(0, best), eArc, mu, ARC_V);
+
+  // 2) 只约束"真正属于实体"的那几段边界：
+  //    底边、右边是完整实心边；左边只在弧端点以下那一小段、顶边只在弧端点右侧才挡人，
+  //    弧的两端是开放出口——物块滑到弧底就能顺着出口滑出弧槽，不会被内腔边框住。
+  //    另外每一段都按"物体从哪一侧靠过来"决定推开方向：物体已经在墙外侧时不能被吸回槽里。
+  const edges = [
+    { ax:x0, ay:y0, nx: 0, ny: 1, lim: 0 },
+    { ax:x1, ay:y0, nx:-1, ny: 0, lim: 0 },
+    { ax:x0, ay:y0, nx: 1, ny: 0, lim: 1 },      // 左边：仅与弧端点以下那截墙有重叠
+    { ax:x0, ay:y1, nx: 0, ny:-1, lim: 2 }       // 顶边：仅与弧端点右侧那截实体有重叠
+  ];
+  let qyMin = 1e9, qxMax = -1e9;
+  for(let i=0;i<pts.length;i++){
+    const qx = sx*(pts[i].x - g.cx), qy = sy*(pts[i].y - g.cy);
+    if(qy < qyMin) qyMin = qy;
+    if(qx > qxMax) qxMax = qx;
+  }
+  qyMin -= rad; qxMax += rad;
+  for(let k=0;k<4;k++){
+    const e = edges[k];
+    if(e.lim === 1 && -g.R - qyMin < 0.02) continue;      // 与弧底以下那截墙几乎不重叠，算擦边不算支撑
+    if(e.lim === 2 && qxMax - g.R < 0.02) continue;       // 与弧端点右侧那截顶面几乎不重叠
+    const sideC = (A.x - e.ax)*e.nx + (A.y - e.ay)*e.ny;
+    const dir = sideC >= 0 ? 1 : -1;
+    let worst = 1e9;
+    for(let i=0;i<pts.length;i++){
+      const s = dir*((pts[i].x - e.ax)*e.nx + (pts[i].y - e.ay)*e.ny) + rad;
+      if(s < worst) worst = s;
+    }
+    if(worst < TOUCH) contactSolve(A, S, e.nx*dir, e.ny*dir, Math.max(0, -worst), eArc, mu, ARC_V);
+  }
 }
 
 /* 自定义多边形：verts 为相对模型中心的局部坐标（米，y 向上），旋转 ang 后输出世界坐标 */
@@ -847,6 +951,19 @@ function polyEdgeDist(px, py, poly){
   return dmin;
 }
 
+/* 点到弹簧的命中：弹簧在画布上就是一条折线，按线段距离判 */
+function springAt(wx, wy){
+  const tol = 10 / W.view.s + 0.02;
+  for(let i=W.links.length-1;i>=0;i--){
+    const L = W.links[i];
+    if(L.type !== "spring") continue;
+    const a = nodePos(L.a), b = nodePos(L.b);
+    if(!a || !b) continue;
+    if(segDist(wx, wy, a.x, a.y, b.x, b.y) < tol) return L;
+  }
+  return null;
+}
+
 /* 最近点（用于拖动/命中） */
 function hitTest(wx, wy){
   const pad = 8 / W.view.s;
@@ -860,6 +977,14 @@ function hitTest(wx, wy){
     }
     if(o.type==="wall"){
       if(Math.abs(wx - o.x) < 0.12 && wy > groundY(wx)-0.1) return o;
+      continue;
+    }
+    if(o.type==="deck"){
+      // 平台是一块可倾斜的板：先转到板的局部坐标，再按矩形判命中
+      const th = (o.tilt||0)*Math.PI/180, c = Math.cos(th), sn = Math.sin(th);
+      const lx =  (wx - o.x)*c + (wy - o.y)*sn;
+      const ly = -(wx - o.x)*sn + (wy - o.y)*c;
+      if(Math.abs(lx) < (o.w||2.4)/2 + pad && Math.abs(ly) < (o.h||0.14)/2 + pad) return o;
       continue;
     }
     if(o.type==="anchor"||o.type==="pulley"||o.type==="rod"){
@@ -922,6 +1047,14 @@ function anchorsOf(o){
   if(o.type==="block"||o.type==="cart"){
     const p = rectPts(o);
     p.forEach((q,i)=>push(q.x,q.y,["左下","右下","右上","左上"][i]));
+    if(o.type==="block"){
+      // 每条边的中点也给一个蓝点：想"挂在中点"时不必凑到角上
+      const q = polyOf(o);
+      for(let i=0;i<q.length;i++){
+        const q2 = q[(i+1)%q.length];
+        push((q[i].x+q2.x)/2, (q[i].y+q2.y)/2, "边中点" + (i+1));
+      }
+    }
     if(o.type==="cart"){
       push((p[0].x+p[1].x)/2, p[0].y, "车面中点");
       push(o.x - o.w*0.25, p[3].y, "车面左");
@@ -1003,7 +1136,7 @@ function tangentPointsTo(px,py,cx,cy,r){
       —— 定滑轮绳绕轮顶、动滑轮绳兜轮底，不再按"最短"选，避免绳从两端那一侧穿堂而过
    2) 多个滑轮串联：前一个滑轮的出切点作为下一段的起点，逐段接上
       （原实现按 pointList[i+1] 配对，第二个滑轮起就没有端点，路径会直接断掉） */
-function ropePath(pointList, pulleyIds){
+function ropePath(pointList, pulleyIds, lock){
   const pulls = [];
   const ids = pulleyIds || [];
   const seq = [{k:"p", p: pointList[0]}];
@@ -1033,8 +1166,14 @@ function ropePath(pointList, pulleyIds){
     const nx = seq[i+1];
     if(!nx) break;
     const N = nx.k === "p" ? nx.p : {x: nx.o.x, y: nx.o.y};
-    const tp = tangentPointsTo(cur.x, cur.y, c.x, c.y, c.r);
-    const tq = tangentPointsTo(N.x, N.y, c.x, c.y, c.r);
+    let tq = tangentPointsTo(N.x, N.y, c.x, c.y, c.r);
+    let tp = tangentPointsTo(cur.x, cur.y, c.x, c.y, c.r);
+    let fromHub = false;
+    if(!tp && tq){
+      // 起点就在轮心（线段落在轮内）：取终切点的对径点起绕，绳子从轮缘出发而不是从圆心穿过去
+      fromHub = true;
+      tp = tq.map(q=>({x: 2*c.x - q.x, y: 2*c.y - q.y}));
+    }
     if(!tp || !tq){
       const dseg = dist(cur.x, cur.y, c.x, c.y) + dist(c.x, c.y, N.x, N.y);
       len += dseg; seg += dseg;
@@ -1045,28 +1184,112 @@ function ropePath(pointList, pulleyIds){
     const mx = (cur.x + N.x)/2 - c.x, my = (cur.y + N.y)/2 - c.y;
     const md = Math.hypot(mx, my);
     let best = null;
-    for(const a of tp) for(const b of tq){
-      for(const ccw of [true, false]){
-        const ang0 = Math.atan2(a.y-c.y, a.x-c.x);
-        const ang1 = Math.atan2(b.y-c.y, b.x-c.x);
-        let sw = ang1 - ang0;
-        if(ccw){ while(sw <= 0) sw += Math.PI*2; } else { while(sw >= 0) sw -= Math.PI*2; }
-        const am = ang0 + sw/2;
-        const L = dist(cur.x,cur.y,a.x,a.y) + Math.abs(sw)*c.r +
-                  (nx.k === "p" ? dist(b.x,b.y,N.x,N.y) : 0);
-        // 弧中点与「两端点中点」方向相反的优先；两端几乎同心时退回最短弧
-        const dot = md > c.r*0.6 ? (Math.cos(am)*mx + Math.sin(am)*my)/md
-                                 : Math.abs(sw)/Math.PI;
-        if(!best || dot < best.dot ||
-           (Math.abs(dot - best.dot) < 1e-9 && L < best.L)){
-          best = {L:L, a:a, b:b, ang0:ang0, ang1:ang1, sw:sw, dot:dot};
+    const prev = (lock && c.id != null) ? lock[c.id] : null;
+    const gapAng = (p1, p2)=>{
+      let d = Math.abs(p1 - p2) % (Math.PI*2);
+      return Math.min(d, Math.PI*2 - d);
+    };
+    // 两端点各自相对轮心的方向：夹角小＝两端挤在轮的一侧
+    const epA = Math.atan2(cur.y - c.y, cur.x - c.x);
+    const epB = Math.atan2(N.y - c.y, N.x - c.x);
+    // 两趟枚举：第一趟严守规矩（不许缠轮、不许绕向翻），一个解都没有才放开重来。
+    // 以前是「选出来再翻回短弧」，翻完 ang0 还是错侧切点，线就跳到轮的对径上去了。
+    const enumOnce = (mode)=>{
+      const strict = mode === 1 || mode === 3;
+      let bb = null;
+      for(const a of tp) for(const b of tq){
+        for(const ccw of [true, false]){
+          const ang0 = Math.atan2(a.y-c.y, a.x-c.x);
+          const ang1 = Math.atan2(b.y-c.y, b.x-c.x);
+          let sw = ang1 - ang0;
+          if(ccw){ while(sw <= 0) sw += Math.PI*2; } else { while(sw >= 0) sw -= Math.PI*2; }
+          if(strict && Math.abs(sw) > 3.85) continue;                        // 缠轮解直接不要
+
+          if(strict && prev && prev.a0 != null &&
+             gapAng(ang0, prev.a1) < 0.30 && gapAng(ang1, prev.a0) < 0.30) continue;   // 切点互换＝镜像解
+          const am = ang0 + sw/2;
+          const lc = dist(cur.x,cur.y,a.x,a.y) + Math.abs(sw)*c.r +
+                     (nx.k === "p" ? dist(b.x,b.y,N.x,N.y) : 0);
+          // 弧中点与「两端点中点」方向相反的优先；两端几乎同心时退回最短弧
+          const dot = md > c.r*0.6 ? (Math.cos(am)*mx + Math.sin(am)*my)/md
+                                   : Math.abs(sw)/Math.PI;
+          // 切点记忆：沿用上一帧的两个切点，谁偏离得少就接着用谁
+          let pen = 0;
+          if(prev && prev.a0 != null){
+            pen = gapAng(ang0, prev.a0) + gapAng(ang1, prev.a1);
+            if((Math.sign(sw) || 1) !== (prev.sg || Math.sign(prev.sw) || 1)) pen += 3.0;   // 绕向来回翻＝切点跳到对径
+          } else {
+            pen = 0.35*(gapAng(ang0, epA) + gapAng(ang1, epB));   // 无记忆时：切点贴近各自端点方向
+          }
+          // 两个切点必须分居轮心两侧：只有当「两端本身挤在轮的一侧」时，
+          // 才宁愿绕大弧走外侧，也不让两个切点都缩在同一侧。
+          if(gapAng(epA, epB) < 1.30 && gapAng(ang0, ang1) < 1.10) pen += 0.45;
+          // 两段直线互相交叉＝线在轮下打结（用户截图那个 X 形）：
+          // 第一档直接不要；第二档给最高权重罚分，只有实在没有干净解时才可能落到这里。
+          // 两端各自的直线段要是穿进轮体，说明切点取到了轮子另一侧：这条候选根本没绕轮
+          if(mode !== 0 && mode !== 2){
+            if(segCircleHit(cur, a, c.x, c.y, c.r*0.94)) continue;
+            if(segCircleHit(N, b, c.x, c.y, c.r*0.94)) continue;
+          }
+          if(!running && segIntersect(cur, a, N, b)){
+            if(mode === 1) continue;
+            pen += 6.0;
+          }
+          // 切点一换，这条路的总长会跟着跳：按上一帧的量给罚分，优先选长度连续的候选
+          if(prev && prev.len > 0) pen += 2.0*Math.min(0.8, Math.abs(lc - prev.len));
+          // 接近跨顶的临界区（弧快到 180°）：轻微偏好小弧，免得在 180° 附近来回选
+          if(Math.abs(sw) > 2.95 && Math.abs(sw) < 3.60) pen += 0.25;
+          const cand = {L:lc, a:a, b:b, ang0:ang0, ang1:ang1, sw:sw, dot:dot, pen:pen};
+          if(!bb || pen < bb.pen - 1e-9 ||
+             (Math.abs(pen - bb.pen) < 1e-9 &&
+              (dot < bb.dot || (Math.abs(dot - bb.dot) < 1e-9 && lc < bb.L)))){
+            bb = cand;
+          }
         }
       }
+      return bb;
+    };
+    best = enumOnce(1) || enumOnce(3) || enumOnce(2) || enumOnce(0);
+    // 跨顶区（绳从轮顶掠过，绕角接近 180°）：切点由轮心与两端方向唯一确定，
+    // 重新搜索只会在两个镜像解之间跳。这里直接沿用上一帧的切点与绕角，端到端只改直线段长度。
+    const epDrift = (prev && prev.epA != null)
+      ? gapAng(epA, prev.epA) + gapAng(epB, prev.epB) : 9;
+    // 只在「一条绳绕过两个以上滑轮」时冻结切点：多轮串联时轮心连线方向变化大，
+    // 逐帧重搜必然在镜像解之间跳；单轮场景两端摆动本身就把切点带动，重搜才跟得上。
+    const swAbs = prev ? Math.abs(prev.sw) : 0;
+    const nearTopSpan = swAbs >= 2.50 && swAbs <= 2.85;   // 真正跨顶的那一下才在 180° 附近
+    if(prev && prev.a0 != null && prev.a1 != null && nearTopSpan && epDrift < 0.30){
+      const ang0 = prev.a0, ang1 = prev.a0 + prev.sw;
+      const pa = { x: c.x + c.r*Math.cos(ang0), y: c.y + c.r*Math.sin(ang0) };
+      const pb = { x: c.x + c.r*Math.cos(ang1), y: c.y + c.r*Math.sin(ang1) };
+      const lf = dist(cur.x,cur.y,pa.x,pa.y) + Math.abs(prev.sw)*c.r +
+                 (nx.k === "p" ? dist(pb.x,pb.y,N.x,N.y) : 0);
+      // 冻结出来的那条要是打结（两段直线互相穿过），就别冻了，让它回去重搜
+      if(running || !segIntersect(cur, pa, N, pb)){
+        best = { L: lf, a: pa, b: pb, ang0: ang0, ang1: ang1, sw: prev.sw, dot: 0, pen: 0 };
+      }
     }
-    const dseg = dist(cur.x, cur.y, best.a.x, best.a.y);
-    len += dseg; seg += dseg;
+    // 记下这一帧的切点，下一帧接着用：滑轮两侧各接一个端点、一端一个切点，
+    // 不让切点在两个对径位置之间来回跳（那是细线抖动的直接来源）。
+    if(best && Math.abs(best.sw) > 3.85){
+      const sg = Math.sign(best.sw) || 1;
+      best.sw = best.sw - sg*Math.PI*2;                  // 5.9 rad → -0.38 rad，改走短弧
+      best.ang1 = best.ang0 + best.sw;
+      best.b = { x: c.x + c.r*Math.cos(best.ang1), y: c.y + c.r*Math.sin(best.ang1) };
+    }
+    if(lock && best && c.id != null){
+      lock[c.id] = { sw: best.sw, sg: Math.sign(best.sw) || 1, a0: best.ang0, a1: best.ang1, epA: epA, epB: epB, len: best.L };
+    }
+    if(fromHub){
+      // 从轮心起绕：起点直接落在进入切点上，不再多一段"圆心→切点"的直线
+      pts.length = 1;
+      pts[0] = {x:best.a.x, y:best.a.y};
+    } else {
+      const dseg = dist(cur.x, cur.y, best.a.x, best.a.y);
+      len += dseg; seg += dseg;
+      pts.push(best.a);
+    }
     len += Math.abs(best.sw)*c.r;
-    pts.push(best.a);
     arcs.push({cx:c.x, cy:c.y, r:c.r, a0:best.ang0, sw:best.sw});
     const NN = 10;
     for(let k=1;k<=NN;k++){
@@ -1107,29 +1330,33 @@ function autoPulleysFor(pA, pB){
   for(const o of W.objs){
     if(!o || o.type !== "pulley") continue;
     const t = ((o.x - pA.x)*dx + (o.y - pA.y)*dy) / L2;
-    if(t <= 0.04 || t >= 0.96) continue;            // 滑轮要落在两端之间
+    if(t <= 0.02 || t >= 0.98) continue;            // 滑轮要落在两端之间
     const px = pA.x + dx*t, py = pA.y + dy*t;
-    if(dist(px, py, o.x, o.y) < (o.r || 0) + 0.06) out.push({id:o.id, t:t});
+    if(dist(px, py, o.x, o.y) < (o.r || 0) + 0.10) out.push({id:o.id, t:t});
   }
   out.sort((a,b)=>a.t-b.t);
   return out.map(q=>q.id);
 }
 
 function ropeGeom(L){
-  let pl = L.pulleys || [];
+  let pl = (L.pulleys || []).slice();
   const pA = nodePos(L.a), pB = nodePos(L.b);
+  // 端点接在滑轮圆心上的情况：把这只轮子当作"必经"，否则线会从圆心直接穿过去、根本不与轮缘相切
+  const hubA = (L.a && L.a.objId) ? byId(L.a.objId) : null;
+  if(hubA && hubA.type === "pulley" && pl.indexOf(hubA.id) < 0) pl.unshift(hubA.id);
   if(!pl.length && (!L.pts || L.pts.length <= 2)){
     pl = autoPulleysFor(pA, pB);
   }
-  if(pl.length) return ropePath([pA, pB], pl);
+  if(!L._lock) L._lock = {};
+  if(pl.length) return ropePath([pA, pB], pl, L._lock);
   if(L.pts && L.pts.length >= 2){
     // 折线：保留中间拐点，首尾若挂在物体上则实时跟随
     const pts = L.pts.map(q=>({x:q.x, y:q.y}));
     if(L.a && L.a.objId) pts[0] = pA;
     if(L.b && L.b.objId) pts[pts.length-1] = pB;
-    return ropePath(pts, []);
+    return ropePath(pts, [], L._lock);
   }
-  return ropePath([pA, pB], []);
+  return ropePath([pA, pB], [], L._lock);
 }
 
 /* SECTION: physics */
@@ -1149,6 +1376,7 @@ const SLOP      = 6e-4;    // 允许的渗透量（m）
 const POS_BIAS  = 0.8;     // 位置投影系数
 const ITER      = 4;       // 约束迭代次数
 const BOUNCE_V  = 1.6;     // 低于此法向速度按"贴面过渡"处理、不反弹（约合 13cm 落差）
+const VMIN_PAIR = 0.25;    // 物体之间 / 与地面接触的弹性门槛：一撞就能看出反弹，静置又不抖
                            // 提高门槛后可消除"沿斜面/弧面滑下、在出口落地时被弹起"的自持小跳
 
 let physAcc = 0;           // 时间累积器
@@ -1221,7 +1449,7 @@ function norm(x, y){
 function accelOf(o){
   if(!isDyn(o)) return {ax:0, ay:0};
   const m = totalMassOf(o) || 1;         // 结合件质量计入车体
-  return { ax:(o.fx||0)/m, ay:-W.g + (o.fy||0)/m };
+  return { ax:((o.fx||0) + (o._fsx||0))/m, ay:-W.g + ((o.fy||0) + (o._fsy||0))/m };
 }
 
 /* 物体沿方向 (nx,ny) 的支撑半宽（含倾角、含球/多边形） */
@@ -1285,7 +1513,7 @@ function dirW(o, dx, dy){
 
 /* ---------- 通用接触求解 ----------
    n 由 B 指向 A；pen>0 为重叠深度；A/B 可为 null（静态） */
-function contactSolve(A, B, nx, ny, pen, e, mu, vMin){
+function contactSolve(A, B, nx, ny, pen, e, mu, vMin, svx){
   if(A && B && physOwner(A) === physOwner(B)) return 0;   // 同一刚体的两个部件不自碰
   const imAr = A ? invM(A) : 0;
   const imBr = B ? invM(B) : 0;
@@ -1324,7 +1552,8 @@ function contactSolve(A, B, nx, ny, pen, e, mu, vMin){
     const wa = A ? (A.omg||0) : 0, wb = B ? (B.omg||0) : 0;
     const vaxc = vax - wa*ray, vayc = vay + wa*rax;
     const vBxc = vbx - wb*rby, vByc = vby + wb*rbx;
-    const vt = (vBxc - vaxc)*tx + (vByc - vayc)*ty;
+    // 支撑面自己也可能在动（传送带）：相对切向速度要减掉带速
+    const vt = (vbx + (B ? 0 : (svx || 0)) - vaxc)*tx + (vby - vayc)*ty;
     const imAt = imAr * dirW(A, tx, ty), imBt = imBr * dirW(B, tx, ty);
     const den = imAt + imBt + iIA*(rax*rax + ray*ray) + iIB*(rbx*rbx + rby*rby);
     if(den < 1e-12) return jn;                // 切向没有可行自由度：不求解，避免 0/0 = NaN
@@ -1402,14 +1631,39 @@ function solveGrounds(h){
   for(const o of W.objs){
     if(!isDyn(o)) continue;
     if(o.type === "shape" && o.slide) continue;      // 可滑动1/4弧槽走"贴地导轨"，不走点接触
-    // 地面是支撑面：除小球外落地即停，避免 e=1 下无限弹跳（对象之间的碰撞才是完全弹性）
-    const eG = (W.collision==="elastic" && o.type==="ball") ? 1 : 0;
+    // 完全弹性场景下，撞击体（小球 / 物块 / 自定义形状）落地按 e=1 反弹；
+    // 小车与 1/4弧槽是载物平台，落地仍按支撑接触处理，否则会把台上的物体弹飞。
+    // 静止贴地的低速接触由 contactSolve 的 vMin 门槛（BOUNCE_V=1.6 m/s）吃掉，不会自己抖起来。
+    const eG = (W.collision==="elastic" && o.type !== "cart" && o.type !== "shape") ? 1 : 0;
     for(const g of gs){
       const th = (g.tilt||0)*Math.PI/180;
       const nx = -Math.sin(th), ny = Math.cos(th);      // 由地面指向物体
       const s = (o.x-g.x)*nx + (o.y-g.y)*ny - supportAlong(o, nx, ny);
       if(s > TOUCH) continue;
-      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, g.mu||0);
+      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, g.mu||0, undefined, g.vt||0);
+      o._N += jn/h;
+      o._onGround = true;
+    }
+  }
+}
+
+/* ---------- 平台（可抬高的水平板：桌面、台面） ---------- */
+function solveDecks(h){
+  const ds = W.objs.filter(o=>o.type==="deck");
+  if(!ds.length) return;
+  for(const o of W.objs){
+    if(!isDyn(o)) continue;
+    if(o.type === "shape" && o.slide) continue;
+    const eG = (W.collision==="elastic" && o.type !== "cart" && o.type !== "shape") ? 1 : 0;
+    for(const d of ds){
+      const th = (d.tilt||0)*Math.PI/180;
+      const nx = -Math.sin(th), ny = Math.cos(th);
+      const along = (o.x - d.x)*Math.cos(th) + (o.y - d.y)*Math.sin(th);
+      if(Math.abs(along) > d.w/2 + 0.02) continue;
+      const s = (o.x - d.x)*nx + (o.y - d.y)*ny - (d.h||0.14)/2 - supportAlong(o, nx, ny);
+      if(s > TOUCH) continue;
+      if(s < -1.2) continue;                  // 物体远在板下方：不算接触（薄板近似）
+      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, d.mu||0);
       o._N += jn/h;
       o._onGround = true;
     }
@@ -1430,7 +1684,7 @@ function solveCarts(h){
       o._onCart = c.id;                        // 先登记"坐在车面上"，此时可滑块有两个自由度
       const muC = c.cartMu !== undefined ? c.cartMu : 0.2;
       c._vLock = true;                         // 车竖直方向由地面承担，只把支撑力给载物
-      // 车面也是支撑面：物块放上去要跟着车走，不弹
+      // 车面是载物平台：物块放上去要跟着车走，不弹（初始摆放在车上时的穿透修正也会被弹飞）
       const jn = contactSolve(o, c, 0, 1, Math.max(0, pen), 0, muC);
       c._vLock = false;
       o._N += jn/h;
@@ -1463,6 +1717,24 @@ function solveWalls(h){
       const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eW, muW, 0.08);
       o._N += jn/h;
     }
+  }
+}
+
+/* ---------- 弹簧：F = k(L − L0)，两端各受一份反向力 ---------- */
+function applySprings(){
+  for(let i=0;i<W.links.length;i++){
+    const S = W.links[i];
+    if(S.type !== "spring") continue;
+    const pa = nodePos(S.a), pb = nodePos(S.b);
+    const dx = pb.x - pa.x, dy = pb.y - pa.y;
+    const len = Math.hypot(dx, dy) || 1e-6;
+    const F = (S.k !== undefined ? S.k : 30) * (len - (S.L0 || 0));   // >0 拉伸、<0 压缩
+    const ux = dx/len, uy = dy/len;
+    const A = S.a.objId ? byId(S.a.objId) : null;
+    const B = S.b.objId ? byId(S.b.objId) : null;
+    if(A && isDyn(A)){ A._fsx += F*ux; A._fsy += F*uy; }
+    if(B && isDyn(B)){ B._fsx -= F*ux; B._fsy -= F*uy; }
+    S._F = F;
   }
 }
 
@@ -1577,11 +1849,13 @@ function convexPolyContact(A, B, pa, pb, h, e, vMin){
 
 /* ---------- 刚体之间 ---------- */
 function solveBodies(h){
-  const list = W.objs.filter(o=>isSolid(o));
+  // 滑轮本身也是实体（定滑轮固定、动滑轮可动）：物块撞上去要被挡住，
+  // 否则物块会被绳一路拉进轮心，绳长约束再也满足不了，张力炸到上千牛。
+  const isCirc = o => o.type === "ball" || o.type === "pulley";
+  const list = W.objs.filter(o=>isSolid(o) || o.type === "pulley");
   if(list.length < 2) return;
   const e = W.collision==="elastic" ? 1 : 0;
-  // 物体之间：门槛压到 0.25 m/s，平时静止/轻压不会抖，但明确一撞就能看出反弹
-  const VMIN_PAIR = 0.25;
+  // 物体之间：门槛压到 0.25 m/s（顶层常量 VMIN_PAIR），平时静止/轻压不会抖，但明确一撞就能看出反弹
   for(let i=0;i<list.length;i++){
     for(let j=i+1;j<list.length;j++){
       const A = list[i], B = list[j];
@@ -1596,7 +1870,7 @@ function solveBodies(h){
         if(onTop) continue;
       }
 
-      if(A.type==="ball" && B.type==="ball"){
+      if(isCirc(A) && isCirc(B)){
         const d = dist(A.x,A.y,B.x,B.y), rr = (A.r||0)+(B.r||0);
         if(d < rr && d > 1e-9){
           const jn = contactSolve(A,B, (A.x-B.x)/d, (A.y-B.y)/d, rr-d, e, 0.06, VMIN_PAIR);
@@ -1604,11 +1878,24 @@ function solveBodies(h){
         }
         continue;
       }
-      if(A.type==="ball" || B.type==="ball"){
-        const ball  = A.type==="ball" ? A : B;
-        const other = A.type==="ball" ? B : A;
-        // 1/4弧槽是"导轨"：球与它之间不设反弹，只沿表面切向滑动
-        ballPolyContact(ball, other, h, other.type === "shape" ? 0 : e, VMIN_PAIR);
+      if(isCirc(A) || isCirc(B)){
+        const ball  = isCirc(A) ? A : B;
+        const other = isCirc(A) ? B : A;
+        // 1/4弧槽是"导轨"、滑轮是绳的载体：这两类接触都不反弹，只做分离，
+        // 否则物块撞到轮缘会被弹开，看着就像「撞到细绳被弹回去」。
+        const soft = other.type === "shape" || ball.type === "pulley" || other.type === "pulley";
+        ballPolyContact(ball, other, h, soft ? 0 : e, VMIN_PAIR);
+        continue;
+      }
+      // 1/4弧槽的凹弧面按"导轨"处理：落在弧面上的物体顺弧滑下（不反弹），
+      // 撞到弧槽外侧的实体壁才按正常碰撞（默认完全弹性）处理。
+      if(A.type === "shape" || B.type === "shape"){
+        const S = A.type === "shape" ? A : B;
+        const O = A.type === "shape" ? B : A;
+        const g = shapeArcGeom(S);
+        const inBowl = isDyn(O) && Math.hypot(O.x - g.cx, O.y - g.cy) < g.R + 0.02;
+        if(inBowl){ shapeBowlContact(O, S, h, VMIN_PAIR); continue; }
+        polyPolyContact(A, B, h, e, VMIN_PAIR);
         continue;
       }
       polyPolyContact(A, B, h, e, VMIN_PAIR);
@@ -1629,12 +1916,28 @@ function ropeInfoOf(L){
   };
 }
 
+/* 绳的约束长度：端点 → 各滑轮轮心 → 端点 的折线总长。
+   为什么不用切点算：切点随物体移动会重新选，长度于是时短时长，
+   拿它做「绳有没有被拉长」的判据，约束就时松时紧（滑轮看着不传力）。 */
+function ropeSegLen(L, g){
+  const pa = nodePos(L.a), pb = nodePos(L.b);
+  if(!pa || !pb) return 0;
+  if(!L._pullSet || !L._pullSet.length){
+    L._pullSet = ((g && g.pulls) || []).map(q=>q.o).filter(o=>o);
+  }
+  const ps = (L._pullSet || []).filter(o=>o && byId(o.id));
+  let S = 0, cur = pa;
+  for(let i=0;i<ps.length;i++){ S += Math.hypot(ps[i].x-cur.x, ps[i].y-cur.y); cur = ps[i]; }
+  S += Math.hypot(pb.x-cur.x, pb.y-cur.y);
+  return S;
+}
+
 function solveRope(L, h){
   if(L.type !== "rope") return;
   const info = ropeInfoOf(L);
   if(!info) return;
   const g = info.g;
-  if(!(L.L0 > 0)) L.L0 = g.len;                 // 兜底：缺省取当前长度
+  if(!(L.L0 > 0)) L.L0 = g.len > 0 ? g.len : ropeSegLen(L, g);   // 兜底：缺省取当前长度
 
   const A = L.a && L.a.objId ? byId(L.a.objId) : null;
   const B = L.b && L.b.objId ? byId(L.b.objId) : null;
@@ -1642,6 +1945,75 @@ function solveRope(L, h){
 
   const pulls = [];
   (g.pulls||[]).forEach(pl=>{ if(pl.o && isDyn(pl.o)) pulls.push(pl); });
+
+  // 带滑轮的绳：按「端点 → 轮心 → 端点」折线做距离和约束（总长 = L0）。
+  // 这样两端位移严格互补（一端下去多少，另一端就必须起来多少），滑轮才真的在「改变力的方向」；
+  // 轮心不随切点重选而跳动，约束也就不会时断时续。
+  {
+    const ps = (L._pullSet && L._pullSet.length ? L._pullSet : (g.pulls||[]).map(q=>q.o))
+                 .filter(o=>o && byId(o.id));
+    if(!L._pullSet || !L._pullSet.length){ L._pullSet = ps.slice(); }
+    {
+      const pa = nodePos(L.a), pb = nodePos(L.b);
+      if(pa && pb && ps.length){
+        const list = [A || {vx:0, vy:0, x:pa.x, y:pa.y}].concat(ps).concat([B || {vx:0, vy:0, x:pb.x, y:pb.y}]);
+        const pos  = [pa].concat(ps.map(o=>({x:o.x, y:o.y}))).concat([pb]);
+        const ims  = [A ? invM(A) : 0].concat(ps.map(o=>invM(o))).concat([B ? invM(B) : 0]);
+        const grad = list.map(()=>({x:0, y:0}));
+        let C = 0;
+        for(let i=0;i<list.length-1;i++){
+          const dx = pos[i+1].x - pos[i].x, dy = pos[i+1].y - pos[i].y;
+          const dl = Math.hypot(dx, dy);
+          C += dl;
+          if(dl > 1e-9){
+            const ex = dx/dl, ey = dy/dl;
+            grad[i].x -= ex; grad[i].y -= ey;
+            grad[i+1].x += ex; grad[i+1].y += ey;
+          }
+        }
+        // 端点已经贴在某个滑轮的轮缘上：绳绕到头了，这时不能再按定长硬拉（会和轮挡块打架）
+        const hug = (pt)=> pt && ps.some(o=>Math.hypot(pt.x-o.x, pt.y-o.y) < o.r + 0.03);
+        const ropeSlack = hug(pa) || hug(pb);
+        let den = 0;
+        for(let i=0;i<list.length;i++) den += ims[i]*(grad[i].x*grad[i].x + grad[i].y*grad[i].y);
+        if(den > 1e-12){
+          let eDot = 0;
+          for(let i=0;i<list.length;i++) eDot += (list[i].vx||0)*grad[i].x + (list[i].vy||0)*grad[i].y;
+          const over = ropeSlack ? 0 : (g.len > 0 ? g.len : C) - L.L0;
+          // 施加方向：两端一律沿「端点 → 切点」的绳方向（info.uA / info.uB），
+          // 这样物块受到的拉力真的顺着细线指向轮缘切点，而不是指向轮心；
+          // 中间的滑轮才用折线梯度（轮心处的法向）。
+          const dirFix = (i)=>{
+            if(i === 0 && info.uA && (Math.abs(info.uA.x) + Math.abs(info.uA.y) > 1e-6)) return info.uA;
+            if(i === list.length-1 && info.uB && (Math.abs(info.uB.x) + Math.abs(info.uB.y) > 1e-6)) return info.uB;
+            return {x:-grad[i].x, y:-grad[i].y};
+          };
+          if(Math.abs(over) > 2e-4){            // 拉长收回来；略微偏短时只做极小的回拉（每子步 ≤2 mm）
+            const corr = (over > 0 ? Math.min(over, 0.12) : Math.max(over, -0.002))*0.7/den;
+            // 位置投影必须沿折线梯度：λ/den 是按梯度算的，换成切点方向就成了「按 A 算、往 B 推」，
+            // 每步只完成一小部分，绳长残留越积越多（实测跑一次 0.5 s 就长出去 0.54 m）。
+            for(let i=0;i<list.length;i++){
+              if(!ims[i]) continue;
+              list[i].x -= grad[i].x*corr*ims[i];
+              list[i].y -= grad[i].y*corr*ims[i];
+            }
+          }
+          if(eDot > 0 || (over < -2e-4 && eDot < 0)){   // 拉长收速；已经偏短时不许再靠近
+            const lam = eDot/den;
+            for(let i=0;i<list.length;i++){
+              if(!ims[i]) continue;
+              const d = dirFix(i);
+              list[i].vx += d.x*lam*ims[i];
+              list[i].vy += d.y*lam*ims[i];
+            }
+            L._Tacc += lam;
+          }
+        }
+        L._geom = g;
+        return;
+      }
+    }
+  }
 
   const imA = A ? invM(A) : 0;
   const imB = same ? 0 : (B ? invM(B) : 0);
@@ -1658,9 +2030,9 @@ function solveRope(L, h){
   for(let i=0;i<pulls.length;i++){
     eDot += (pulls[i].o.vx||0)*pulls[i].ux + (pulls[i].o.vy||0)*pulls[i].uy;
   }
-  if(!(L.L0 > 0)) L.L0 = g.seg;                 // 兜底：缺省取当前直线段总长
-  const over = g.seg - L.L0;                    // >0 表示绳被拉长（弧长锁定，不随摆角重排）
-  if(over < -1e-4){ L._geom = g; return; }       // 松弛：绳不能推
+  if(!(L.L0 > 0)) L.L0 = g.len > 0 ? g.len : ropeSegLen(L, g);   // 兜底：缺省取当前绳长
+  const over = (g.len > 0 ? g.len : ropeSegLen(L, g)) - L.L0;   // >0 表示绳被拉长
+  if(over < -0.005){ L._geom = g; return; }      // 真正松弛（松了 5mm 以上）才放手：绳不能推
 
   if(L.elastic){
     const k = L.k || 260;
@@ -1753,7 +2125,9 @@ function substep(h){
   for(const o of dyn){
     o._N = 0; o._onGround = false; o._onCart = null;
     if(o.omg) o.ang = (o.ang||0) + o.omg*h;     // 自转角（质点模式下 ω 恒为 0）
+    o._fsx = 0; o._fsy = 0;                     // 弹簧力每子步重算
   }
+  applySprings();
   for(let i=0;i<W.links.length;i++){
     const L = W.links[i];
     if(L.type === "rope") L._Tacc = 0;
@@ -1783,6 +2157,7 @@ function substep(h){
     solveGrounds(h);
     solveCarts(h);
     solveWalls(h);
+    solveDecks(h);
     solveBodies(h);
     for(let i=0;i<W.links.length;i++){
       const L = W.links[i];
@@ -1799,6 +2174,11 @@ function substep(h){
     if(L.type === "rope") L._T = Math.max(0, L._Tacc||0)/h;
   }
 
+  // 弹簧的力随位置变，收尾这半步必须用「新位置」的弹簧力（标准速度 Verlet 的后半步）
+  if(W.links.some(L=>L.type === "spring")){
+    for(const o of dyn){ o._fsx = 0; o._fsy = 0; }
+    applySprings();
+  }
   if(mode !== "euler"){
     for(const o of dyn){
       const a = accelOf(o);
@@ -1881,8 +2261,11 @@ function resetSim(){
   }
   physAcc = 0;
   for(const L of W.links){
-    L._T = 0;
-    if(L.type==="rope"){ const gg = ropeGeom(L); L.L0 = gg.seg; }   // 位置还原后立即重算原长
+    L._T = 0; L._Tacc = 0; L._geom = null;
+    if(L.type==="rope"){
+      L._lock = {}; L._pullSet = null;                // 忘掉上一轮记下的切点与绕轮，避免沿用旧走线
+      const gg = ropeGeom(L); L.L0 = (gg && gg.len) || ropeSegLen(L, gg);   // 位置还原后立即重算原长
+    }
   }
   T = 0;
   samples = [];
@@ -1896,7 +2279,10 @@ function captureInitial(){
   }
   physAcc = 0;
   for(const L of W.links){
-    if(L.type==="rope"){ const gg = ropeGeom(L); L.L0 = gg.seg; L._T = 0; }
+    if(L.type==="rope"){
+      L._lock = {}; L._geom = null; L._Tacc = 0; L._pullSet = null;
+      const gg = ropeGeom(L); L.L0 = (gg && gg.len) || ropeSegLen(L, gg); L._T = 0;
+    }
   }
 }
 
@@ -1945,13 +2331,14 @@ function drawScene(){
 
   if(W.grid) drawGrid(w,h);
   drawGround();
-  W.objs.forEach(o=>{ if(o.type==="wall") drawWall(o); });
+  W.objs.forEach(o=>{ if(o.type==="wall") drawWall(o); else if(o.type==="deck") drawDeck(o); });
   W.objs.forEach(o=>{ if(o.type==="rod") drawRod(o); });
   W.objs.forEach(o=>{ if(o.type==="anchor") drawAnchorObj(o); });
   W.objs.forEach(o=>{ if(isBody(o)) drawBody(o); });
   W.objs.forEach(o=>{ if(o.bind) drawBind(o); });
   W.objs.forEach(o=>{ if(o.type==="pulley") drawPulley(o); });
   W.links.forEach(L=>{ if(L.type!=="rope") return; drawRope(L); });
+  W.links.forEach(L=>{ if(L.type==="spring") drawSpring(L); });
   W.objs.forEach(o=>{ if(isBody(o)&&W.trail) drawTrail(o); });
   W.objs.forEach(o=>{ if(isBody(o)) drawVectors(o); });
 
@@ -2016,6 +2403,58 @@ function drawGround(){
   const tilt = g ? (g.tilt||0) : 0;
   ctx.fillText("地面 · " + (tilt>0?("倾角 "+tilt+"°"):"水平") + " · μ = " + mu.toFixed(2), 14, sy0+18);
   ctx.restore();
+}
+
+function drawDeck(o){
+  const w = o.w || 2.4, hh = o.h || 0.14;
+  const th = (o.tilt||0)*Math.PI/180;
+  const cx = wx2sx(o.x), cy = wy2sy(o.y);
+  const pw = w * W.view.s, ph = Math.max(3, hh * W.view.s);
+  if(selId === o.id){
+    ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = "#2f7d32";
+    ctx.fillRect(cx - pw/2 - 3, cy - ph/2 - 3, pw + 6, ph + 6);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-th);
+  ctx.fillStyle = o.color || "#E9EEF6";
+  ctx.fillRect(-pw/2, -ph/2, pw, ph);
+  ctx.strokeStyle = "#34495E"; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(-pw/2, -ph/2); ctx.lineTo(pw/2, -ph/2); ctx.stroke();
+  // 两端各点一个小圆：这两个就是「端点吸附」的抓手
+  ctx.fillStyle = "#2f7d32";
+  [[-pw/2, -ph/2], [pw/2, -ph/2]].forEach(q=>{
+    ctx.beginPath(); ctx.arc(q[0], q[1], 2.6, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle = "#5A6675"; ctx.font = "8.5px system-ui"; ctx.textAlign = "left";
+  ctx.fillText("平台 μ=" + (o.mu||0).toFixed(2) + (o.tilt ? (" θ=" + o.tilt + "°") : ""), -pw/2 + 6, -ph/2 - 5);
+  ctx.restore();
+}
+
+/* 平台的两个端点（世界坐标） */
+function deckEnds(o){
+  const th = (o.tilt||0)*Math.PI/180, c = Math.cos(th), sn = Math.sin(th);
+  const hl = (o.w || 2.4)/2;
+  return [{ x:o.x - hl*c, y:o.y - hl*sn }, { x:o.x + hl*c, y:o.y + hl*sn }];
+}
+/* 拖动平台时把它的端点吸到别的平台的端点上 */
+function snapDeckEnds(o, band){
+  const bd0 = band === undefined ? 0.22 : band;
+  const mine = deckEnds(o);
+  let best = null, bestD = bd0;
+  for(const d of W.objs){
+    if(d === o || d.type !== "deck") continue;
+    for(const a of mine){
+      for(const b of deckEnds(d)){
+        const dd = Math.hypot(a.x-b.x, a.y-b.y);
+        if(dd < bestD){ bestD = dd; best = { dx:b.x-a.x, dy:b.y-a.y }; }
+      }
+    }
+  }
+  if(!best) return false;
+  o.x += best.dx; o.y += best.dy;
+  return true;
 }
 
 function drawWall(o){
@@ -2231,6 +2670,31 @@ function drawPulley(o){
   ctx.restore();
 }
 
+function drawSpring(S){
+  const a = nodePos(S.a), b = nodePos(S.b);
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1e-6;
+  const ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
+  const amp = Math.min(0.05, len*0.05);
+  const t0 = 0.14, t1 = 0.86, N = 12;
+  ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(wx2sx(a.x), wy2sy(a.y));
+  const p1 = { x:a.x + ux*len*t0, y:a.y + uy*len*t0 };
+  ctx.lineTo(wx2sx(p1.x), wy2sy(p1.y));
+  for(let i=1;i<=N;i++){
+    const t = t0 + (t1 - t0)*(i/N);
+    const sg = (i % 2 === 0) ? 1 : -1;
+    ctx.lineTo(wx2sx(a.x + ux*len*t + nx*amp*sg), wy2sy(a.y + uy*len*t + ny*amp*sg));
+  }
+  const p2 = { x:a.x + ux*len*t1, y:a.y + uy*len*t1 };
+  ctx.lineTo(wx2sx(p2.x), wy2sy(p2.y));
+  ctx.lineTo(wx2sx(b.x), wy2sy(b.y));
+  ctx.stroke();
+  ctx.fillStyle = "#7C6BD6"; ctx.font = "11px monospace";
+  ctx.fillText("k=" + (S.k !== undefined ? S.k : 30) + "N/m  L=" + len.toFixed(2) + "m", wx2sx(a.x) + 6, wy2sy(a.y) - 8);
+}
+
 function drawRope(L){
   let g = L._geom;
   if(!g || running===false) g = ropeGeom(L);
@@ -2386,7 +2850,8 @@ function drawAnchors(){
 }
 function nameOf(o){
   const n = { block:"物块", ball:"小球", cart:"小车", shape:"1/4弧槽", poly:"自定义形状",
-    rope:"细线", rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮" };
+    rope:"细线", rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮",
+    deck:"平台" };
   return n[o.type] || o.type;
 }
 function drawWirePreview(){
@@ -2415,8 +2880,8 @@ function drawWirePreview(){
     if(cross) break;
   }
 
-  ctx.strokeStyle = cross ? "#EF4444" : "#2F6FED";
-  ctx.lineWidth = 2; ctx.setLineDash([5,4]);
+  ctx.strokeStyle = cross ? "#EF4444" : "#5A6675";
+  ctx.lineWidth = 1.6; ctx.setLineDash([]);
   ctx.beginPath();
   P.forEach((p,i)=>{ const sx=wx2sx(p.x), sy=wy2sy(p.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
   ctx.stroke();
@@ -2441,6 +2906,15 @@ function drawWirePreview(){
     ctx.fillText("此连线会与已有细线交叉", wx2sx(cur.x)+10, wy2sy(cur.y)-6);
   }
   ctx.restore();
+}
+/* 线段 p→q 是否穿进圆 (cx,cy,r) 里面：切点取错（取到轮子另一侧）时就会穿过去 */
+function segCircleHit(p, q, cx, cy, r){
+  const dx = q.x - p.x, dy = q.y - p.y;
+  const L2 = dx*dx + dy*dy;
+  let t = L2 > 1e-12 ? ((cx - p.x)*dx + (cy - p.y)*dy)/L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const px = p.x + dx*t, py = p.y + dy*t;
+  return Math.hypot(cx - px, cy - py) < r;
 }
 function segIntersect(p1,p2,p3,p4){
   const d = (p2.x-p1.x)*(p4.y-p3.y) - (p2.y-p1.y)*(p4.x-p3.x);
@@ -2592,6 +3066,14 @@ function updateReadout(){
   lines.push("t = " + T.toFixed(2) + " s");
   lines.push("x = " + o.x.toFixed(2) + " m　y = " + o.y.toFixed(2) + " m");
   lines.push("v = " + sp.toFixed(2) + " m/s");
+  if(isBody(o) && (o.m || 0) > 0){
+    const m = o.m || 0;
+    const vx = o.vx || 0, vy = o.vy || 0;
+    lines.push("vx = " + vx.toFixed(2) + "　vy = " + vy.toFixed(2) + " m/s");
+    lines.push("Ek = " + (0.5*m*sp*sp).toFixed(3) + " J　Ep = " + (m*W.g*Math.max(0, o._y0!==undefined?o._y0:o.y)).toFixed(3) + " J");
+    lines.push("p = " + (m*sp).toFixed(3) + " kg·m/s");
+    if(o._a) lines.push("a = " + Math.hypot(o._a.x||0, o._a.y||0).toFixed(2) + " m/s²");
+  }
   if(o._N) lines.push("N = " + o._N.toFixed(1) + " N");
   bEl.textContent = lines.join("\n");
   bEl.style.whiteSpace = "pre-line";
@@ -2607,7 +3089,8 @@ function evtPos(e){
   return {x,y};
 }
 cv.addEventListener("pointerdown", (e)=>{
-  cv.setPointerCapture(e.pointerId);
+  // 指针捕获失败会整段处理中断（某些环境 pointerId 无效），拖不动就是这么来的
+  try { cv.setPointerCapture(e.pointerId); } catch(_){}
   const p = evtPos(e);
   mouse.x = p.x; mouse.y = p.y;
   mouse.wx = sx2wx(p.x); mouse.wy = sy2wy(p.y);
@@ -2618,7 +3101,7 @@ cv.addEventListener("pointerdown", (e)=>{
     const a = nearestAnchor(mouse.wx, mouse.wy, 0.14);
     if(a){
       if(!wirePts){
-        wirePts = { pts:[{x:a.x,y:a.y}], from:a };
+        wirePts = { pts:[{x:a.x,y:a.y}], from:a, via:[] };
         toast("已起线，点击下一个蓝点" + (a.o.type==="pulley"?"（滑轮将自动相切）":""));
       } else {
         finishWire(a);
@@ -2628,9 +3111,16 @@ cv.addEventListener("pointerdown", (e)=>{
     }
   }
 
+  const lkHit = springAt(mouse.wx, mouse.wy);
+  if(lkHit && !hitTest(mouse.wx, mouse.wy)){
+    selId = null; selLink = lkHit;
+    syncPanel(); draw();
+    return;
+  }
+
   const hit = hitTest(mouse.wx, mouse.wy);
   if(hit){
-    selId = hit.id;
+    selId = hit.id; selLink = null;
     if(running){ /* 运行中可选中查看，不改参数 */ }
     else {
       pushUndo();
@@ -2644,11 +3134,31 @@ cv.addEventListener("pointerdown", (e)=>{
     }
     syncPanel(); draw();
   } else {
-    if(selId){ selId = null; syncPanel(); draw(); }
+    if(selId || selLink){ selId = null; selLink = null; syncPanel(); draw(); }
   }
 });
 
+/* 点击浅红垃圾桶：删掉当前选中的物体（拖拽那条路径见 pointerup） */
+let trashJustDropped = 0;   // 拖拽刚落上时的时刻，用来挡掉随后的 click
+$("btnTrash").addEventListener("click", ()=>{
+  if(Date.now() - trashJustDropped < 260) return;
+  if(running){ toast("先点「重置」退出运行，再删"); return; }
+  if(!selId && !selLink){ toast("先在画布上点选一个物体"); return; }
+  deleteSel();
+});
+
+/* 指针是否落在浅红垃圾桶上 */
+function inTrash(clientX, clientY){
+  const el = $("btnTrash");
+  if(!el) return false;
+  const r = el.getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+
 cv.addEventListener("pointermove", (e)=>{
+  if(mouse.down && drag && !running){
+    $("btnTrash").classList.toggle("hot", inTrash(e.clientX, e.clientY));
+  }
   const p = evtPos(e);
   mouse.x = p.x; mouse.y = p.y;
   mouse.wx = sx2wx(p.x); mouse.wy = sy2wy(p.y);
@@ -2666,6 +3176,7 @@ cv.addEventListener("pointermove", (e)=>{
           o.ax += nxw - o.x; o.ay += nyw - o.y;      // 杆的位置由锚点决定，不跟着改就拖不动
         }
         o.x = nxw; o.y = nyw;
+        if(o.type === "deck") snapDeckEnds(o);   // 端点吸到别的平台端点，拼长台面 / 台阶
         if(isBody(o)) settleDrag(o);
         if(o.type === "cart") followBinds();
         if(isBody(o)){
@@ -2688,7 +3199,17 @@ cv.addEventListener("pointermove", (e)=>{
   mouse.lastX = p.x; mouse.lastY = p.y;
   if(running) draw();
 });
-cv.addEventListener("pointerup", ()=>{
+cv.addEventListener("pointerup", (e)=>{
+  const dropping = !running && drag && inTrash(e.clientX, e.clientY);
+  $("btnTrash").classList.remove("hot");
+  if(dropping){
+    trashJustDropped = Date.now();
+    const id = drag.id;
+    drag = null; dragVis = null;
+    mouse.down = false; mouse.panning = false;
+    removeObjById(id);
+    return;
+  }
   if(!running && drag){
     const o = byId(drag.id);
     if(o && o.type === "shape" && !o.bind && bindTargetFor(o))
@@ -2740,10 +3261,28 @@ function snapToSurface(o){
     if(shapeTangency(o)){ o.vy = 0; return true; }
   }
   if(!onCartSpan(o) && groundSeat(o, 0.25)){ o.vy = 0; return true; }
+  if(snapToDeck(o, 0.25)){ o.vy = 0; return true; }
   if(snapToCart(o, 0.18)){ o.vy = 0; return true; }
   if(snapToShape(o, 0.18)){ o.vy = 0; return true; }
   return false;
 }
+/* 吸附到平台板面：沿板法向挪到位（倾斜平台也成立） */
+function snapToDeck(o, band){
+  const lim = band === undefined ? 0.25 : band;
+  for(const d of W.objs){
+    if(d.type !== "deck" || d === o) continue;
+    const th = (d.tilt||0)*Math.PI/180;
+    const nx = -Math.sin(th), ny = Math.cos(th);
+    const along = (o.x - d.x)*Math.cos(th) + (o.y - d.y)*Math.sin(th);
+    if(Math.abs(along) > (d.w||2.4)/2 + 0.05) continue;
+    const s = (o.x - d.x)*nx + (o.y - d.y)*ny - (d.h||0.14)/2 - supportAlong(o, nx, ny);
+    if(s > lim || s < -0.6) continue;
+    o.x -= nx*s; o.y -= ny*s;
+    return true;
+  }
+  return false;
+}
+
 /* 物体是否正处在某辆小车的车面上方（此时地面被车挡住，不参与吸附） */
 function onCartSpan(o){
   // 判据用"物体底部"而不是中心：大尺寸 / 自定义轮廓中心离地很高，
@@ -2916,28 +3455,83 @@ function drawBind(o){
   ctx.restore();
 }
 
-/* 吸附到1/4弧槽：取最近边界点，沿该处外法向把间隙归零（凹弧内的小球自然落进槽里） */
+/* 折线上离 (x,y) 最近的点，顺带给出距离 */
+function nearestOnPoly(poly, x, y){
+  let bx = 0, by = 0, bd = Infinity;
+  for(let i=0;i<poly.length;i++){
+    const a = poly[i], b = poly[(i+1)%poly.length];
+    const abx = b.x-a.x, aby = b.y-a.y;
+    const L2 = abx*abx + aby*aby;
+    let t = L2 > 1e-12 ? ((x-a.x)*abx + (y-a.y)*aby)/L2 : 0;
+    t = t < 0 ? 0 : (t > 1 ? 1 : t);
+    const px = a.x + abx*t, py = a.y + aby*t;
+    const d = Math.hypot(x-px, y-py);
+    if(d < bd){ bd = d; bx = px; by = py; }
+  }
+  return bd === Infinity ? null : { x:bx, y:by, d:bd };
+}
+
+/* 小物块贴到 1/4 弧槽的弧面时，自动缩到"能顺着弧滑下"的边长（只缩不放）。
+   目标边长取 0.22R：R=1.5 时 0.33 m，R=0.9 时约 0.20 m——实测这个量级沿弧滑下最顺、不弹跳。 */
+function fitBlockToBowl(o, g){
+  if(o.type !== "block" || o.verts) return false;      // 自定义轮廓不动，免得破坏用户画的形状
+  const L = clamp(0.22*g.R, 0.06, 0.35);
+  const big = Math.max(o.w, o.h);
+  if(big <= L*1.05) return false;                      // 已经够小，不动
+  const k = L/big;
+  o.w = Math.max(0.06, o.w*k); o.h = Math.max(0.06, o.h*k);
+  const u = (W && W.unitLen === "cm") ? "cm" : "m";
+  const shown = u === "cm" ? (L*100).toFixed(1) : L.toFixed(2);
+  if(typeof toast === "function") toast("小物块已自动缩到 " + shown + " " + u + "，方便顺着 1/4弧槽滑下");
+  return true;
+}
+
+/* 物体中心已经落在弧腔里：沿径向贴到弧面。
+   槽顶那一带的空间很窄，按"最近轮廓点"容易贴到矩形外壁、被顶在槽顶上滑不下去；
+   改走径向就正好挂在弧的内侧，一松手就顺着弧滑进槽底。 */
+function snapInBowlRadial(o, s){
+  const g = shapeArcGeom(s);
+  const sx = (s.orient === "TR" || s.orient === "BR") ? -1 : 1;
+  const sy = (s.orient === "BL" || s.orient === "BR") ? -1 : 1;
+  const dx = sx*(o.x - g.cx), dy = sy*(o.y - g.cy);
+  if(Math.hypot(dx, dy) < 1e-6) return false;
+  const a = Math.atan2(dy, dx);
+  if(a > 0.6 || a < -Math.PI/2 - 0.6) return false;    // 明显不在槽口这一带
+  const ac = clamp(a, -Math.PI/2, 0);                  // 落在槽口外一点点也收进 1/4 弧范围
+  const ux = sx*Math.cos(ac), uy = sy*Math.sin(ac);     // 圆心 → 目标位置的方向
+  const want = g.R - supportAlong(o, -ux, -uy);         // 贴住时中心该离圆心多远
+  const tx = g.cx + ux*want, ty = g.cy + uy*want;
+  if(Math.hypot(tx - o.x, ty - o.y) > 0.35) return false;  // 差太远，交给普通吸附
+  fitBlockToBowl(o, g);                                // 确认要贴弧了，再把块缩到能滑下的尺寸
+  const want2 = g.R - supportAlong(o, -ux, -uy);        // 尺寸变了，落点按新尺寸重算
+  o.x = g.cx + ux*want2; o.y = g.cy + uy*want2;
+  return true;
+}
+
+/* 吸附到1/4弧槽：弧腔内走径向贴合，其余位置取最近边界点沿外法向贴（凹弧内的小球自然落进槽里） */
 function snapToShape(o, band){
   for(const s of W.objs){
     if(s.type !== "shape" || s === o) continue;
-    const poly = polyOf(s);
+    let poly = polyOf(s);
     if(poly.length < 3) continue;
     if(pointInPoly(o.x, o.y, poly)) continue;
-    let bx = 0, by = 0, bd = Infinity;
-    for(let i=0;i<poly.length;i++){
-      const a = poly[i], b = poly[(i+1)%poly.length];
-      const abx = b.x-a.x, aby = b.y-a.y;
-      const L2 = abx*abx + aby*aby;
-      let t = L2 > 1e-12 ? ((o.x-a.x)*abx + (o.y-a.y)*aby)/L2 : 0;
-      t = t < 0 ? 0 : (t > 1 ? 1 : t);
-      const px = a.x + abx*t, py = a.y + aby*t;
-      const d = Math.hypot(o.x-px, o.y-py);
-      if(d < bd){ bd = d; bx = px; by = py; }
+    if(snapInBowlRadial(o, s)) return true;
+    let hit = nearestOnPoly(poly, o.x, o.y);
+    if(!hit || hit.d < 1e-6) continue;
+    const g = shapeArcGeom(s);
+    let fitted = false;
+    if(Math.abs(Math.hypot(hit.x - g.cx, hit.y - g.cy) - g.R) <= Math.max(0.03, 0.05*g.R)){
+      fitted = fitBlockToBowl(o, g);                   // 贴的正是弧面：顺手把块缩到能滑下的尺寸
+      if(fitted){
+        poly = polyOf(s);                              // 尺寸改过，轮廓变了，贴合点要重算
+        hit = nearestOnPoly(poly, o.x, o.y);
+        if(!hit || hit.d < 1e-6) continue;
+      }
     }
-    if(!isFinite(bd) || bd < 1e-6) continue;
-    const nx = (o.x-bx)/bd, ny = (o.y-by)/bd;
-    const gap = bd - supportAlong(o, nx, ny);
-    if(gap > band || gap < -(supportAlong(o, nx, ny) + 0.5)) continue;
+    const nx = (o.x-hit.x)/hit.d, ny = (o.y-hit.y)/hit.d;
+    const sup = supportAlong(o, nx, ny);
+    const gap = hit.d - sup;
+    if(fitted ? Math.abs(gap) > 0.4 : (gap > band || gap < -(sup + 0.5))) continue;
     o.x -= gap*nx; o.y -= gap*ny;
     return true;
   }
@@ -3178,10 +3772,11 @@ function drawDragTarget(r){
 
 /* 添加元素 */
 function addObj(type, wx, wy){
-  if(type==="ground" || type==="wall"){
-    if(W.objs.some(o=>o.type===type)){ toast("地面和墙壁各只允许一个", "warn"); return; }
+  if(type==="ground"){
+    if(W.objs.some(o=>o.type===type)){ toast("地面只能放一个，倾斜和摩擦可在右侧改", "warn"); return; }
   }
-  if(type==="rope"){ startWire(); return; }
+  if(type==="rope"){ startWire("rope"); return; }
+  if(type==="spring"){ startWire("spring"); return; }
   if(type==="poly"){
     if(running){ toast("运行中不能新增形状，请先重置", "warn"); return; }
     openShapeEditor({ mode:"new", x:wx, y:wy });
@@ -3203,21 +3798,27 @@ function addObj(type, wx, wy){
 }
 
 /* SECTION: wiring */
-function startWire(){
+function startWire(kind){
+  wireKind = kind === "spring" ? "spring" : "rope";
   if(!W.objs.some(o=>isBody(o) || o.type==="anchor" || o.type==="pulley")){
     toast("先放一个物体或固定点，才能连细线", "warn"); return;
   }
   wireMode = true;
   wirePts = null;
-  $("hintBox").innerHTML =
-    "<b>布线中</b>蓝点 = 可连接位置。滑轮只有圆心一个点，线会自动与轮缘相切。<br>点击蓝点起线，再点下一个点完成。<br>按 Esc 退出。";
-  toast("布线模式：点击蓝点开始连接");
+  $("hintBox").innerHTML = wireKind === "spring"
+    ? "<b>弹簧</b>点两个位置：起端蓝点 → 末端蓝点，就得到一根弹簧。<br>刚度 k 在左下「本场关键量」里改；原长＝接入时的长度（拉伸为正、压缩为负）。<br>按 Esc 退出。"
+    : "<b>布线中</b>连线顺序：物块蓝点（起线）→ 滑轮圆心（可连续点多个）→ 另一物块蓝点（收线）。<br>整根线会绕过途经的每个滑轮，与轮缘自动相切。<br>点滑轮后请继续点下一个点；按 Esc 退出。";
+  toast(wireKind === "spring" ? "弹簧模式：点两端" : "布线模式：点击蓝点开始连接");
   draw();
 }
 function finishWire(a){
   pushUndo();
   const fromA = wirePts.from;
   const via = wirePts.via || [];
+  if(fromA.o.type === "pulley"){
+    toast("请先从物块或固定点起线，滑轮放在中间", "warn");
+    wirePts = null; draw(); return;
+  }
 
   // 闭环检测：首尾是同一条物体且没有滑轮缓冲
   if(a.o.id === fromA.o.id && via.length === 0 && isBody(a.o)){
@@ -3225,11 +3826,23 @@ function finishWire(a){
     wirePts = null; draw(); return;
   }
 
+  if(wireKind === "spring"){
+    if(a.o.type === "pulley"){ toast("弹簧不能绕滑轮，请直接点另一端", "warn"); wirePts = null; draw(); return; }
+    const nodeA = anchorToNode(fromA), nodeB = anchorToNode(a);
+    const pa = nodePos(nodeA), pb = nodePos(nodeB);
+    const len = Math.hypot(pb.x - pa.x, pb.y - pa.y);
+    const S = { type:"spring", a:nodeA, b:nodeB, k:(W.springK || 30), L0:len };
+    W.links.push(S);
+    wirePts = null; captureInitial();
+    toast("已加弹簧：k=" + S.k + " N/m，原长 " + len.toFixed(2) + " m");
+    draw(); refreshEnv(); return;
+  }
+
   if(a.o.type === "pulley"){
     // 点击滑轮 = 途经该滑轮，继续选下一个点
+    if(!wirePts.via) wirePts.via = [];
     wirePts.via.push(a.o.id);
     wirePts.pts.push({x:a.x, y:a.y});
-    wirePts.from = a;
     toast("已绕过滑轮，请继续选择下一个连接点");
     draw();
     return;
@@ -3246,7 +3859,7 @@ function finishWire(a){
   wirePts = null;
   captureInitial();
   const g = ropeGeom(L);
-  L.L0 = g.seg;
+  L.L0 = g.len;
   toast("已连接，绳长 " + g.len.toFixed(2) + " m" + (via.length ? "（途经 " + via.length + " 个滑轮）" : ""));
   draw();
 }
@@ -3266,10 +3879,11 @@ const P = {
 const ROW_VIS = {
   rowMass:  "body",            rowVel:   "body",            rowAng:    "body",
   rowForce: "body",            rowFdir:  "body",
-  rowRadius:"ball pulley",     rowWH:    "block cart shape poly",
+  rowRadius:"ball pulley",     rowWH:    "block cart shape poly deck",
   rowSlotR: "shape",           rowOrient:"shape",           rowTangent:"shape",
   rowSlide: "shape",           rowBind:  "shape",
-  rowWallE: "wall",            rowMu:    "ground wall",     rowTilt:   "ground",
+  rowWallE: "wall",            rowMu:    "ground wall deck",     rowTilt:   "ground deck",
+  rowBelt: "ground",
   rowCartMu:"cart",            rowTopMu: "block",           rowBlockShape:"block poly",
   rowRodLen:"rod",
   rowRodAng: "rod",
@@ -3289,6 +3903,24 @@ function applyRowVisibility(t, hasMass){
 }
 
 function syncPanel(){
+  const lk = selLink;
+  if(lk && lk.type === "spring"){
+    P.empty.classList.add("hidden");
+    P.form.classList.remove("hidden");
+    $("pTitle").textContent = "属性 · 弹簧";
+    $("pBadge").textContent = running ? "运行中" : "已选中";
+    $("pBadge").className = "badge" + (running ? " pu" : "");
+    $("pMode").classList.add("hidden");
+    for(const id in ROW_VIS) $(id).classList.add("hidden");
+    const kr = $("rSpringK"), kn = $("nSpringK");
+    kr.value = clamp(lk.k !== undefined ? lk.k : 30, 5, 300);
+    kn.value = (lk.k !== undefined ? lk.k : 30).toFixed(0);
+    $("rowSpringK").classList.remove("hidden");
+    $("rowSpringK").classList.toggle("hidden", false);
+    kr.disabled = running; kn.disabled = running;
+    return;
+  }
+  selLink = null;
   const o = selId ? byId(selId) : null;
   const badge = $("pBadge"), title = $("pTitle"), modeBox = $("pMode");
 
@@ -3343,9 +3975,10 @@ function syncPanelSize(o, t, hasMass){
     });
     o.w = +(bx1-bx0).toFixed(3); o.h = +(by1-by0).toFixed(3);
   }
-  if(t === "block" || t === "cart" || t === "shape" || t === "poly"){
-    setRange("rW", o.w, 0.1, 4, running);
-    setRange("rH", o.h, 0.1, 4, running);
+  if(t === "block" || t === "cart" || t === "shape" || t === "poly" || t === "deck"){
+    // 平台也用「宽 / 高」两个滑块：宽 = 板长，高 = 板厚
+    setRange("rW", o.w, 0.1, 6, running);
+    setRange("rH", o.h, 0.02, 0.8, running);
   }
 
   if(t === "shape"){
@@ -3414,8 +4047,14 @@ function syncPanelColor(o, t){
 }
 
 function syncPanelSurface(o, t){
-  if(t === "ground" || t === "wall") setRange("rMu", o.mu || 0, 0, 1, running);
+  if(t === "ground" || t === "wall" || t === "deck") setRange("rMu", o.mu || 0, 0, 1, running);
   if(t === "ground") setRange("rTilt", o.tilt || 0, -30, 30, running);
+  if(t === "deck")   setRange("rTilt", o.tilt || 0, -90, 90, running);
+  if(t === "ground"){
+    const nb = $("nBelt");
+    nb.value = (o.vt || 0).toFixed(1);
+    nb.disabled = running;
+  }
   if(t === "cart") setRange("rCartMu", o.cartMu || 0, 0, 1, running);
   if(t === "block") setRange("rTopMu", o.topMu !== undefined ? o.topMu : 0.15, 0, 1, running);
 
@@ -3482,6 +4121,7 @@ function noteText(o){
   }
   if(o.type==="ground") return "<b>地面</b>摩擦系数影响是否能推动。<br>倾角为 0 表示水平。";
   if(o.type==="wall") return "<b>墙壁</b>竖直支持面，可设摩擦。<br>碰撞模式：弹性按 e=1 等速反弹，非弹性撞上即停。";
+  if(o.type==="deck") return "<b>平台</b>可抬高的水平板：改「宽」调长度、「倾角」当斜面。<br>拖动时两端小圆会吸到别的平台端点，物体靠近会自动贴住板面。";
   if(o.type==="pulley") return "<b>滑轮</b>理想滑轮绳中张力处处相等。<br>定滑轮 F=G 只改方向；动滑轮 n=2、F=G/2。<br>绳必与轮缘相切。";
   if(o.type==="rod") return "<b>细杆</b>可推可拉，与细线不同。<br>靠近杆端的物体会被约束成摆锤。<br>杆本身可整体拖动；杆长与杆角在右侧调。";
   if(o.type==="cart") return "<b>小车</b>车面摩擦决定物块是否随之运动。<br>μ 不足时物块会相对滑动。";
@@ -3565,9 +4205,25 @@ bindNum("nFdir", (o,v)=>{
   o.fx = fm*Math.cos(r); o.fy = fm*Math.sin(r);
 });
 bindRange("rMu", (o,v)=>{ o.mu = v; });
+/* 弹簧的弹力系数：改的是「选中的这一根」，每根弹簧各自独立 */
+function setSpringK(v){
+  if(!selLink || selLink.type !== "spring" || running) return;
+  if(!isFinite(v)) return;
+  selLink.k = clamp(v, 5, 300);
+  draw();
+  $("rSpringK").value = selLink.k;
+  $("nSpringK").value = selLink.k.toFixed(0);
+}
+$("rSpringK").addEventListener("input", ()=>{ setSpringK(parseFloat($("rSpringK").value)); });
+$("nSpringK").addEventListener("input", ()=>{ setSpringK(parseFloat($("nSpringK").value)); });
+
 bindRange("rTilt", (o,v)=>{
   o.tilt = v;
   W.objs.forEach(b=>{ if(b.type==="shape" && b.tangent) shapeTangency(b); });
+});
+bindNum("nBelt", (o,v)=>{
+  if(!isFinite(v) || o.type !== "ground") return;
+  o.vt = clamp(v, -20, 20);          // 传送带速度：+ 向右、− 向左
 });
 bindRange("rCartMu", (o,v)=>{ o.cartMu = v; });
 bindRange("rTopMu", (o,v)=>{ o.topMu = v; });
@@ -3760,12 +4416,35 @@ function duplicateSel(){
   c.id = nid();
   c.x = o.x + 0.4; c.y = o.y + 0.2;
   c.trail = [];
-  if(c.type==="ground"||c.type==="wall"){ toast("地面和墙壁不能重复添加","warn"); return; }
+  if(c.type==="ground"){ toast("地面不能重复添加","warn"); return; }
   W.objs.push(c);
   selId = c.id;
   captureInitial(); syncPanel(); draw();
 }
+/* 删掉某个物体（连带引用它的细线/弹簧） */
+function removeObjById(id){
+  if(running) return;
+  pushUndo();
+  W.objs = W.objs.filter(x=>x.id!==id);
+  W.links = W.links.filter(L=>{
+    if(L.a && L.a.objId===id) return false;
+    if(L.b && L.b.objId===id) return false;
+    if(L.pulleys && L.pulleys.indexOf(id)>=0) return false;
+    return true;
+  });
+  if(selId === id) selId = null;
+  captureInitial(); syncPanel(); draw(); refreshEnv();
+  toast("已删除");
+}
+
 function deleteSel(){
+  if(selLink && !running){
+    pushUndo();
+    W.links = W.links.filter(L=>L !== selLink);
+    selLink = null;
+    captureInitial(); syncPanel(); draw(); refreshEnv();
+    return;
+  }
   const o = selId ? byId(selId) : null;
   if(!o || running) return;
   pushUndo();
@@ -3857,13 +4536,46 @@ function goEdit(){
 function refreshEnv(){
   const box = $("envBox");
   const rows = [
-    ["g", W.g.toFixed(1) + " m/s²"],
     ["计算", W.pointMass ? "质点（只算平动）" : "非质点（球自转/滚动）"],
     ["碰撞", W.collision==="elastic" ? "完全弹性 e=1" : "完全非弹性 e=0"],
     ["积分", W.integrator==="euler" ? "半隐式欧拉" : (W.integrator==="rk4" ? "RK4" : "速度 Verlet（辛）")],
     ["物体", W.objs.filter(o=>isBody(o)).length + " 个｜连线 " + W.links.length + " 条"]
   ];
   box.textContent = "";
+  // g 可编辑：高考题里常写「g 取 10 m/s²」，学生自己填就能对上题目数据
+  const gRow = document.createElement("div");
+  gRow.style.cssText = "display:flex;align-items:center;gap:6px";
+  const gLab = document.createElement("span"); gLab.textContent = "g";
+  const gInp = document.createElement("input");
+  gInp.type = "number"; gInp.step = "0.1"; gInp.min = "0"; gInp.max = "20";
+  gInp.value = W.g.toFixed(1);
+  gInp.style.cssText = "width:64px;padding:2px 4px;border:1px solid #cfd8e3;border-radius:4px;font:12px monospace";
+  gInp.onchange = ()=>{
+    const v = parseFloat(gInp.value);
+    if(!isFinite(v) || v < 0 || v > 20){ toast("g 需在 0~20 m/s² 之间", "warn"); refreshEnv(); return; }
+    W.g = v; captureInitial(); refreshEnv();
+    toast("重力加速度 g 已改为 " + v + " m/s²");
+  };
+  const gU = document.createElement("span"); gU.textContent = "m/s²";
+  gRow.appendChild(gLab); gRow.appendChild(gInp); gRow.appendChild(gU);
+  box.appendChild(gRow);
+  // 弹簧刚度：新建弹簧用它，改了对已有弹簧不追溯
+  const kRow = document.createElement("div");
+  kRow.style.cssText = "display:flex;align-items:center;gap:6px";
+  const kLab = document.createElement("span"); kLab.textContent = "弹簧 k";
+  const kInp = document.createElement("input");
+  kInp.type = "number"; kInp.step = "1"; kInp.min = "0"; kInp.max = "2000";
+  kInp.value = (W.springK || 30);
+  kInp.style.cssText = "width:64px;padding:2px 4px;border:1px solid #cfd8e3;border-radius:4px;font:12px monospace";
+  kInp.onchange = ()=>{
+    const v = parseFloat(kInp.value);
+    if(!isFinite(v) || v < 0 || v > 2000){ toast("k 需在 0~2000 N/m", "warn"); refreshEnv(); return; }
+    W.springK = v; refreshEnv();
+    toast("弹簧刚度 k = " + v + " N/m（新建弹簧生效）");
+  };
+  const kU = document.createElement("span"); kU.textContent = "N/m";
+  kRow.appendChild(kLab); kRow.appendChild(kInp); kRow.appendChild(kU);
+  box.appendChild(kRow);
   rows.forEach(([k,v])=>{
     const d = document.createElement("div");
     d.textContent = k + "　" + v;
