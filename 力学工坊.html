@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>力学工坊 · 初中物理力学模型 DIY</title>
+<title>力学工坊 · 力学模型 DIY</title>
 <style>
   /* 拖拽删除区：浅红 */
   #btnTrash{
@@ -308,7 +308,7 @@ body::after{
     <div class="logo">力</div>
     <div>
       <div class="bn">力学工坊</div>
-      <div class="bs">初中物理 · 力学模型 DIY</div>
+      <div class="bs">力学模型 DIY</div>
     </div>
   </div>
 
@@ -376,6 +376,10 @@ body::after{
       <div class="card" data-add="shape">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M4 19 A15 15 0 0 0 19 4 L21 4 L21 19 Z" fill="#E8EEF8" stroke="#34495E" stroke-width="1.3"/><path d="M4 19 A15 15 0 0 0 19 4" fill="none" stroke="#7C6BD6" stroke-width="1.7"/></svg>
         <div><div class="cn">1/4弧槽</div><div class="cd">凹弧面</div></div>
+      </div>
+      <div class="card" data-add="half">
+        <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 19 L3 6 A9 9 0 0 0 21 6 L21 19 Z" fill="#E8EEF8" stroke="#34495E" stroke-width="1.3"/><path d="M3 6 A9 9 0 0 0 21 6" fill="none" stroke="#7C6BD6" stroke-width="1.7"/></svg>
+        <div><div class="cn">1/2弧槽</div><div class="cd">半圆凹槽</div></div>
       </div>
       <div class="card" data-add="poly">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 20 L3 8 L11 8 L11 4 L21 4 L21 20 Z" fill="#D7E4FB" stroke="#2F6FED" stroke-width="1.6" stroke-linejoin="round"/><circle cx="3" cy="20" r="1.7" fill="#2F6FED"/><circle cx="11" cy="8" r="1.7" fill="#2F6FED"/><circle cx="11" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="20" r="1.7" fill="#2F6FED"/></svg>
@@ -474,7 +478,7 @@ body::after{
 
       <div id="rowWH">
         <div class="row"><label data-len="宽">宽 m</label><input type="range" id="rW" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nW" step="0.02" style="width:56px"></span></div>
-        <div class="row"><label data-len="高">高 m</label><input type="range" id="rH" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nH" step="0.02" style="width:56px"></span></div>
+        <div class="row" id="rowH"><label data-len="高">高 m</label><input type="range" id="rH" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nH" step="0.02" style="width:56px"></span></div>
       </div>
 
       <div class="row" id="rowRodLen"><label data-len="杆长">杆长 m</label><input type="range" id="rRodLen" min="0.4" max="3" step="0.05"><span class="numwrap"><input type="number" id="nRodLen" step="0.05" style="width:56px"></span></div>
@@ -554,6 +558,7 @@ body::after{
       <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:56px"></span></div>
       <div class="row" id="rowBelt"><label>带速 v<sub>t</sub></label><input type="number" id="nBelt" step="0.1" style="width:56px"><span style="font-size:11px;color:#8a94a3">m/s　0=普通地面</span></div>
       <div class="row hidden" id="rowSpringK"><label>弹力系数 k</label><input type="range" id="rSpringK" min="5" max="300" step="1"><span class="numwrap"><input type="number" id="nSpringK" min="5" max="300" step="1" style="width:56px"></span><span style="font-size:11px;color:#8a94a3">N/m</span></div>
+      <div class="row hidden" id="rowSpringL0"><label id="lbSpringL0" data-len="原长">原长 m</label><input type="range" id="rSpringL0" min="0.05" max="4" step="0.01"><span class="numwrap"><input type="number" id="nSpringL0" step="0.01" style="width:56px"></span></div>
 
       <div class="row" id="rowCartMu"><label>车面摩擦 μ</label><input type="range" id="rCartMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nCartMu" step="0.01" style="width:56px"></span></div>
       <div class="row" id="rowTopMu"><label>顶面摩擦 μ</label><input type="range" id="rTopMu" min="0" max="1" step="0.01"><span class="numwrap"><input type="number" id="nTopMu" step="0.01" style="width:56px"></span></div>
@@ -698,7 +703,8 @@ const DEF = {
   block: { type:"block", w:0.6, h:0.6, m:1.0, topMu:0.15 },
   ball:  { type:"ball",  r:0.18, m:0.5 },
   cart:  { type:"cart",  w:1.2, h:0.32, m:2.0, cartMu:0.2, wr:0.09 },
-  shape: { type:"shape", w:1.0, h:1.0, R:0.9, orient:"TL", m:1.5, wallMu:0.2 },
+  shape: { type:"shape", w:1.0, h:1.0, R:0.9, orient:"TL", m:1.5, wallMu:0.0 },
+  half:  { type:"shape", half:true, w:1.2, h:0.6, R:0.6, orient:"TL", m:1.5, wallMu:0.0 },
   poly:  { type:"poly",  verts:null, w:0.8, h:0.6, m:1.0, wallMu:0.2, topMu:0.15 },
   rope:  { type:"rope",  elastic:false },
   rod:   { type:"rod",   len:1.4 },
@@ -714,7 +720,7 @@ function makeObj(type, x, y){
   const o = Object.assign({}, d);
   o.id = nid();
   o.x = x; o.y = y;
-  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA", deck:"#E9EEF6" };
+  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", half:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA", deck:"#E9EEF6" };
   o.color = DEFC[type] || COLORS[Math.floor(Math.random()*4)];
   o.vx = 0; o.vy = 0;
   o.fx = 0; o.fy = 0;        // 外力
@@ -738,10 +744,25 @@ function rectPts(o){
   return [ {x:x-hw,y:y-hh}, {x:x+hw,y:y-hh}, {x:x+hw,y:y+hh}, {x:x-hw,y:y+hh} ];
 }
 
-/* 1/4弧槽实体轮廓：矩形挖去 1/4 圆，弧面朝外 */
+/* 轮廓分派：1/2 弧槽是"矩形顶面挖去半个圆"，1/4 弧槽是"矩形挖去 1/4 圆" */
 function shapePts(o, seg){
   seg = seg || 18;
   const {x,y,w,h} = o;
+  if(o.half){
+    const x0 = x-w/2, x1 = x+w/2, y0 = y-h/2, y1 = y+h/2;
+    const R = Math.min(o.R, Math.min(w/2, h));
+    const cx = x, cy = y1;                       // 圆心固定在顶边中点，弧向下鼓成碗
+    const t = [{x:x0, y:y0}, {x:x0, y:y1}];
+    if(cx - R > x0 + 1e-9) t.push({x:cx-R, y:cy});
+    const n = Math.max(12, seg);
+    for(let i=1;i<=n;i++){
+      const a = Math.PI + Math.PI*(i/n);
+      t.push({x: cx + R*Math.cos(a), y: cy + R*Math.sin(a)});
+    }
+    if(cx + R < x1 - 1e-9) t.push({x:cx+R, y:cy});
+    t.push({x:x1, y:y1}, {x:x1, y:y0});
+    return t;
+  }
   const R = Math.min(o.R, Math.min(w,h));
   const x0 = x-w/2, y0 = y-h/2;          // 左下（世界 y 向上，左下即底部）
   // 以左上角为切角构型，世界坐标下左上 = (x0, y0+h)
@@ -771,6 +792,7 @@ function shapePts(o, seg){
 /* 1/4弧槽的圆弧圆心与半径（与 shapePts 的镜像规则一致）。
    用来区分"落在凹弧面上（导轨，顺弧滑）"与"撞在外侧实体壁（正常碰撞）。" */
 function shapeArcGeom(o){
+  if(o.half) return { cx:o.x, cy:o.y + o.h/2, R: Math.min(o.R, Math.min(o.w/2, o.h)) };
   const x0 = o.x - o.w/2, y0 = o.y - o.h/2;
   let cx = x0, cy = y0 + o.h;
   if(o.orient === "TR" || o.orient === "BR") cx = 2*o.x - cx;
@@ -781,7 +803,143 @@ function shapeArcGeom(o){
 /* 1/4弧槽凹弧腔的解析接触。
    折线近似的 SAT 在每段交界处法向突变，物块滑过时会一顿一顿地跳；
    这里改用"圆心径向的连续法向"+"矩形四边半平面"，沿弧滑动时法向平滑变化。 */
+/* ---------- 光滑弧面导轨：几何约束，不吞动能 ----------
+   contactSolve 走的是"碰撞"那一套：低速时 e=0，把朝弧面压进去的法向速度直接
+   抹掉。球沿弧滑行时，数值积分每步都会攒出一点点向心方向的速度，被这样抹掉
+   就等于每步扣一小块动能——反复振荡越荡越矮，最后停住，看着像有摩擦。
+   这里改成纯几何约束：位置照 sample 那样推开，速度只把"朝圆心"的那一份
+   转到切向、总速率不变（约束力垂直于运动方向、不做功），
+   于是光滑弧槽里球的机械能真的守恒。高速砸进弧面仍交给 contactSolve 弹。 */
+function arcGuide(A, S, nx, ny, pen, R, rad){
+  const imA = invM(A), imB = invM(S);
+  if(imA + imB < 1e-12) return;
+  const t = physOwner(A) || A;
+  const m = totalMassOf(A) || 1;
+  const target = Math.max(1e-4, (R || 0) - (rad || 0));     // 球心应该走的半径
+  const cur = target + (pen || 0);                          // 现在实际的半径
+  const oldY = t.y;
+  // 1) 径向：把球心精确放回弧面上。这是双边约束——贴着就是贴着，
+  // 不能等它穿进去再顶回来，否则球每步都飞离弧面、再撞上去，
+  // 一撞就吞掉一块动能，看着就像有摩擦。
+  // 位移沿 n（n 由球指圆心）：球偏外就往里推，偏里就往外贴
+  const dr = cur - target;
+  const vx0 = A.vx || 0, vy0 = A.vy || 0;
+  t.x += nx*dr; t.y += ny*dr;
+  if(t !== A){ A.x = t.x; A.y = t.y; }
+  // 刚拖进弧槽时球可能整块嵌进去：这种"静止 + 大穿透"才只修正几何、不改速度。
+  // 槽自己会动的时候球心半径也会跟着变，不能一概当成初始嵌入，否则速度被跳过、
+  // 球就被甩出弧面再撞回来。
+  if(dr > 0.02 && Math.hypot(vx0, vy0) < 0.25) return;
+  // 2) 速度：只留切向分量；速率按"位置校正带来的势能变化"补偿，
+  // 约束力不做功，于是机械能严格守恒。
+  const vx = A.vx||0, vy = A.vy||0;
+  const tx = -ny, ty = nx;
+  const vt = vx*tx + vy*ty;
+  const gZ = W.g || 0;
+  const T0 = 0.5*m*(vx*vx + vy*vy);
+  const movingB = imB > 1e-9;                      // 弧槽自己也会被推动
+  let sp1;
+  if(movingB){
+    // 球比槽重时，如果"先改球的速度、再把差量倒给槽"，每子步都会加一次，
+    // 槽被越推越快、球被甩出去再撞回来 —— 就是那种跳。
+    // 这里改成一次解出：球相对槽只有切向速度（法向被弧面挡住），
+    // 球+槽的水平总动量守恒。两者同时确定，不会再累积。
+    const tS = physOwner(S) || S;
+    const mS = totalMassOf(S) || 1;
+    const vsx = tS.vx || 0;
+    const relvt = (vx - vsx)*tx + vy*ty;            // 球相对槽的切向速度
+    const relvx = tx*Math.abs(relvt)*(relvt >= 0 ? 1 : -1);
+    const relvy = ty*Math.abs(relvt)*(relvt >= 0 ? 1 : -1);
+    const P = m*vx + mS*vsx;                        // 球 + 槽 的水平总动量
+    const vsx2 = (P - m*relvx)/(m + mS);
+    A.vx = vsx2 + relvx; A.vy = relvy;
+    if(t !== A){ t.vx = A.vx; t.vy = A.vy; }
+    tS.vx = vsx2;
+    if(tS !== S) S.vx = vsx2;
+    A._arcSteps = 0; A._arcE = undefined;
+    return;
+  }else{
+    // 弧槽固定：约束力不做功，直接把这段弧里的机械能投影回来，
+    // 球滑多久都不会越来越矮。
+    if(!(A._arcSteps > 0)) A._arcE = 0.5*m*vt*vt + m*gZ*t.y;  // 刚贴上弧面：记下此刻的机械能
+    A._arcSteps = 4;
+    const Eref = (A._arcE === undefined) ? (T0 + m*gZ*t.y) : A._arcE;
+    // 速率取"能量守恒允许的"与"当下真实切向动能"的较大者：
+    // 前者保证越滑越高时不会被凭空减速，后者保证静止摆放的球能被重力带起来
+    // （只取切向分量，避免把数值径向误差也算成动能、越滑越快）。
+    const T1 = Math.max(0.5*m*vt*vt, Math.max(0, Eref - m*gZ*t.y));
+    sp1 = Math.sqrt(2*T1/m);
+  }
+  const sgn = (vt >= 0) ? 1 : -1;
+  A.vx = tx*sp1*sgn; A.vy = ty*sp1*sgn;
+  if(t !== A){ t.vx = A.vx; t.vy = A.vy; }
+}
+
+/* 1/2 弧槽：下半圆凹面 + 底/左/右三条实心边，碗口完全敞开，物块能滑过另一侧飞出去。 */
+function shapeBowlHalfContact(A, S, h, vMin){
+  const g = shapeArcGeom(S);
+  const mu = (S.wallMu !== undefined ? S.wallMu : 0.15);
+  const isBall = A.type === "ball";
+  const eArc = (W.collision === "elastic") ? 1 : 0;
+  const ARC_V = 3.0;
+  const ARC_GRAB = 0.05;        // 球心离弧面 5 cm 以内就贴回去（光滑导轨）
+  const rad = isBall ? (A.r || 0) : 0;
+  const pts = isBall ? [{ x:A.x, y:A.y }] : polyOf(A);
+  if(!pts || pts.length < 1) return;
+  const x0 = S.x - S.w/2, x1 = S.x + S.w/2, y0 = S.y - S.h/2;
+
+  // 弧面：法向沿径向指向圆心，滑行时连续变化，不会一顿一顿
+  let best = -1e9, bnx = 0, bny = 0;
+  for(let i=0;i<pts.length;i++){
+    const dx = pts[i].x - g.cx, dy = pts[i].y - g.cy;
+    const d = Math.hypot(dx, dy);
+    if(d < 1e-9) continue;
+    if(dy > 0.02) continue;                       // 只处理圆心以下那半圈
+    const pen = d + rad - g.R;
+    if(pen > best){ best = pen; bnx = -dx/d; bny = -dy/d; }
+  }
+  // 球用"双边导轨"：球心离弧面近了（外侧穿透、或内侧脱开）都吸回来。
+  // 只按 TOUCH 判定的话，碗底速度一大球就会离心脱开两三厘米、再撞回弧面，
+  // 看上去就是一跳一跳的。
+  const thr = isBall ? -ARC_GRAB : -TOUCH;
+  if(best > thr){
+    const penA = Math.max(0, best);
+    const vnRel = ((A.vx||0) - (S ? (S.vx||0) : 0))*bnx + ((A.vy||0) - (S ? (S.vy||0) : 0))*bny;
+    // 小球沿弧滑动时走光滑约束（动能不损失）；真正砸上去才按碰撞弹。
+    // 物块仍走原来的接触求解：它靠"多个顶点同时贴弧"定位，改法向速度会把它钉在弧面上出不去。
+    if(isBall){
+      // 球和弧槽内腔之间一律走光滑导轨：碗面是光滑的，球落进来只会顺着滑，
+      // 不会"砸一下弹飞"。以前高速（>3 m/s）时按弹性处理，球一重、碗一轻，
+      // 碗被弹开、球就跟着跳。
+      arcGuide(A, S, bnx, bny, best, g.R, rad);
+    }else if(W.collision === "elastic" && vnRel > ARC_V){
+      contactSolve(A, S, bnx, bny, penA, eArc, mu, ARC_V);
+    }else{
+      contactSolve(A, S, bnx, bny, penA, eArc, mu, ARC_V);
+    }
+  }
+
+  // 底边 / 左边 / 右边：半平面，按物体所在侧决定推开方向
+  const edges = [
+    { ax:x0, ay:y0, nx: 0, ny: 1 },
+    { ax:x1, ay:y0, nx:-1, ny: 0 },
+    { ax:x0, ay:y0, nx: 1, ny: 0 }
+  ];
+  for(let k=0;k<3;k++){
+    const e = edges[k];
+    const sideC = (A.x - e.ax)*e.nx + (A.y - e.ay)*e.ny;
+    const dir = sideC >= 0 ? 1 : -1;
+    let worst = 1e9;
+    for(let i=0;i<pts.length;i++){
+      const q = dir*((pts[i].x - e.ax)*e.nx + (pts[i].y - e.ay)*e.ny) + rad;
+      if(q < worst) worst = q;
+    }
+    if(worst < TOUCH) contactSolve(A, S, e.nx*dir, e.ny*dir, Math.max(0, -worst), eArc, mu, ARC_V);
+  }
+}
+
 function shapeBowlContact(A, S, h, vMin){
+  if(S.half){ shapeBowlHalfContact(A, S, h, vMin); return; }
   const g = shapeArcGeom(S);
   const sx = (S.orient === "TR" || S.orient === "BR") ? -1 : 1;
   const sy = (S.orient === "BL" || S.orient === "BR") ? -1 : 1;
@@ -792,6 +950,7 @@ function shapeBowlContact(A, S, h, vMin){
   // 顺着弧面滑下时法向速度远低于它，仍是不弹跳的平滑导轨。
   const eArc = (W.collision === "elastic") ? 1 : 0;
   const ARC_V = 3.0;
+  const ARC_GRAB = 0.05;        // 球心离弧面 5 cm 以内就贴回去（光滑导轨）
   const rad = isBall ? (A.r || 0) : 0;
   const pts = isBall ? [{ x:A.x, y:A.y }] : polyOf(A);
   if(!pts || pts.length < 1) return;
@@ -806,7 +965,26 @@ function shapeBowlContact(A, S, h, vMin){
     const pen = d + rad - g.R;
     if(pen > best){ best = pen; bnx = -dx/d; bny = -dy/d; }
   }
-  if(best > -TOUCH) contactSolve(A, S, bnx, bny, Math.max(0, best), eArc, mu, ARC_V);
+  // 球用"双边导轨"：球心离弧面近了（外侧穿透、或内侧脱开）都吸回来。
+  // 只按 TOUCH 判定的话，碗底速度一大球就会离心脱开两三厘米、再撞回弧面，
+  // 看上去就是一跳一跳的。
+  const thr = isBall ? -ARC_GRAB : -TOUCH;
+  if(best > thr){
+    const penA = Math.max(0, best);
+    const vnRel = ((A.vx||0) - (S ? (S.vx||0) : 0))*bnx + ((A.vy||0) - (S ? (S.vy||0) : 0))*bny;
+    // 小球沿弧滑动时走光滑约束（动能不损失）；真正砸上去才按碰撞弹。
+    // 物块仍走原来的接触求解：它靠"多个顶点同时贴弧"定位，改法向速度会把它钉在弧面上出不去。
+    if(isBall){
+      // 球和弧槽内腔之间一律走光滑导轨：碗面是光滑的，球落进来只会顺着滑，
+      // 不会"砸一下弹飞"。以前高速（>3 m/s）时按弹性处理，球一重、碗一轻，
+      // 碗被弹开、球就跟着跳。
+      arcGuide(A, S, bnx, bny, best, g.R, rad);
+    }else if(W.collision === "elastic" && vnRel > ARC_V){
+      contactSolve(A, S, bnx, bny, penA, eArc, mu, ARC_V);
+    }else{
+      contactSolve(A, S, bnx, bny, penA, eArc, mu, ARC_V);
+    }
+  }
 
   // 2) 只约束"真正属于实体"的那几段边界：
   //    底边、右边是完整实心边；左边只在弧端点以下那一小段、顶边只在弧端点右侧才挡人，
@@ -953,7 +1131,7 @@ function polyEdgeDist(px, py, poly){
 
 /* 点到弹簧的命中：弹簧在画布上就是一条折线，按线段距离判 */
 function springAt(wx, wy){
-  const tol = 10 / W.view.s + 0.02;
+  const tol = 14 / W.view.s + 0.02;
   for(let i=W.links.length-1;i>=0;i--){
     const L = W.links[i];
     if(L.type !== "spring") continue;
@@ -1061,12 +1239,16 @@ function anchorsOf(o){
       push(o.x + o.w*0.25, p[3].y, "车面右");
       push(o.x - o.w*0.3, o.y - o.h/2 + (o.wr||0.09), "轮轴左");
       push(o.x + o.w*0.3, o.y - o.h/2 + (o.wr||0.09), "轮轴右");
+      push(o.x, o.y, "车身中心");     // 挂在重心上：弹簧力过质心，不会带转
+    }else{
+      push(o.x, o.y, "中心");         // 物块的几何中心
     }
   } else if(o.type==="ball"){
     for(let i=0;i<8;i++){
       const a = i*Math.PI/4;
       push(o.x + o.r*Math.cos(a), o.y + o.r*Math.sin(a), "圆周"+(i*45)+"°");
     }
+    push(o.x, o.y, "球心");           // 球心：力臂为 0，只平动不转
   } else if(o.type==="shape"){
     const p = polyOf(o);
     // 四角 + 槽两端点：取轮廓中距离最远的两段端点
@@ -1594,19 +1776,27 @@ function solveSlideShapes(h){
     const th = (g.tilt||0)*Math.PI/180;
     const nx = -Math.sin(th), ny = Math.cos(th);
     if(ny < 1e-6) continue;
-    // 竖向：把弧沿地面法向的最低点放到地面平面上（与"相切"一致）
-    const R = Math.min(o.R, Math.min(o.w, o.h));
-    const cxs = o.x - o.w/2, cys = o.y + o.h/2;
-    let minS = Infinity;
-    for(let i=0;i<=28;i++){
-      const a = -Math.PI/2 + (Math.PI/2)*(i/28);
-      let px = cxs + R*Math.cos(a), py = cys + R*Math.sin(a);
-      if(o.orient==="TR"||o.orient==="BR") px = 2*o.x - px;
-      if(o.orient==="BL"||o.orient==="BR") py = 2*o.y - py;
-      const s = (px - g.x)*nx + (py - g.y)*ny;
-      if(s < minS) minS = s;
+    // 竖向：把物体沿地面法向的最低点放到地面平面上（与"相切"一致）
+    //   半圆碗：最低点就是外框底边（也就是弧底），直接按 h/2 对齐，
+    //          不必采样——h 与 R 不等时采样会把整只碗往下压、碗壁插进地里；
+    //   1/4弧槽：采样弧段求最低点。
+    if(o.half){
+      const s = (o.x - g.x)*nx + (o.y - g.y)*ny - (o.h || 0)/2;
+      o.y += -s/ny;
+    } else {
+      const R = Math.min(o.R, Math.min(o.w, o.h));
+      const cxs = o.x - o.w/2, cys = o.y + o.h/2;
+      let minS = Infinity;
+      for(let i=0;i<=28;i++){
+        const a = -Math.PI/2 + (Math.PI/2)*(i/28);
+        let px = cxs + R*Math.cos(a), py = cys + R*Math.sin(a);
+        if(o.orient==="TR"||o.orient==="BR") px = 2*o.x - px;
+        if(o.orient==="BL"||o.orient==="BR") py = 2*o.y - py;
+        const s2 = (px - g.x)*nx + (py - g.y)*ny;
+        if(s2 < minS) minS = s2;
+      }
+      if(isFinite(minS)) o.y += -minS/ny;
     }
-    if(isFinite(minS)) o.y += -minS/ny;
     // 沿坡方向：vy 与 vx 同步（位置随之连续变化，而不是每子步被"瞬移"对齐）
     o.vy = o.vx * Math.tan(th);
     o._onGround = true;
@@ -1625,6 +1815,27 @@ function solveSlideShapes(h){
 }
 
 /* ---------- 地面（支持任意倾角、多块地面） ---------- */
+/* 物体是否正处在某个弧槽的凹面内腔里。
+   碗底与地面相切时，球会被"地面"和"弧面"两套约束同时顶，两股冲量互相抵消，
+   竖直速度每步被吃掉一点，看着就是能量不断流失、最后停在碗底。 */
+function inArcCavity(o){
+  for(const S of W.objs){
+    if(S.type !== "shape") continue;
+    if(physOwner(S) === physOwner(o)) continue;
+    const g = shapeArcGeom(S);
+    const d = Math.hypot(o.x - g.cx, o.y - g.cy);
+    if(d > g.R + 0.02 || d < 1e-9) continue;
+    if(S.half){
+      if(o.y - g.cy <= 0.02 && Math.abs(o.x - g.cx) <= g.R + 0.02) return true;
+    } else {
+      const sx = (S.orient==="TR"||S.orient==="BR") ? -1 : 1;
+      const sy = (S.orient==="BL"||S.orient==="BR") ? -1 : 1;
+      if(sx*(o.x - g.cx) >= -0.02 && sy*(o.y - g.cy) >= -0.02) return true;
+    }
+  }
+  return false;
+}
+
 function solveGrounds(h){
   const gs = W.objs.filter(o=>o.type==="ground");
   if(!gs.length) return;
@@ -1640,6 +1851,8 @@ function solveGrounds(h){
       const nx = -Math.sin(th), ny = Math.cos(th);      // 由地面指向物体
       const s = (o.x-g.x)*nx + (o.y-g.y)*ny - supportAlong(o, nx, ny);
       if(s > TOUCH) continue;
+      // 在弧槽内腔里的球由弧面托着，地面被槽体挡住，这里不再额外顶它
+      if(o.type === "ball" && inArcCavity(o)) continue;
       const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, g.mu||0, undefined, g.vt||0);
       o._N += jn/h;
       o._onGround = true;
@@ -1883,6 +2096,16 @@ function solveBodies(h){
         const other = isCirc(A) ? B : A;
         // 1/4弧槽是"导轨"、滑轮是绳的载体：这两类接触都不反弹，只做分离，
         // 否则物块撞到轮缘会被弹开，看着就像「撞到细绳被弹回去」。
+        // 球落进弧槽内腔（碗里 / 1/4 弧槽里）：交给弧面导轨接触。
+        // 以前这里走"球撞折线多边形"，弧是 28 段折线拼的，每段法向突变、
+        // 而且按非弹性处理，球每撞一下就被拿走一块动能 —— 看着就像越滑越矮、最后停住。
+        if(other.type === "shape"){
+          const gS = shapeArcGeom(other);
+          if(isDyn(ball) && Math.hypot(ball.x - gS.cx, ball.y - gS.cy) < gS.R + 0.02){
+            shapeBowlContact(ball, other, h, VMIN_PAIR);
+            continue;
+          }
+        }
         const soft = other.type === "shape" || ball.type === "pulley" || other.type === "pulley";
         ballPolyContact(ball, other, h, soft ? 0 : e, VMIN_PAIR);
         continue;
@@ -2124,6 +2347,7 @@ function substep(h){
   const dyn = W.objs.filter(o=>isDyn(o));
   for(const o of dyn){
     o._N = 0; o._onGround = false; o._onCart = null;
+    if(o._arcSteps > 0) o._arcSteps--;          // 离开弧面几子步后，弧段能量基准作废
     if(o.omg) o.ang = (o.ang||0) + o.omg*h;     // 自转角（质点模式下 ω 恒为 0）
     o._fsx = 0; o._fsy = 0;                     // 弹簧力每子步重算
   }
@@ -2398,10 +2622,15 @@ function drawGround(){
   ctx.restore();
   ctx.beginPath(); ctx.moveTo(0,sy0); ctx.lineTo(w,sy1);
   ctx.strokeStyle = "#34495E"; ctx.lineWidth = 2.6; ctx.stroke();
-  ctx.fillStyle = "#7B8794"; ctx.font = "8.5px system-ui"; ctx.textAlign="left";
   const mu = g ? (g.mu||0) : 0;
   const tilt = g ? (g.tilt||0) : 0;
-  ctx.fillText("地面 · " + (tilt>0?("倾角 "+tilt+"°"):"水平") + " · μ = " + mu.toFixed(2), 14, sy0+18);
+  const gTxt = "地面 · " + (tilt>0?("倾角 "+tilt+"°"):"水平") + " · μ = " + mu.toFixed(2);
+  ctx.font = "8.5px system-ui"; ctx.textAlign = "left";
+  const gtw = ctx.measureText(gTxt).width + 12;
+  ctx.fillStyle = "rgba(255,255,255,.86)";         // 白底：压到物体也读得清
+  roundRect(ctx, 9, sy0 + 9, gtw, 14, 4); ctx.fill();
+  ctx.fillStyle = "#7B8794";
+  ctx.fillText(gTxt, 15, sy0 + 19);
   ctx.restore();
 }
 
@@ -2584,8 +2813,80 @@ function drawCartBody(o, sel){
   ctx.fillText("小车 " + (o.m||0).toFixed(1)+"kg", x, y+3);
 }
 
-function drawShapeBody(o, sel){
+/* 1/2 弧槽：轮廓 + 紫弧高亮 + 碗口虚线 + 标签 */
+/* ---------- 弧槽贴地时裁掉埋在土里的部分 ----------
+   1/4 弧槽的弧底贴住地面时，外框底边可能比弧底更低（宽高大于半径），
+   那一截埋在地下的实心块只是累赘：绘制时沿地面线裁掉，界面才干净。
+   纯绘制层处理，碰撞与解算完全不动。 */
+function slotOnGround(o){
+  const g = groundObj(); if(!g) return null;
+  const th = (g.tilt||0)*Math.PI/180;
+  const nx = -Math.sin(th), ny = Math.cos(th);
+  if(ny < 1e-6) return null;
+  const low = o.y + arcBottomOff(o);
+  const d = (o.x - g.x)*nx + (low - g.y)*ny;      // 弧底到地表面的距离
+  return (Math.abs(d) < 0.03) ? { g:g, th:th } : null;
+}
+function clipIfOnGround(o){
+  const info = slotOnGround(o);
+  if(!info) return false;
+  const g = info.g, th = info.th, L = 800;
+  const dx = Math.cos(th), dy = Math.sin(th);
+  let a = { x: wx2sx(g.x - dx*L), y: wy2sy(g.y - dy*L) };
+  let b = { x: wx2sx(g.x + dx*L), y: wy2sy(g.y + dy*L) };
+  if(a.x > b.x){ const t = a; a = b; b = t; }
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+  ctx.lineTo(b.x, -8000); ctx.lineTo(a.x, -8000);
+  ctx.closePath();
+  ctx.clip();
+  return true;
+}
 
+function drawHalfBowl(o, sel){
+  const clipped = clipIfOnGround(o);
+  const p = polyOf(o);
+  ctx.beginPath();
+  p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
+  ctx.closePath();
+  ctx.fillStyle = o.color || "#E8EEF8"; ctx.fill();
+  ctx.strokeStyle = sel?"#2F6FED":"#34495E"; ctx.lineWidth = sel?2.6:2; ctx.stroke();
+
+  const g = shapeArcGeom(o);
+  const n = 44;
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const a = Math.PI + Math.PI*(i/n);
+    const qx = g.cx + g.R*Math.cos(a), qy = g.cy + g.R*Math.sin(a);
+    i?ctx.lineTo(wx2sx(qx), wy2sy(qy)):ctx.moveTo(wx2sx(qx), wy2sy(qy));
+  }
+  ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 2.4; ctx.stroke();
+
+  ctx.setLineDash([5,4]); ctx.strokeStyle="#B6C0CE"; ctx.lineWidth=1.3;
+  ctx.beginPath();
+  ctx.moveTo(wx2sx(g.cx - g.R), wy2sy(g.cy));
+  ctx.lineTo(wx2sx(g.cx + g.R), wy2sy(g.cy));
+  ctx.stroke(); ctx.setLineDash([]);
+
+  ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="right";
+  {
+    const nm = "1/2弧槽";
+    ctx.font = "8.5px system-ui";
+    const tw = ctx.measureText(nm).width + 10;
+    const nx0 = wx2sx(o.x + o.w/2) - tw - 4, ny0 = wy2sy(o.y) + 12;
+    ctx.fillStyle = "rgba(255,255,255,.86)";
+    roundRect(ctx, nx0, ny0 - 11, tw, 14, 4); ctx.fill();
+    ctx.fillStyle = "#4A5A6E"; ctx.textAlign = "left";
+    ctx.fillText(nm, nx0 + 5, ny0);
+  }
+  if(clipped) ctx.restore();
+}
+
+function drawShapeBody(o, sel){
+  if(o.half){ drawHalfBowl(o, sel); return; }
+
+  const clipped = clipIfOnGround(o);
   const p = polyOf(o);
   ctx.beginPath();
   p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
@@ -2627,6 +2928,7 @@ function drawShapeBody(o, sel){
   ctx.globalAlpha=1; ctx.setLineDash([]);
   ctx.fillStyle="#3A4A5E"; ctx.font="9px system-ui"; ctx.textAlign="right";
   ctx.fillText("1/4弧槽", wx2sx(x1)-6, wy2sy(y0)-8);
+  if(clipped) ctx.restore();
 }
 
 function drawBlockBody(o, sel){
@@ -2636,8 +2938,9 @@ function drawBlockBody(o, sel){
 
   const x=wx2sx(o.x), y=wy2sy(o.y);
   const w=o.w*W.view.s, h=o.h*W.view.s;
-  ctx.fillStyle = fill; ctx.strokeStyle = sel?"#2F6FED":"#2F6FED";
-  ctx.lineWidth = sel?2.6:1.8;
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = sel ? "#2F6FED" : "rgba(28,48,80,.20)";   // 未选中用极淡描边，堆叠时看不出缝
+  ctx.lineWidth = sel ? 2.4 : 1.2;
   roundRect(ctx, x-w/2, y-h/2, w, h, 2); ctx.fill(); ctx.stroke();
 }
 
@@ -2677,7 +2980,8 @@ function drawSpring(S){
   const ux = dx/len, uy = dy/len, nx = -uy, ny = ux;
   const amp = Math.min(0.05, len*0.05);
   const t0 = 0.14, t1 = 0.86, N = 12;
-  ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+  const on = (selLink === S);
+  ctx.strokeStyle = on ? "#2F6FED" : "#7C6BD6"; ctx.lineWidth = on ? 2.8 : 1.7; ctx.setLineDash([]);
   ctx.beginPath();
   ctx.moveTo(wx2sx(a.x), wy2sy(a.y));
   const p1 = { x:a.x + ux*len*t0, y:a.y + uy*len*t0 };
@@ -2691,8 +2995,20 @@ function drawSpring(S){
   ctx.lineTo(wx2sx(p2.x), wy2sy(p2.y));
   ctx.lineTo(wx2sx(b.x), wy2sy(b.y));
   ctx.stroke();
-  ctx.fillStyle = "#7C6BD6"; ctx.font = "11px monospace";
-  ctx.fillText("k=" + (S.k !== undefined ? S.k : 30) + "N/m  L=" + len.toFixed(2) + "m", wx2sx(a.x) + 6, wy2sy(a.y) - 8);
+  // 两端接点：选中时更醒目，方便确认点中的是哪一根
+  ctx.fillStyle = on ? "#2F6FED" : "#7C6BD6";
+  [a, b].forEach(p=>{
+    ctx.beginPath(); ctx.arc(wx2sx(p.x), wy2sy(p.y), on ? 4.5 : 3, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.font = "10.5px monospace";
+  const sTxt = "k=" + (S.k !== undefined ? S.k : 30) + " N/m  l₀=" + (S.L0 || 0).toFixed(2) + "  l=" + len.toFixed(2);
+  const sx0 = wx2sx((a.x + b.x)/2) - ctx.measureText(sTxt).width/2 - 6;
+  const sy0b = wy2sy((a.y + b.y)/2) - 20;
+  ctx.fillStyle = "rgba(255,255,255,.88)";
+  roundRect(ctx, sx0, sy0b - 11, ctx.measureText(sTxt).width + 12, 15, 4); ctx.fill();
+  ctx.fillStyle = "#5B4BA8";
+  ctx.textAlign = "left";
+  ctx.fillText(sTxt, sx0 + 6, sy0b);
 }
 
 function drawRope(L){
@@ -2743,26 +3059,32 @@ function drawVectors(o){
   if(!isMass(o)) return;
   const x = wx2sx(o.x), y = wy2sy(o.y);
   ctx.save();
-  // 小球：矢量从球面起笔，避免箭头穿过球体
-  const rr = (o.type === "ball") ? Math.max(0, (o.r||0)*W.view.s) : 0;
-  // 重力（整体平移出球体，长度保持不变）
-  const gLen = Math.min(70, 16 + o.m*W.g*2.2);
+  // 所有力一律从物体中心（重心）起笔，起点画一个小圆点标出作用点
+  const rr = 0;
+  // 统一比例尺：所有物体的力都用同一换算（2 px / 1 N），长度严格正比于力的大小
+  const grid = W.view.s || 100;          // 一个网格 = 1 m 对应的像素
+  const cap  = 1.5 * grid;               // 受力箭头最长 1.5 个网格（只有最大受力时才到）
+  const F_REF = 1000;                    // 质量上限 100 kg（g=10 时 G=1000 N）作为满标
+  // 用平方根映射：小质量也看得见，增长平稳，满质量才顶到 1.5 个网格
+  const lenOf = (F) => Math.min(cap, Math.max(4, cap * Math.sqrt(Math.max(0, F) / F_REF)));
+  const gLen = lenOf((o.m||0) * (W.g||0));                               // G = m·g
   if(W.forces){
     // 1/4弧槽是"导轨"，本身不作为受力对象展示重力
     if(o.type !== "shape"){
+      ctx.beginPath(); ctx.arc(x, y+rr, 2.2, 0, Math.PI*2); ctx.fillStyle = C_FORCE.g; ctx.fill();
       arrow(x, y+rr, x, y+rr+gLen, C_FORCE.g, 2.4);
       label("G", x+5, y+rr+gLen+2, C_FORCE.g);
     }
     // 支持力
     if(o._N > 0.1){
-      const nLen = Math.min(64, 10 + o._N*2.0);
+      const nLen = lenOf(o._N);
       arrow(x, y-rr, x, y-rr-nLen, C_FORCE.n, 2.4);
       label("N", x+5, y-rr-nLen-2, C_FORCE.n);
     }
     // 外力
     const fMag = Math.hypot(o.fx||0, o.fy||0);
     if(fMag > 0.01){
-      const fLen = Math.min(80, 12 + fMag*2.2);
+      const fLen = lenOf(fMag);
       const ux = (o.fx||0)/fMag, uy = -(o.fy||0)/fMag;
       arrow(x+ux*rr, y+uy*rr, x+ux*(rr+fLen), y+uy*(rr+fLen), C_FORCE.ext, 2.2);
       label("F", x+ux*(rr+fLen)+5, y+uy*(rr+fLen), C_FORCE.ext);
@@ -2852,6 +3174,7 @@ function nameOf(o){
   const n = { block:"物块", ball:"小球", cart:"小车", shape:"1/4弧槽", poly:"自定义形状",
     rope:"细线", rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮",
     deck:"平台" };
+  if(o && o.half) return "1/2弧槽";
   return n[o.type] || o.type;
 }
 function drawWirePreview(){
@@ -3316,14 +3639,20 @@ function shapeTangency(o){
   const th = (g.tilt||0)*Math.PI/180;
   const nx = -Math.sin(th), ny = Math.cos(th);
   if(ny < 1e-6) return false;
-  const R = Math.min(o.R, Math.min(o.w, o.h));
-  const cxs = o.x - o.w/2, cys = o.y + o.h/2;      // TL 构型的弧心
+  // 半圆碗的圆心在顶边中点、弧是下半圈；1/4弧槽的圆心在外框角上、弧是一个象限
+  const R = o.half ? Math.min(o.R, Math.min(o.w/2, o.h)) : Math.min(o.R, Math.min(o.w, o.h));
+  const cxs = o.half ? o.x : (o.x - o.w/2);
+  const cys = o.y + o.h/2;
+  const aBeg = o.half ? Math.PI : -Math.PI/2;
+  const aEnd = o.half ? 2*Math.PI : 0;
   let minS = Infinity;
   for(let i=0;i<=28;i++){
-    const a = -Math.PI/2 + (Math.PI/2)*(i/28);
+    const a = aBeg + (aEnd - aBeg)*(i/28);
     let px = cxs + R*Math.cos(a), py = cys + R*Math.sin(a);
-    if(o.orient==="TR"||o.orient==="BR") px = 2*o.x - px;
-    if(o.orient==="BL"||o.orient==="BR") py = 2*o.y - py;
+    if(!o.half){
+      if(o.orient==="TR"||o.orient==="BR") px = 2*o.x - px;
+      if(o.orient==="BL"||o.orient==="BR") py = 2*o.y - py;
+    }
     const s = (px - g.x)*nx + (py - g.y)*ny;
     if(s < minS) minS = s;
   }
@@ -3339,6 +3668,7 @@ function cartDeck(c){ return c.y + (c.h||0)/2; }
 
 /* 弧沿竖直方向最低点相对 o.y 的偏移 */
 function arcBottomOff(o){
+  if(o.half) return -o.h/2;
   const R = Math.min(o.R, Math.min(o.w, o.h));
   const cxs = o.x - o.w/2, cys = o.y + o.h/2;
   let low = Infinity;
@@ -3353,7 +3683,7 @@ function arcBottomOff(o){
 
 /* 弧底是否已贴住某辆小车（右侧"是否结合"的询问依据） */
 function bindTargetFor(o){
-  if(!o || o.type !== "shape") return null;
+  if(!o || o.type !== "shape" || o.half) return null;
   let best = null, bg = 1e9;
   const lowY = o.y + arcBottomOff(o);
   for(const c of W.objs){
@@ -3496,8 +3826,9 @@ function snapInBowlRadial(o, s){
   const dx = sx*(o.x - g.cx), dy = sy*(o.y - g.cy);
   if(Math.hypot(dx, dy) < 1e-6) return false;
   const a = Math.atan2(dy, dx);
-  if(a > 0.6 || a < -Math.PI/2 - 0.6) return false;    // 明显不在槽口这一带
-  const ac = clamp(a, -Math.PI/2, 0);                  // 落在槽口外一点点也收进 1/4 弧范围
+  const aMax = s.half ? 0.55 : 0.6, aMin = s.half ? -Math.PI - 0.55 : -Math.PI/2 - 0.6;
+  if(a > aMax || a < aMin) return false;               // 明显不在槽口这一带
+  const ac = clamp(a, s.half ? -Math.PI : -Math.PI/2, 0);   // 落在槽口外一点点也收进弧范围
   const ux = sx*Math.cos(ac), uy = sy*Math.sin(ac);     // 圆心 → 目标位置的方向
   const want = g.R - supportAlong(o, -ux, -uy);         // 贴住时中心该离圆心多远
   const tx = g.cx + ux*want, ty = g.cy + uy*want;
@@ -3572,6 +3903,7 @@ function landedOnGround(o, tol){
 function snapToViewEdge(o, bandPx){
   const b = boundsOf(o);
   if(!b) return false;
+  if(!cv || !cv.clientWidth || !cv.clientHeight) return false;   // 画布还没量出尺寸，别乱吸
   const band = (bandPx === undefined ? 12 : bandPx) / W.view.s;
   const wx0 = sx2wx(0), wx1 = sx2wx(cv.clientWidth), wy1 = sy2wy(0);
   if(b.x0 - wx0 < band){ o.x += (wx0 - b.x0); return true; }
@@ -3708,12 +4040,39 @@ function separateDragged(o){
   }
 }
 
-/* 拖动落位：先消穿模，再按 地面 → 邻接（已落地优先）→ 画布边缘 的优先级吸附 */
+/* 叠放吸附：松手点正下方有别的物体时，落在它的顶面上而不是穿过它去贴地面 */
+function snapOntoBody(o, band){
+  if(!isBody(o)) return false;
+  const lim = band === undefined ? 0.22 : band;
+  const A = boundsOf(o);
+  if(!A) return false;
+  let best = null;
+  for(const b of W.objs){
+    if(b === o || !isBody(b)) continue;
+    // 小车车面、弧槽弧面各有专门的吸附函数，交给它们
+    if(b.type === "cart" || b.type === "shape") continue;
+    const B = boundsOf(b);
+    if(!B) continue;
+    const ov = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0);   // 水平重叠宽度
+    const span = Math.min(A.x1 - A.x0, B.x1 - B.x0);
+    if(ov < Math.min(0.06, span*0.3)) continue;               // 没压在上面
+    const gap = A.y0 - B.y1;          // >0 悬在上方，<0 已略微陷进去
+    if(gap > lim || gap < -0.20) continue;
+    if(!best || Math.abs(gap) < Math.abs(best.gap)) best = { gap:gap };
+  }
+  if(!best) return false;
+  o.y -= best.gap;
+  o.vy = 0;
+  return true;
+}
+
+/* 拖动落位：先消穿模，再按 叠到别的物体 → 地面 / 车面 / 弧面 → 邻接边 → 画布边缘 吸附 */
 function settleDrag(o){
   separateDragged(o);              // 先消穿模（只推动待拖动的物体）
-  snapToViewEdge(o, 12);           // 画布边缘贴边（以水平对齐为主）
-  if(snapToSurface(o)) return;     // 地面 / 车面 / 弧面：最高优先
-  snapToNeighborEdges(o, 0.07);    // 其次贴到别的实体边（已落地者优先，目标自身不动）
+  if(snapOntoBody(o, 0.22)) return; // 压在另一个物体上：先叠上去，别被吸到地面
+  if(snapToSurface(o)) return;     // 地面 / 车面 / 弧面
+  if(snapToNeighborEdges(o, 0.07)) return;   // 贴到别的实体边（已落地者优先）
+  snapToViewEdge(o, 12);           // 最后兜底：贴画布边缘
 }
 
 /* 平滑跟随：把绘制坐标临时替换为滞后于目标的视觉坐标 */
@@ -3790,7 +4149,7 @@ function addObj(type, wx, wy){
     o.ax = wx; o.ay = wy;
     o.x = wx; o.y = wy;
   }
-  if(isBody(o)) snapToSurface(o);
+  if(isBody(o) && !o.half) snapToSurface(o);
   W.objs.push(o);
   selId = o.id;
   captureInitial();
@@ -3864,10 +4223,9 @@ function finishWire(a){
   draw();
 }
 function anchorToNode(anchor){
-  if(anchor.o.type==="anchor" || anchor.o.type==="ground" || anchor.o.type==="wall"){
-    return { x:anchor.x, y:anchor.y };
-  }
-  return { objId: anchor.o.id, local:[anchor.x-anchor.o.x, anchor.y-anchor.o.y] };
+  // 一律用"对象 + 局部偏移"记录端点。固定点、地面、墙以前只存绝对坐标，
+  // 拖走以后连在它上面的弹簧 / 细线就断在原地不跟。
+  return { objId: anchor.o.id, local:[anchor.x - anchor.o.x, anchor.y - anchor.o.y] };
 }
 
 /* SECTION: panel sync */
@@ -3880,6 +4238,7 @@ const ROW_VIS = {
   rowMass:  "body",            rowVel:   "body",            rowAng:    "body",
   rowForce: "body",            rowFdir:  "body",
   rowRadius:"ball pulley",     rowWH:    "block cart shape poly deck",
+  rowH:     "block cart shape poly",
   rowSlotR: "shape",           rowOrient:"shape",           rowTangent:"shape",
   rowSlide: "shape",           rowBind:  "shape",
   rowWallE: "wall",            rowMu:    "ground wall deck",     rowTilt:   "ground deck",
@@ -3895,8 +4254,12 @@ const CAN_COLOR = "ball block shape cart ground pulley";
 const hitRule = (rule, t, hasMass) =>
   rule === "body" ? hasMass : (" " + rule + " ").indexOf(" " + t + " ") >= 0;
 
-function applyRowVisibility(t, hasMass){
+function applyRowVisibility(t, hasMass, o){
   for(const id in ROW_VIS) $(id).classList.toggle("hidden", !hitRule(ROW_VIS[id], t, hasMass));
+  if(o && o.half){
+    ["rowOrient", "rowTangent", "rowBind"].forEach(id=>$(id).classList.add("hidden"));
+    $("vBind").classList.add("hidden");
+  }
   $("vRadiusNote").classList.toggle("hidden", t !== "ball");
   $("lbRadius").dataset.len = t === "pulley" ? "滑轮半径" : "半径";
   $("lbRadius").textContent = $("lbRadius").dataset.len + " " + lenUnit();
@@ -3916,11 +4279,19 @@ function syncPanel(){
     kr.value = clamp(lk.k !== undefined ? lk.k : 30, 5, 300);
     kn.value = (lk.k !== undefined ? lk.k : 30).toFixed(0);
     $("rowSpringK").classList.remove("hidden");
-    $("rowSpringK").classList.toggle("hidden", false);
-    kr.disabled = running; kn.disabled = running;
+    // 原长：改它等于改「自由长度」，弹簧的平衡位置跟着走
+    const L0 = clamp(lk.L0 !== undefined ? lk.L0 : 1.0, 0.05, 4);
+    const lr = $("rSpringL0"), ln = $("nSpringL0");
+    lr.value = L0;
+    ln.value = (L0*lenK()).toFixed(lenDec());
+    $("lbSpringL0").textContent = "原长 " + lenUnit();
+    $("rowSpringL0").classList.remove("hidden");
+    kr.disabled = kn.disabled = lr.disabled = ln.disabled = running;
     return;
   }
   selLink = null;
+  $("rowSpringK").classList.add("hidden");
+  $("rowSpringL0").classList.add("hidden");
   const o = selId ? byId(selId) : null;
   const badge = $("pBadge"), title = $("pTitle"), modeBox = $("pMode");
 
@@ -3942,7 +4313,7 @@ function syncPanel(){
   $("lockTag").style.display = running ? "" : "none";
 
   const t = o.type, hasMass = isBody(o);
-  applyRowVisibility(t, hasMass);
+  applyRowVisibility(t, hasMass, o);
   syncPanelSize(o, t, hasMass);      // 质量、半径、宽高、形状专属、墙弹性、杆
   syncPanelMotion(o, hasMass);       // 初速度、速度方向、外力、外力方向
   syncPanelPosition(o);              // 位置
@@ -3976,9 +4347,9 @@ function syncPanelSize(o, t, hasMass){
     o.w = +(bx1-bx0).toFixed(3); o.h = +(by1-by0).toFixed(3);
   }
   if(t === "block" || t === "cart" || t === "shape" || t === "poly" || t === "deck"){
-    // 平台也用「宽 / 高」两个滑块：宽 = 板长，高 = 板厚
-    setRange("rW", o.w, 0.1, 6, running);
-    setRange("rH", o.h, 0.02, 0.8, running);
+    // 宽 = 板长 / 块宽；平台的板厚固定，不再提供「高」的调节
+    setRange("rW", o.w, 0.1, 8, running);
+    if(t !== "deck") setRange("rH", o.h, 0.02, 4, running);
   }
 
   if(t === "shape"){
@@ -4154,8 +4525,29 @@ bindRange("rRodLen", (o,v)=>{ o.len = v; });
 bindRange("rRodAng", (o,v)=>{ o.ang = v*Math.PI/180; });
 bindRange("rRadius", (o,v)=>{ o.r = v; if(o.type==="pulley") o.r = clamp(v,0.05,0.8); });
 bindRange("rW", (o,v)=>{ o.w = v; if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h); if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
-bindRange("rH", (o,v)=>{ o.h = v; if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h); if(o.tangent) shapeTangency(o); if(o.type==="cart") followBinds(); });
-bindRange("rSlotR", (o,v)=>{ o.R = v; if(o.tangent) shapeTangency(o); });
+bindRange("rH", (o,v)=>{
+  // 1/2 弧槽的"高"就是碗深：调深度时碗底要钉在原地，否则整个碗会跟着上下漂
+  const keepLow = (o.type === "shape" && o.half) ? (o.y - (o.h||0)/2) : null;
+  o.h = v;
+  if(keepLow !== null) o.y = keepLow + o.h/2;
+  if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h);
+  if(o.tangent) shapeTangency(o);
+  if(o.type==="cart") followBinds();
+});
+bindRange("rSlotR", (o,v)=>{
+  o.R = v;
+  if(o.type === "shape"){
+    /* 半径一变就把宽高重算成"刚好撑满"的比例，弧才不会漂在框里：
+       半圆碗   宽 = 2R、碗深 = R —— 碗口正好容下整个半圆，两侧不留空壁；
+       1/4 弧槽 宽 = 高 = R —— 弧两端正好切到相邻两条边，弧底正好落在底边。
+       底面全程钉住，改大往上长、改小往下收，都不会离开原来那条基线。 */
+    const lowKeep = o.y - (o.h || 0)/2;
+    o.w = Math.max(0.2, o.half ? 2*v : v);
+    o.h = Math.max(0.1, v);
+    o.y = lowKeep + o.h/2;
+  }
+  if(o.tangent) shapeTangency(o);
+});
 /* 方向记忆：速度/外力大小为 0 时也要记住上次设定的方向，
    否则"先把方向拖到 180°、再把大小调大"会被强制拉回 0°（向右）。 */
 function velAngOf(o){
@@ -4217,6 +4609,18 @@ function setSpringK(v){
 $("rSpringK").addEventListener("input", ()=>{ setSpringK(parseFloat($("rSpringK").value)); });
 $("nSpringK").addEventListener("input", ()=>{ setSpringK(parseFloat($("nSpringK").value)); });
 
+/* 弹簧原长：内部存米，数字框跟着当前长度单位走 */
+function setSpringL0(v){
+  if(!selLink || selLink.type !== "spring" || running) return;
+  if(!isFinite(v)) return;
+  selLink.L0 = clamp(v, 0.05, 4);
+  draw();
+  $("rSpringL0").value = selLink.L0;
+  $("nSpringL0").value = (selLink.L0*lenK()).toFixed(lenDec());
+}
+$("rSpringL0").addEventListener("input", ()=>{ setSpringL0(parseFloat($("rSpringL0").value)); });
+$("nSpringL0").addEventListener("input", ()=>{ setSpringL0(parseFloat($("nSpringL0").value)/lenK()); });
+
 bindRange("rTilt", (o,v)=>{
   o.tilt = v;
   W.objs.forEach(b=>{ if(b.type==="shape" && b.tangent) shapeTangency(b); });
@@ -4267,6 +4671,7 @@ $("btnEditShape").addEventListener("click", ()=>{
 /* 长度单位切换：米 / 厘米（内部始终用米，界面换算） */
 function applyUnit(){
   renderLenLabels();
+  if(selLink && selLink.type === "spring") syncPanel();
   const sel = $("selUnit");
   if(sel) sel.value = lenUnit();
   syncNums();
@@ -4367,12 +4772,12 @@ $("selSlide").addEventListener("change", (e)=>{
   if(o.slide){
     o.tangent = true; o.vy = 0;      // 可滑动＝沿地面导轨贴着走，故默认保持相切
     shapeTangency(o);
-    toast("1/4弧槽已改为可滑动：会被小球推动，摩擦由地面 μ 决定");
+    toast((o.half ? "1/2弧槽" : "1/4弧槽") + "已改为可滑动：会被小球推动，摩擦由地面 μ 决定");
   } else if(o.free){
-    toast("1/4弧槽已改为无约束：只由重力与碰撞决定运动，既不贴地也不钉死");
+    toast((o.half ? "1/2弧槽" : "1/4弧槽") + "已改为无约束：只由重力与碰撞决定运动，既不贴地也不钉死");
     o.tangent = false;
   } else {
-    toast("1/4弧槽已改回固定：停在原地，不会被推动");
+    toast((o.half ? "1/2弧槽" : "1/4弧槽") + "已改回固定：停在原地，不会被推动");
   }
   captureInitial(); syncPanel(); draw();
 });
