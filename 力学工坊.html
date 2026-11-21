@@ -1,14 +1,26 @@
 <!DOCTYPE html>
+<!--
+  力学工坊 · 力学模型 DIY（单文件版）
+  © 2026 力学工坊  保留所有权利 / All rights reserved.
+  未经版权所有者书面许可，不得复制、再分发、修改或用于商业用途。
+  如需更换署名，请修改本注释与页面左下角的 .copyline 文本。
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="力学工坊">
+<meta name="copyright" content="© 2026 力学工坊 保留所有权利">
+<meta name="description" content="力学工坊：面向中学物理的可视化力学仿真工作台，含高考力学题库、圆环轨道、传送带、滑轮与细绳等模型，支持触摸白板操作。">
+<meta property="og:title" content="力学工坊 · 力学模型 DIY">
+<meta property="og:description" content="可视化力学仿真工作台：搭模型、跑仿真、对照高考真题。">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>力学工坊 · 力学模型 DIY</title>
 <style>
   /* 拖拽删除区：浅红 */
   #btnTrash{
-    display:flex; align-items:center; justify-content:center;
-    width:34px; height:34px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+    width:auto; height:34px; padding:0 10px 0 7px; border-radius:9px;
+    font-size:11.5px; font-weight:700; letter-spacing:.6px; color:#c96a6a;
     background:#ffe4e4; border:1.5px solid #f3bcbc; cursor:pointer;
     transition:background .12s ease, border-color .12s ease, transform .12s ease;
     margin-left:2px; user-select:none;
@@ -16,6 +28,13 @@
   #btnTrash:hover{ background:#ffd6d6; border-color:#eda8a8; }
   #btnTrash.hot{ background:#ffc2c2; border-color:#e07b7b; transform:scale(1.08); }
   #btnTrash:active{ background:#ffb3b3; border-color:#d96b6b; transform:scale(.95); }
+/* 版权水印（画布左下角常驻，不遮挡操作） */
+.copyline{
+  position:absolute; left:14px; bottom:8px; z-index:1; pointer-events:none;
+  font-size:9.5px; line-height:1.5; color:rgba(122,137,158,.92); letter-spacing:.3px;
+  text-shadow:0 1px 0 rgba(255,255,255,.85);
+}
+.copyline b{ color:rgba(96,112,134,.95); font-weight:700; }
 /* SECTION: base */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -56,6 +75,7 @@ input,select{font-family:inherit}
   display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;
 }
 .btn:hover{background:#EEF2F8}
+.btn.on{background:#E8F0FF;border-color:var(--blue);color:var(--blue);font-weight:700}
 .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
 .btn.pri:hover{background:#265FDB}
 .btn.pri.run{background:#EF4444;border-color:#EF4444}
@@ -90,6 +110,7 @@ input,select{font-family:inherit}
 }
 .card:hover{background:#EEF4FF;border-color:#C9DBFA}
 .card:active{cursor:grabbing}
+body.libdragging, body.libdragging *{cursor:grabbing!important}
 .card.on{background:var(--blue-l);border-color:var(--blue)}
 .card svg{flex:0 0 auto}
 .card .cn{font-size:9.5px;font-weight:700;line-height:1.25;min-width:0}
@@ -250,6 +271,28 @@ textarea{width:100%;min-height:180px;border:1px solid #C9D3E0;border-radius:8px;
   resize:vertical;color:var(--txt);background:#FBFCFE}
 textarea:focus{outline:none;border-color:var(--blue)}
 
+/* ===== 触屏（希沃白板 / 教学一体机）适配 ===== */
+*{ -webkit-tap-highlight-color:transparent; }
+html,body{ overscroll-behavior:none; }
+body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+input, textarea, select{ -webkit-user-select:text; user-select:text; }
+/* 手指点击目标放大：body.touchui 由启动时检测（any-pointer:coarse）自动加上，
+   也可以在测试里手动加，桌面鼠标环境不受影响。 */
+body.touchui .btn{ height:42px; padding:0 16px; font-size:12.5px; border-radius:11px; }
+body.touchui .card{ min-height:60px; }
+body.touchui .row{ padding:7px 0; }
+body.touchui .row label{ font-size:11px; }
+body.touchui .row .v{ font-size:11px; }
+body.touchui input[type=number], body.touchui select{ height:34px; font-size:12px; }
+body.touchui input[type=range]{ height:26px; }
+body.touchui input[type=range]::-webkit-slider-thumb{ width:22px; height:22px; border-width:2.5px; }
+body.touchui #edZoom{ left:10px; top:10px; gap:6px; }
+body.touchui #edZoom button{ width:36px; height:36px; border-radius:9px; }
+body.touchui #edZoom button svg{ width:17px; height:17px; }
+body.touchui .presets button{ height:40px; font-size:10.5px; }
+body.touchui .jit{ font-size:12px; }
+body.touchui #btnTrash{ height:42px; font-size:12.5px; }
+
 /* SECTION: responsive */
 @media (max-width:1180px){
   .right{width:308px;flex-basis:308px}
@@ -298,6 +341,51 @@ body::after{
   .modal{padding:10px}
   #edCv{height:222px}
 }
+
+/* ===== 题库：右上角题目卡片 ===== */
+.gkcard{position:absolute;right:14px;top:14px;width:248px;z-index:24;background:#fff;
+  border:1px solid #D8E2EF;border-radius:12px;box-shadow:0 10px 26px rgba(16,32,60,.14);
+  padding:10px 11px 11px;display:flex;flex-direction:column;gap:8px}
+.gkcard.hidden{display:none}
+.gk-hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gk-no{font-size:12px;font-weight:800;color:#1D4ED8;letter-spacing:.2px}
+#gkHide{width:20px;height:20px;border:0;border-radius:50%;background:#F1F4F9;color:#7A8798;
+  font-size:12px;line-height:1;cursor:pointer;flex:0 0 20px}
+#gkHide:hover{background:#E4EAF3;color:#33455A}
+.gk-tx{font-size:11px;line-height:1.65;color:#3C4A5E;max-height:96px;overflow:auto}
+#gkImg{display:block;width:100%;height:148px;object-fit:contain;border-radius:8px;
+  background:#F7FAFE;border:1px solid #E6ECF4}
+#mBody .gktip{font-size:10.5px;color:#6B7A90;line-height:1.6;margin-bottom:2px}
+#mBody .gkrow{padding:8px 10px}
+#mBody .gkrow .pn{font-size:11.5px}
+#mBody .gkrow .pd{font-size:10px}
+#mBody .gknum{flex:0 0 30px;height:30px;border-radius:7px;background:#EEF4FE;border:1px solid #D6E2F8;
+  color:#1D4ED8;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+#mBody .gkgroup{font-size:10.5px;font-weight:800;color:#7A8798;letter-spacing:.4px;
+  margin:7px 2px 1px;padding-left:2px}
+
+/* 赏饭小挂件：淡绿细描边小按钮（位于画布版权水印上方）+ 按钮上方的赞助二维码弹窗 */
+.tipbtn{position:fixed;right:18px;bottom:36px;z-index:60;height:24px;padding:0 10px;
+  border-radius:999px;border:1.2px solid rgba(121,179,121,.9);background:rgba(255,255,255,.92);
+  color:#79B379;font:600 11px/1 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  letter-spacing:.05em;cursor:pointer;box-shadow:0 1px 6px rgba(121,179,121,.14);
+  -webkit-tap-highlight-color:transparent;transition:background .15s,box-shadow .15s,color .15s}
+.tipbtn:hover{background:#F1F9EF;color:#66A766;border-color:rgba(102,167,102,.95);
+  box-shadow:0 2px 10px rgba(121,179,121,.2)}
+.tipbtn:active{background:#E9F4E6}
+.tipbtn[aria-expanded="true"]{background:#F1F9EF}
+.tippop{position:fixed;right:18px;bottom:68px;z-index:61;width:196px;padding:9px 9px 8px;
+  border-radius:12px;border:1px solid rgba(121,179,121,.42);background:#fff;
+  box-shadow:0 14px 30px -10px rgba(22,40,32,.26);text-align:center}
+.tippop img{display:block;width:100%;height:auto;border-radius:8px;background:#fff}
+.tippop .tpcap{margin-top:7px;font-size:11px;line-height:1.55;color:#5A6779}
+.tippop .tpcap b{display:block;margin-top:2px;font-size:11.5px;color:#6FAE6F;font-weight:700;
+  letter-spacing:.02em;word-break:break-all}
+.tippop .tpupd{margin-top:5px;padding-top:5px;border-top:1px dashed rgba(150,166,186,.28);
+  font-size:9.5px;color:#A2AEBD;letter-spacing:.12em}
+.touchui .tipbtn{height:32px;padding:0 14px;font-size:12.5px;bottom:30px}
+.touchui .tippop{bottom:70px;width:216px}
+
 </style>
 </head>
 <body>
@@ -341,16 +429,17 @@ body::after{
   <div class="sw on" id="swGrid"><span>网格</span><span class="dot"></span></div>
   <button class="btn" id="btnPreset">预设 ▾</button>
   <button class="btn" id="btnSave">保存</button>
-  <button class="btn" id="btnLoad">载入</button>
+  <button class="btn" id="btnLoad" title="题库：载入历年高考物理题模型">题库</button>
   <button class="btn" id="btnImg">导出图片</button>
   <button class="btn" id="btnJson">场景 JSON</button>
-  <div id="btnTrash" title="点击＝删除选中的物体；也可把物体拖到这里删除">
-    <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+  <div id="btnTrash" title="点击＝清空操作台（Ctrl+Z 可撤销）；把物体拖到这里＝只删掉这一个">
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 7h16" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
       <path d="M9 7V5h6v2" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
       <path d="M6 7l1 13h10l1-13" stroke="#c96a6a" stroke-width="2" stroke-linecap="round" fill="none"/>
       <path d="M10 10v7M14 10v7" stroke="#c96a6a" stroke-width="1.6" stroke-linecap="round" fill="none"/>
     </svg>
+    <span>清空</span>
   </div>
 </header>
 
@@ -381,6 +470,10 @@ body::after{
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 19 L3 6 A9 9 0 0 0 21 6 L21 19 Z" fill="#E8EEF8" stroke="#34495E" stroke-width="1.3"/><path d="M3 6 A9 9 0 0 0 21 6" fill="none" stroke="#7C6BD6" stroke-width="1.7"/></svg>
         <div><div class="cn">1/2弧槽</div><div class="cd">半圆凹槽</div></div>
       </div>
+      <div class="card" data-add="ring">
+        <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#34495E" stroke-width="1.4"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#7C6BD6" stroke-width="2"/><circle cx="12" cy="18.6" r="2" fill="#FFD9A8" stroke="#F59E0B" stroke-width="1"/></svg>
+        <div><div class="cn">圆环轨道</div><div class="cd">内侧整圈</div></div>
+      </div>
       <div class="card" data-add="poly">
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 20 L3 8 L11 8 L11 4 L21 4 L21 20 Z" fill="#D7E4FB" stroke="#2F6FED" stroke-width="1.6" stroke-linejoin="round"/><circle cx="3" cy="20" r="1.7" fill="#2F6FED"/><circle cx="11" cy="8" r="1.7" fill="#2F6FED"/><circle cx="11" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="4" r="1.7" fill="#2F6FED"/><circle cx="21" cy="20" r="1.7" fill="#2F6FED"/></svg>
         <div><div class="cn">自定义形状</div><div class="cd">三角 L 形</div></div>
@@ -400,6 +493,10 @@ body::after{
       <div class="card" data-add="rod">
         <svg width="24" height="24" viewBox="0 0 24 24"><line x1="4" y1="19" x2="18" y2="6" stroke="#34495E" stroke-width="3.2" stroke-linecap="round"/><circle cx="4" cy="19" r="1.8" fill="#fff" stroke="#34495E" stroke-width="1.3"/></svg>
         <div><div class="cn">细杆</div><div class="cd">可推可拉</div></div>
+      </div>
+      <div class="card" data-add="glue">
+        <svg width="24" height="24" viewBox="0 0 24 24"><rect x="3" y="9.5" width="18" height="6" rx="2" fill="#F5E6B8" stroke="#C9A227" stroke-width="1.2"/><line x1="7" y1="14.6" x2="10.2" y2="10.4" stroke="#C9A227" stroke-width="1"/><line x1="12" y1="14.6" x2="15.2" y2="10.4" stroke="#C9A227" stroke-width="1"/><line x1="17" y1="14.6" x2="19.4" y2="10.4" stroke="#C9A227" stroke-width="1"/></svg>
+        <div><div class="cn">胶块</div><div class="cd">粘住共速</div></div>
       </div>
     </div>
 
@@ -429,12 +526,17 @@ body::after{
         <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#F2F5FA" stroke="#34495E" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="#fff" stroke="#1D4ED8" stroke-width="1.5"/></svg>
         <div><div class="cn">滑轮</div><div class="cd">定/动</div></div>
       </div>
+      <div class="card" data-add="belt">
+        <svg width="24" height="24" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3" fill="#EDF3FA" stroke="#34495E" stroke-width="1.6"/><line x1="9" y1="12" x2="15" y2="12" stroke="#2F6FED" stroke-width="1.6"/><path d="M15 9.6L18 12L15 14.4Z" fill="#2F6FED"/></svg>
+        <div><div class="cn">传送带</div><div class="cd">恒速带面</div></div>
+      </div>
     </div>
 
     <div class="tipbox" id="hintBox">
       <b>小提示</b>
       点击元素卡片即可添加到画面中心，也可以直接拖进去。<br>
-      拖动物体改位置（靠近地面 / 车面 / 弧面会自动吸附），双击打开属性，Delete 删除。
+      拖动物体改位置（靠近地面 / 车面 / 弧面会自动吸附），双击打开属性，Delete 删除。<br>
+      一根手指在空白处滑动可平移画面；选中一个物体后，两根手指在它身上捏合可改它的尺寸。
     </div>
 
     <div class="lt" style="margin-top:10px">本场关键量</div>
@@ -447,7 +549,13 @@ body::after{
       <div class="ro-t" id="roTitle">实时数据</div>
       <div class="ro-b" id="roBody">选中一个物体查看数据</div>
     </div>
+    <div class="gkcard hidden" id="gkCard">
+      <div class="gk-hd"><span class="gk-no" id="gkNo">题号</span><button id="gkHide" title="收起">✕</button></div>
+      <div class="gk-tx" id="gkText"></div>
+      <img id="gkImg" alt="题目模型图">
+    </div>
     <div class="toasts" id="toasts"></div>
+    <div class="copyline" id="copyWm"><b>© 2026 力学工坊</b> · 保留所有权利 · 未经许可不得复制或商用</div>
   </main>
 
   <aside class="right" id="panel">
@@ -483,6 +591,9 @@ body::after{
 
       <div class="row" id="rowRodLen"><label data-len="杆长">杆长 m</label><input type="range" id="rRodLen" min="0.4" max="3" step="0.05"><span class="numwrap"><input type="number" id="nRodLen" step="0.05" style="width:56px"></span></div>
       <div class="row" id="rowRodAng"><label>杆角 °</label><input type="range" id="rRodAng" min="-180" max="180" step="1"><span class="numwrap"><input type="number" id="nRodAng" step="1" style="width:56px"></span></div>
+
+      <div class="row" id="rowGlueW"><label data-len="宽">宽 m</label><input type="range" id="rGlueW" min="0.08" max="0.8" step="0.02"><span class="numwrap"><input type="number" id="nGlueW" step="0.02" style="width:56px"></span></div>
+      <div class="row" id="rowGlueInfo"><label>粘连</label><span id="vGlueInfo" style="font-size:10.5px;color:#6b7686;line-height:1.55"></span></div>
 
       <div class="row" id="rowSlotR"><label data-len="槽半径 R">槽半径 R m</label><input type="range" id="rSlotR" min="0.1" max="4" step="0.02"><span class="numwrap"><input type="number" id="nSlotR" step="0.02" style="width:56px"></span></div>
 
@@ -556,7 +667,8 @@ body::after{
       </div>
 
       <div class="row" id="rowTilt"><label>倾角 θ °</label><input type="range" id="rTilt" min="-30" max="30" step="1"><span class="numwrap"><input type="number" id="nTilt" step="1" style="width:56px"></span></div>
-      <div class="row" id="rowBelt"><label>带速 v<sub>t</sub></label><input type="number" id="nBelt" step="0.1" style="width:56px"><span style="font-size:11px;color:#8a94a3">m/s　0=普通地面</span></div>
+      <div class="row" id="rowBelt"><label>带速 v<sub>t</sub></label><input type="range" id="rBelt" min="0" max="8" step="0.1"><span class="numwrap"><input type="number" id="nBelt" min="0" max="8" step="0.1" style="width:56px"></span><span style="font-size:11px;color:#8a94a3">m/s</span></div>
+      <div class="row" id="rowBeltDir"><label>速度方向</label><button class="btn" id="btnBeltDir" style="width:104px;justify-content:center">→ 向右</button></div>
       <div class="row hidden" id="rowSpringK"><label>弹力系数 k</label><input type="range" id="rSpringK" min="5" max="300" step="1"><span class="numwrap"><input type="number" id="nSpringK" min="5" max="300" step="1" style="width:56px"></span><span style="font-size:11px;color:#8a94a3">N/m</span></div>
       <div class="row hidden" id="rowSpringL0"><label id="lbSpringL0" data-len="原长">原长 m</label><input type="range" id="rSpringL0" min="0.05" max="4" step="0.01"><span class="numwrap"><input type="number" id="nSpringL0" step="0.01" style="width:56px"></span></div>
 
@@ -618,6 +730,15 @@ body::after{
   <div class="cinfo" id="chartInfo"></div>
 </footer>
 
+
+<!-- SECTION: tip -->
+<button class="tipbtn" id="tipBtn" type="button" aria-expanded="false">赏饭</button>
+<div class="tippop hidden" id="tipPop">
+  <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwQDAwQEBAQFBQQFBwsHBwYGBw4KCggLEA4RERAOEA8SFBoWEhMYEw8QFh8XGBsbHR0dERYgIh8cIhocHRz/2wBDAQUFBQcGBw0HBw0cEhASHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBz/wAARCAEkASwDASIAAhEBAxEB/8QAHQAAAgMBAQEBAQAAAAAAAAAAAAgGBwkFBAMBAv/EAGkQAAEDAwMCAwMECgsJCgsGBwECAwQFBhEABxIIIRMxQRQiUQkVMmEWGBlxdYGRlbPTFyM3OFaUobGy0dIzNUJSVFVyc3QkNDZDREVTV2NlJSYnRmKCg5OitMNHkqPBxOEoZHaFpMLi/8QAGwEBAAMBAQEBAAAAAAAAAAAAAAMEBQYCAQf/xAAvEQEAAQQAAwcDAgcAAAAAAAAAAQIDBBEFEiEGEzFRYXGBFCJBocEVFjJCUpHR/9oADAMBAAIRAxEAPwB/tGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aCpuozdqXsrts/dUKms1F9qUyx7O86ptJCyRnKe/bGk++6T3H5fYJSf467/AGdX517/AL3yd+Eof9M6pvoV2qsjcDby45lz2rSavLjVbwW3pkcLWlHgtniD8Mkn8eg4/wB0nuT+AlK/jrv9nR90nuT+AlK/jrv9nTFzbK6YabLfhzYW3EaXHWW3WHn2ELbWDgpUkqyCD2wdfD7F+lj/AKLbL+NR/wC1oF7+6T3J/ASlfx13+zqf7I9cVb3X3Tt60JdpU+FHqjjiFSGZbilN8WlrGEkYP0cfj1dlA2P2KuqD7fQrPs6pwQ54XtEJpt5vkMZTySSMjI7fXrPzphjtROrm3WGG0tstVOchCEjASkNPgAD4YGgfDqk6g6j0/wBKt6fAosWqGqyHWVokPLbCAhAVkcR65/k0tsP5SC45Uthg2NSgHXEoJE13tk4/xdS/5Sb/AIK2F/t8n9EjXV6VtmbAurp5otwViz6NOrK/bFKmvxwp0lDzgSc/UAPyaBzGu6SSe5+v6tK31O9VdW6f7ootGgW7CqrVQgmWpyRIW2pB8RSMAJB/xc/j0gi+pbdpKsDcW5PM/wDLD8dM90zXLYe6Fr1qfvdWqDWq5EnBiC9dMtsvoj+GlRSjmQePMqPb1J0HK+6T3H/ASk/x13+zr8+6UXH/AAFpP8dd/s6uy7rR6bZFpV5qhRNvXq05AfRCahvMLeW+W1BtLaQrJWVYAA75xrNi4dt7wtKEibXrXrNKhrWGkvToTjKFLIJCQpQAzgE4+o6Buz8pLcaxj7BaT/HXf6taFW/UlVihUyorbDapkZp8oByElaArGfXGdIH0kUTZGftS45uC3Zfz6Kk+kGsOtJfLPFHH6SgeP0sH7+nTou623UlyDSKPeNtvvK4R40SJUWVqV2wlCUhWT5eQ0E68tJtvt1l1raTdqo2XEtanz48YRimS9KcQpXitpUcpAx2Ksfi16+vLcO6dvrYtCTa9fqNHelzn0PLhPFsuJDaSAfiAdfvTrYlt7v7K0y9r5oVPuO65Rlh6rVNrxZLgacWhvKz/AIqUpA+AA0DdNK5toUcZUAdLb1T9S1T6fJdsogUGHVU1lEhSzIfW34ZaLYGOIOc8z+TS29Hu89/3lvxTaPX7vrVTpa40tSosqUVtkpbJSeP1HT73tthaO4S4jl0W5TKyqGFhgzmQ54QVjkE/DPEfk0CVWt8ofcFw3NRaQ5ZVLZbqM1mKpxMx0lAW4lJIGPMZ0zPUtvRO2IsWJckGlx6o4/UW4RYkOqbSkKQtXLKRnPuAY+vWdG6VJo1m9WUyBTo0Sl0WnXBE4NNgNssNhTSifgAO5OtN587a/elsUB+fbN1tsK9s9hElqVw4+74nFJOMc8Z/9L69AmB+UmuQg/8AiJSv467/AGdPltvcrt52DbVxvsIju1insTVMIUVJbLiAopBPcgZxqpq/tl05WrOECu0OwaVNKA4GJymmXCg5AVxUQcdj3+rX8bmbu2JbuzNzQrLvi3ok6n0d1qlMUupteI0pLeG0tJCs5GAABoPR1R7/AM/YKhUCpQKNFqiqlLXHWiQ+tsICUcsjiDn8elka+UiuJ95ts2LSgFKAyJzvqcfDSm3juvee4EaLGui56pWI8VZcZbmvFxLaiMEgfHHbRbe2F6XBHi1Sk2pW6hTFr92XEguutHirCsKSnHYg5+GNBsNvTuFJ2x2rrt5RITUyRS2G3UxnVlKF8nEIwSO/+Hn8Wq36WOo6pdQQuhdQoUSlfMxjpR7O+tzxPE5+fIDGOH8urCfvPbLceCLTfuK2a6mopDSqWJrTxfKcKx4YVk4Kc/i13LL20tPbxMz7FreptGEwJ9oEFkN+KU548vjjJ/LoOtdVVXQraq9UabS45AiPSQ2o4CyhtSsE+mcY0r3TP1d1bfPcGRbM62YNMZZpzs0PsSXHFEpW2njhQxg8/wCTVB71bvX3F6nazaTN21dFtuVmNDVTRIPs6mHA0FtlH+KQtWR9en7tDZyxLDqq6pbdp0ik1BTSmDIhxw2stkglJPwJSPyaCk+qDqoquwF0UWlQLehVRuow1SlLkSFtlBDhRgBIPbtnVF/dJ7j/AICUn+Ou/wBnXl+UgONxbOJ8vmhf6dWmH2l2O2lf2Ts+4rhs22uTlEjS5s+YwkDJaCluLWew+JJ0FBfdJ7k/gJSv467/AGdH3Se5P4CUr+Ou/wBnTCfYv0sf9Ftn/GY/9rR9i/Sx/wBFtn/GY/8Aa0C9fdJ7j/gJSf467/Z0xXS11J1LqFVc4n0KLSvmYR+Hsz63PE8QuZzyAxjh/LqNdSOyW2NA2CvCv2/ZlBiTGobbsWbEjJCk8nWwFJUPiFef16rP5NP+6bkfegfzvaDQLRo0aA0aNGgWHr3/AHvk78JQ/wCmdQz5OIZ2wuz6q4P0Depn17/vfJ34Sh/0zqGfJxEDbC7M+tcA/wDwG9AiO+PbebcEAD+/070/7deoDn735NT7fD3t5twSCP7/AE71/wC3XqA8frH5dBqh8n7+4IT6/PMofyN6T7pp/fgUH8K1D9E/pwfk/iBsJj/vqV/Ra0n3TT+/AoP4VqH6J/QMT8pLj7FbCz5e3yf0SNRbp66uNvdsdkaZZ9bTWTV4wlhfs0RK2j4ji1JworHooempR8pN3tWwxkZ9uk+Zx/xSNZ4wYwkT4rC/ouuJSeJ74JA0Ex2v2yrO8F3NW1bpiCpvNOvpMtzw2+KBk98Hvj6tXofk/d2z3Krb/OCv1ermvjZWhdHVvObpWPJqU6vw3EQkR60pLkcofPBRKUJQrIHl3/Lq5uk7fG4d9bSr9WuKJT40iBUBEbTAbWlJR4SVZPJROcq0GY7lFk7ObvRKbcRbMm3avHXN9jPiJKW3ELVxJxnt97vpkurbqlsXenbqn0G2hV/bmKo3LX7ZFDaPDDbiTghZ75WNMVfvRDYW5V5Vi6qpVriZqFVe8d5uM80ltKsAYSFNk47ep1HPudG2f+e7p/jDH6rQZiqWo9iokDyzq0ums/8Al7268v79RvT/ANPTzq+Tq2yT51u6v4wx+q137J6F7AsK7qLc1Oq1yOz6RKRLZQ+8yW1LQcgKAbBx946CvvlJABZtigeQqEj9EnUW6berCwNtNmqRZlZFYNYaXJCvZ4YW1l11RT73MHyUM9tNnvZsJb+/NNpNPuKXU4rNMeW+0YK0JUpSkhJBKkqGMDWX3ULtrStmt4Kna9EelSYNORGebXMUFOkraS4clIA8z8PLQX9trszcnSXd7G6e4BgG2YTbsZ35qfMh/m+ngjCClIIyRnvpx9nN/rV31ZrKrUFRApRaS/7dHDX905ceOFHP0D/JrOHdnq/vTeCyJFp1qnUFiA+606pyG04lzLauQwVLIxn6tR7YzqOubYNistW7CpMr53U0p/5wQtXHw+XHjxUn/HOc/VoL86jOkTcK59xb6vyEqiihurXOT4sxSXfDQ0M+7wxn3D2zqmek3d+3dltx59euZM009+luxECEyHFhanG1DIJAxhB/k1Nq78oBuNXaNUaTJo1sJjz4zkZxTTD3IJWkpJB8QjODqB9K+zlB3x3Dm27XpM6PDj0xyYlyCtKXCtK20gZUkjGFnQfz1YbtW/vLuhHuO2hMFPRTGYqhMZDa+aFuE9gT2woeuvU/0kX/ABtsjuEV0UUAUwVbtMPjeAW+f0OH0sHyzrndUm0FD2U3KjW3QJM5+CumszFLnLSpzmtSwRlKQMYSPT4670jrEvORtUrblVMoPzJ81Cj+L4Tvj+CEcOWefHlgeeMZ9NAuWtZuiT3umejZ7/t0/wDTL1k1x+sfl1rN0QI59N1AaJOFyZySUn4vrGgzp2Hvmlba7z27dNa8f5rpkh1bwjtBbmC04gYTkZ7qHrrVTZfqAtPfNFYNrpqQFIDQf9tjhr+6cuPHCjn6BzpUt+eiqxNstqbou6l1O4X6jTmkONNynmlNEqdQk8gGwcYUfX4aW/ZLqKuXYFNbTbkOkyhWCz43t7a1BPh8+PHipOPpnOfq0Hf6iapHofVvcdTlBZjQq3EkOhAyooQllRwPjgHWg20fVRYu890vW7bQq4ntRlyz7ZES2jglSQfeCz3ysdsayf3HvqduZeVYuuqNRWajVXQ663GBS2khIT7oUScYSPXTE/J4oI30nnKf7wyPIj/pWdBIvlIv3Q7P/BDn6dWmTcGehvuM/wDiMP8A5XS2fKRfuh2f+CHP06tMm4QOhrucf+Io8/8AZdBkso9/T8mhJ7+nkfTX6tJCvMfl1+JT38x5fHQa1b9/vN6x+AYP87GqP+TT/um5H3oH872rw37/AHm9Y/AMH+djVH/Jp/3Tcj70D+d7QaBaNGjQGjRo0Cw9e/73yd+Eof8ATOqU6Gd4bE232/uSBdlzwKTMk1bx2mZKlBS2/BQnkMA9sgj8Wm16hNo3t7dun7TYqqKWt2UzI9pWwXgOBJxxBHnn46Uf7m1VACBuNEAz5fNS/wBboGCk7wdM82S7JlVOxn5Lyitx12Aha1qJyVKUW8kn4nXy/ZW6YP8ALLC/NzX6vVBfc2qp/wBY8T80q/WaPubVU/6xon5pV+s0DM0nqL2GoET2SkXfbVPi8/E8GIjwW+Rxk8UoAyceekA6YJLUzq4tyQw4lxh6pTnELT5KSWnyCPxHVzD5NuqDuNx4n5pV+s1PNl+hubtPudQLxevSNUUUtbi1Rk09TRc5trR9IuHH0s+XpoGN3Tubba2YlOc3GeojUd9akxDVo6XUlYA5ccpODgjWdu/G0Nf3N3MrF37VWqqpWM+hn2KdRmENxVFtpKXOAHHuHErB7eYOry+UhXi2LC4q/wCXyc4/1SNVXsd1kwdsNtKVYL1oyJ7zS3m/bkzktpPjOKVngUHy5/HvjQLzRnNy92ZotiDULhuGQ6C983uTXHgoI7lXBasdtfWvUrc7ZSSzSqm5X7XcnJ9pTGblrYDwB488IVg+WMn4abOJsa/0WuDdmZWWbnZhAwjTGY5iqX7R7gV4hKgOPnjHf6tLv1L78xt/bnotZjUJ2kJp0IxFNLkB7mfEUvkCEjH0saDSfpyuEo6drOrdcqDrnh0pUiVMlOKWrihSypalHJOAP5NSiy97dv8AcSqO0u17qp9VqDTJkLYjqUVBsEAq7gdsqH5dIJZ/WjBtjZOLt0bPlPuM0l6mmeJ6UjLiVjnw4Z7c/LOvh8nasneitZPYUF79MzoH9vPfHbywKuKRc1106l1Lw0PiPIUoK4KJwrsD2ODrNS+bS3/pzlfuQKvRi2W3HpiJYqLqWUxioqSsftnZPEg+XlqR/KAKKd9mwFYzRI2PrPJ0akF4dcdOuraapWMmypEZ2bSfmwTFVBKkoPhhHPhw8u2cZ0Ep+T0u24bku29G61XapUkMwGFNomy3Hggl05ICicHVPdavfqhrgIBBRTwQfUeA3qyvk2/+GV948vm+P+lVqtetT99FW/8ARp/6BvQaKXRQdprEoBrVy2/alNpjZQhcmRTGQkKV2AOEHzOvBZH7Ce5Tc5VpUqz6uIPEPmLTGT4RVnjnKB58T+TX2332of3o20lWizVEUpyQ9HeEpbJdADagrHEEefl56iHTL05yunxi5WpNxM1kVhTCgpuKWA14YX2OVHOef8mgzu6k6Aj7Y28KJRKe00HKkiPFhxW0tp5KQgJSlIwBkn+XV3dK1oVvp13Em3TulTX7Ut6TTXYDU+ogJbW+pbaktgpJPIpQs/eSdVR1E1hNvdWFz1dbReTTq2xKLQVgrDYaVxz6ZxjTCS9z2eu1B24p9NXaTsFXz0ZzzwlpWG8tlvgkIIJLwOc/4PloG8oTu2u8kI3DTodv3LHbWYntzkND5SUgHhyWnPbkDj69Qxu5+nt66haqGbJVcJl+w+wimteJ4/Lj4ePD8+XbS9QN3WuhZk7YT6U5db8hRrPziw+IiUh73PD4KCzkeCTnPfPlpc9tbpF79WFt3EhhUdqsXW3NDBXyLYcf5cSRjJGfPQaWXxH2Y21jRJN2Ue0KQxMWW2FyaYyA4oDJAwg+mpPZNWtCuWaidY66cu3leMllVNbDbPIEhfEAAA8s57arvqZ2Bkb/ANEoVNjV9qjqpkpyQXFxy94nJHHjgKTj7+pBshtc/s3tZHtGRVG6m5EVJd9qbaLQV4i1LxxJOMZx56DJaDWtxdx6uLWg1q4a1IqK1Nopyp7rgf45VjipWDgJz3+Gmt6YLZoGx7dzJ30o1Moa6qY/zULgitueMGwvxfDyFYxzbz5fSGqI6SU56mLHBHYzH/0Dun96l+miV1Am2TFuBmiiih8HxIhe8XxOHlhQxjh/LoLBpVv7TVy10XPTretSTQXGFyUzW6WyWy2jPJX0M4HE/k1zdtL42YuO4lxLAk2w5XER1uKTS4iGnfBBSFdwge7kp/k17LE2rkWdsrE28XUkSnY9NfgGaGSlKi54nvcMk4HPyz6aqPpx6Qp+xV+vXNJuxmrIep7kL2dENTRSVKQrlkrPb3PLHroKH+UhBVuJZwHmaQ5+nVpg9pOoTaCnbM2db1fvGiB9iixokyFJysBQaCVoWkpIPfII8tfTqZ6Vpe/1zUarMXOxR0U2GqKW3Iany4S4V5yFpx541SI+TZqmMjcaJj8Eq/WaC/f2VumA/wDLbC/Nzf6vR+yt0wf5bYX5ub/V6oL7m1U/+seJ+aVfrNH3Nqqf9Y8T80q/WaCz+pHf3ay59h7vt+3LvpMqoSIjbUWFGKgVcXWzxSOIAwlJ/Jquvk0/7puR96B/O9ry/c2qpgj9keJg/wDdS/1umA6YemqT09LuXx7iZrPzyI+C3ELHheFz88qVnPP8WNAxmjRo0Bo0aNAaS3rG6j772ZvehUq1JUFuHMpvtTqZERLyufirT2J8hhI7adLVQ7pb5ba7V1mJTr1qSIk6Wz7Q0lUFx8qb5lOcpQQO6T20COWJ1ubtV6+bapM6dSTEnVONFfCachJ4LdSlWD6HBPfTa9YG7ty7N7d0ut2o/FanSKqiI6ZDAeT4ZacVjB8jlI76TK7elndXcC8K3eVr223Jt+vzXqnTZKZ8drxI7yy40sJUsKTlKknBAI1zJHRnvxLb8N+2FOIzniurx1DPxwXNA+XSZuhcO7u1X2R3M9HdqQqT8YKjshpPBIRgcR6+8e+kquLrk3fpteqsRidSfAjSnWkZpiDhKVkDJ/ENOZ0i7a3LtZtGq37qp4g1M1N9/wAFLyHfcWEBJ5IJHfB9fTVQ9TPUXtNde0d5WtQ6u05cj4Qy2yKc42eaJCCscygAdkq75/n0EW2NrcnrSqFXpO660y4duMolwRTR7GpLjqihZUUfSGEjz0vHULt7Rdsd+p9sW60+3SYa4ZaS86XVZW22tXvHz7qOo1tPtTfG6sqpRrJhLlPwG0OyAiYiOUpUohJypQz3B+9p39s91bG2G21Y273PnIp19U9Egyoy4q5agHlKca/bkJUk5QtH+F28tBOOu5QPTxUsEdp8L+npcejfpwsXeizLgqd1xZzsyDURGaMeWpkBBaSruB5nJPfUT6H5TtT39p0aU+5JjmBMJafWXEkhHY8VZGtANwN9tudlajFpd0VVNJlzmfaWm2oLiwtHIpyS2kjOQR3+Ggp2+eiLaWgWXcVThwKsJkGnSZLHKorUPEQ0pScj17gaz42q3aubZq4JFctZ2M1PkRjFWqRHDyfDKkqIwfXKR31pu71r7IPDiu71lJGCk0ySQR8D+168f24GwH8IWPzK/wDqtBXGzO19A6vLQVuDuazIlXI3Kcpgcp7xiN+A0EqQOCe2cuK7/e16d5ujPa2ytqrwuGlQaompUumvSY6nKgtaQtKcjKSO4z6aZ/a/cC1NyreXW7OlJk0kPrjlxMdTA8RIBI4qAPkod8amTzLchstuoStCuxSoZB/EdBnV8m2CLxvnPYmnRz/+KrVYdcC3Gepa43WhlbbMFQ7Z7iOjWkG4m6djbJx4c66ZrdKYqLimWXGoanCtSRyIPhpJ7A+uqwm9YGxVTS8lNxtvSn0lCSukP5UojA7lv73mdAmievHeMDAn0jAH+bG9fp6795SMmdSMH/utvUx2Z2juXpxv+NuFunSmqVZ0Zl6O9LLjcri48ni2PDbKldyfPHb11KOoCntdWsm339mIzVcj22l5NTIQIXhqeKS0MOhHLIbX5Zxj69Ald8XfVtwbrqdzVtTa6rU3A6+ppvw0lXEDskeXYDTMfJ2pI3tqvY/3if8A0zOmB2y3u2w2TsOh2Bf1QYp14W+x7LUYnzeuT4TnIqx4iEKSr3VJPYnUwY6yNhoznNi5kNr8sopEhJ/KG9BLd0el/b/d+5UXDc8WoO1JEdEUKjzFNJ4JKiPdHrlR76yxuuQvZ/fCsqtjDX2L114U/wBpHjcfBdIRyz9LyGfjrYTbfc62t2LfXXbVnqnUxEhUUullbX7YkAkYUAfJQ7/XrHXfz923cT8PTf0ytBbKevHeRXlPpB+9TG9f23107xSXUx1zqRhwhBHzYjOCcfH69fz0X7qWTtXct0TL2nIiRZkJpqOVxVP8lhzJ7JScdtQrqkvq3dwN5KtXrUlIk0V9iMlpxLCmRyQ0lKvdUAR3B9NBovYPSPtjYF00m66LEqTdXgqLrKnZ6nE8lIKTlJ7Hso6vwLTgAKB7fHWP3SNVJsrqMsNp6XIcbVJdylbqlA/7nd9CdOP1n7N7hbquWabHp7kwU5MsSimaiPx5lrh9JSeX0VeWcaBu+Q+I0ch8RrDC8qXdFhXHULerrsmLV6c4GpDIlFYQopCsckqIPYjyPrrqbcWXe+7FcXQ7TEmfVG46pSmTO8LDaSkE5WoDzUPX10D3dZPUXfGzF329T7UkwWos6AqQ97RES8SsOlPYny7AauZe4ld+1e+zzxWPsi+xcVXxPBHh+P4HPPDyxy9NZXbp7W3ntbUoEC94S4k2YwXmUqlofJQFFJOUqIHceWnJX1ObYHpZNjC4lG5PsV+bPZPYnse0ez8OHPjx+l2znGgo77fDeTGRPpBHx+bG9A68d5CcCfSCfwWjU8+Toix5d93ih5pt5ApTWA4gKx+3D460U+Y6aMEQIuQR/wAQj+rQZYfb4by/5dSPzY3pq+jDfm8t7F3iLtkQ3RS/ZDG9mipZwV+Lyzjz+gNJXtvdNBsjqaZrtxOoj0Wn1uauQ4Wi4EpPjJHuAEnuR2A1pztTvBt/usamLHqDcz5v8L2vhCXH48+XD6SU5+iry8saC0NGjRoDRo0aCqOojdyVsntw9dUOmMVJ5uWzH9nedLaSHCQTkAntj4aVuk2U118R13pWpblqv0JfzOiLBQJSHkkeLzKl8SDlzGPqGrd69/3vk78JQ/6Z1DPk4f3Mbs/Df/0G9BAJHW/V9n33dvYtnwKhGtJRorcx6attchMf9qDikhJCSoIyQDgE6+Y+UkuAjIsCmY/CDn9jS1b1WtW5W8F+vNUioLbcrk1SVJiuKCgX19wQnuNWr0bbd0Kt7jVWNuBb8ZykN0la2hWGS2143itgEFeBy4lX4s6CwR8pFcB/8wKaQO/aoOen/qa4+9HR7SrT2tr25jd1Tn5fhNTxBVEQlHJ9xGU8+WcDxD3x6abU7JbBHAFrWZ3I/wAJr4/6Ws5r8v8A3ar6a1bcqq3PLtpby2EwVNuKYLKHP2tIATggcU4+8NBevybXa6r8/wBgjfpV6qTrfBPUldeMkeFD8v8AZm9VhbN235tQuQ/Q6hWbeXPSEOONJWwXgk5AJI74yfy60R6b9uLT3l2eot6bgUGBcl0z1yBJqlTb8R91Lby0ICleoShKUj6gNBn/ALGbrSdlb8j3ZGpbNRdYYdY9nfdU0khxOM8gCe33tNxSbMa6+I7t41uWu1X7eV80oiwUe1JdSR4vMqXxIOV4wPh566/VdtNtlR9n50qyLZoLdfTMjJbVSUpcf4FeF4CCTjHn212vk7KZMpm3N2tTYkiMtVYBCX2lNkjwEd8EDQIHu9YbW2m5Fx2nGmOzWaTJ8BMhxsIU57oOSASB56hGFD0Otnrh2j2dr9wTJlbtu15lcmO5fXJ4eO44cDvlWST27Y0ufWrsfZ9obXUqZZllQoNTcq7TTjlNiHxC14TpIPHPu5CfyDQT35PokbDO9v8AnuSP/ga1VNc+UUr9IrVSp6LEpriYkl1gLM9wFQQspzjj9Wrd6CKfKg7HPMy478Z0VqSvg82UKI4tY7EDtqzal06bQcpE+dYlvZWpTrzzzAGSTkqJJ+J0GcHUP1QVHqAo9FgTbci0kUuQt9K2JC3SsqSE4OUjHlnVhbDdG9J3S2vpV9SLrnQJLy31GK3EQtALLqkj3ioHvx+Hrpwv2E9gf4LWZ/8Aea/taS3fzcuvbV7w1Cz9uLkkUSy2BFMem0l9IioLjaFO8QMjupSie/mToOfvf1k1TeLb+bZ8q04NOZeeZc9qZmLcUnw1ggcSkeePjqJ9OnUrP6f41wtQrei1f55UypZfkLa8Lw+YGOKTnPP+TTY9WuxFj2zsfUKjadkU2HWRKipQ9AikvBKnByAxk4xqreifbKzq5CvEbi27TXVsuRfYjWmvDIBDvPhzIz5Jzj6tAt11XC5vbvOurTI4phuepsIcbZJcDAWpDZIJxnA798aco/JuW+M5v6qDGf8Am9v+3q4Lp2j2WpFs1qoUK3bUj1uHCffgvRVN+M2+htSm1IwonkFAEfXpAf2bd/Ox+ym8/LJ7O/2dAwdT3bldDUsbY0amNXRDkJFZM+a6Yywp73CjggKGAGgc59TpKr8uR29bzr9yORUxnaxNemrYQoqS0XFlRSCe5Az560G6brftfdbb56vbxw6fWrsRUHYyJVxFIkiMlKChI5lJ4AqWR29Tqcbz9P22FP2fvOqW9YtERU2KQ+9DkRI3JYWEEpUgpJyfhjQIv0v9P8Hf+uV+mza1JpQpkVuQlcdhLpXyXxIIURjTN/c2aB/D2qfm5v8At6i/ydlFqNKvW9FzYEuMldMZCS+wtAJ8XyGQMnT+y7kpMB4syqnBYeAyW3ZCEKGfLsTnQJDUelundK8N3d+nXFLrsy1B7Q3TZMVLDb5cPg4K0qJTgOk9gfLV09LvUjP6gU3P7fQYtJ+ZvZwnwJCnfELniZzySMY4D8uvr1bXLR5/TtfceNVYDz64zXFtuS2pSv8AdDXkAcnWY2398X/Z5qAseqVqnpkcBK+bAs8+OePPiD5ZVj750Gge6fQzR90b/r13SbxnwXaq8HlR2oSFpbwgJwFFWT2Tny1Idg+kOlbFXu9c0K6ZlUddguQiw/EQ2kBakK5cgo/4nl9eujtjf0yV00wajXLh/wDGz5lluuuzJCUyg8A7wJCiFchhOMj0Gs5FdTu7+f3Q7g/jX/7aDRrqF6WKbv8AXDSarNuSXSVU6KqKltiKh0LBWV8iSoY88ap77m5b/wDD+p/m9v8At6UYdTm75P7odw/xo/1a7DO+e/UhpDrV23g40sBSVo8RSVA+oIT3GgY+r2u10CNN3RRJSrrduNXza5HnJ9lSwEDxeYKORJyMYOms6f8AdWTvPtnAu6XTWac9KfeaMZl0uJSG3CkHkQPPGdZR3jdm6u4UONDumXctYjRnC6y3MZdWG1kYJHu+eO2tH+h6HJp/TzQ2JUd1h5MyXlt1BQoft6vQ99BnfbG38fdLqGetGTNdgtVatTGlSWkBamwFOryEnGfo48/XWknTt020/p9VcCoNwSqv88hgKD8dLXheHzxjBOc8z+TWZtaYvC2dza3WqDErEOoxqrKcjzI0dwKQS4sZSePwJH49PF0M3tf94rvf7OKrW5/swh+yfOaV+5y8Xnx5AeeE5+8NA5WjRo0Bo0aNBSnVRtjXd3Np5NtW6Ivzk7MjvJ9qd8NHFCiT72Dpe9m7wpvRNRKjaW5/jir1mV86RvmhHtTZY4BrKlZTg8m1dvhjT36zT+UeVx3PtTt2NEI//wAhzQaCtXzS37BReyBI+Zl0351ALeHfA8LxPo5+lx9NZ+9XnU5Y29e3VLotsiqibFqiJihNieGjww04k4PI98rGuFYfWFeNdpltbWvUihN0KoNR7dckobd9oTHcCWCsEr48+Kifo4z6aYL7nRtwf/OK6vh2eY/VaDMhsclgdu+fPWtGz3Vvt5fNStiyaV88mtSWEx0eND4Ncm2cqyrkcDCD6ah/3Ofbj+EV1f8AvmP1WpZtp0U2VtbfFHu2k1y4H51LWtbbUpxlTa+SFIIVxbB8lH19BoPl1jbG3TvhRLXhWv7D4tNkvPPe2yPCHFSEgY7HJyDqA7c71Wx00WLF2fvYzTd9O8VL3zcz48bMhanG8OZGfdcTnt2OdOz6ayX6yf309e/0oH6BrQWTtZs9cfSTeLG5m4Qgi2YjTkNw0p72l4OPDigBGE9s+udOztFvVbG9tFqNUtf272WC/wCzO+2MeErnwCuwycjBGvvu1tTSt5bKetesy5kWC860+pyGUhzLZ5AAqBGM/VrmbJbF0TYmhVWk0KoVGZGqEkSlqnKQVJVwCMDilIxhI0GeW4tMfrHXDIhRgjx3bqiceZwOymicn7wOtXwO2suK4R9v833H/C2L6/6GtRyeIJ0H7qC7zWtPvbay7rcpYaNRqtOeiseMvgjmpOByPfA1N0nkM6/dBlUegDd7PYW7j8If/wDGvvC6BN3GJkd1f2PcW3EqOKgfIEH/ABNanaNB/LA/aUA5GABpUOsrp8vDfKZaK7WFO40luSl8zZPhd3C3x4+6c/QOdNjo0GYlndCu69Cu6gVSUKB7NAnx5LvCflXBDiVHA4eeAdacpPuqJz2J9df1o0CP9WXSzf2826DFxW380/NzVMZiEy5fhr5pW4o9uJ7e+NNjtRb0y0ttbTt+oBsTqTTI0N/wlckc0NhKuJwMjI89S1SylJIH4tCVch6A6Ho+mMayS66e3UbcPYf71hen/wDLo1rYDnS3bv8AR1Z+7N4VG7qvWK5GqElltCmoa2g2A2jinHJBPkBnvoMlM6bDo26gLR2LZu9F1GpD53MVUf2OP4v9zDnLPvDH0xpUnkBDq0g5AUQO/wBemf6R+nS29/2rqNfqNVhmjGMGRT3G08vEDmeXNKv8QYxjQVtvJX4W8W+VdqtuFz2W4J7KIhlo8NWVJQ2OQ7494fk10t2elm/NmLabuG5TSTT3JSIaTEl+KsuKSoj3eI7YQdO7Rfk+9vqHWKfU49wXMp+DIbkoS46wUqUhYUAcNA4yBr8+UOGNiqfnz+fo/wCie0GXKElasDWk21PW3tfZ22lo29UzXfnClUuPEf8ACg8kc0NhJwefcZGqO6TOmC1t+bUrtTr1TrEN+nzkxW0wFtpSUlsKyeSFHOTphPudG3H8Irq/98x+q0FxbQ9Sdlb3VaoUy1xVPaIDCZDpmRvCTwKuIweRyc6uAniNUfsf0v2xsPWapVKBVKvMeqMdMZxM9bakpSF8sjghPfPx1eBGR289AslT679qKRUptPlfZAJEN5bDnGBlPJCik4PPuMg6sXZ7qEtDfBVXTaoqJNJDRke2x/CH7Zy447nP0DpXeojo3s2ydvb1v2HWK8/VY/KYhl5xrwStx4AggIBwOZx39Neb5NMftm5A+qB/O9oNAtGjRoDRo0aDg3felAsKjLrFyVSNTKYhaW1SZCsIClHAHb1OkC6tKFUuoq86JXNrYTt20in04wpMulDxG2X/ABVr8NROMHipJ+8dN71J7TVXejbGRatHmwocx2WxIDswqDYShRJHugnP4tcHpW2JrWxFpVqj12o06fIn1D2tC4XMpSnwkIweaR3yk6CG7f3hsJaFo2xTbhfsmn3dSIUZmeiTDZEqPMaQkOBauGQ4laTk5zka4vUpuQd3rLp9G2VuaRWroYnolSWLdlLRITFDa0qUopKTw5qQPPzI1Vm8nQ/eUis35fKLioCaat+bWBHJe8UNZW7x+hjlx7eeM+uuD8nSee8lfz3HzC4cH/Xs6BuekmlXrRNqBGv5FYRXBUn18as6px7wiEcTlRJ4/Sx3+OkkuLb7qXdr9VXDi7h+yKlPFnw574Tw5njgBzyxjTnb19XlqbIXn9jFXodbmSzFbl+LCDXh8VkgD3lg590+muTtZ1tWZupfdHtGm29X4s+qLWht6UGfCTxbUs8uKyfJJ8h56Cr+mO4rs2bqtwS98KzWaJT6hHaapq7kmOLQ66laisN8lKwQkjP3xpb+qW7aHePUTVq9QapGqNHkGEW5cdRKFcWm0q749Ckj8Wme+Ukwm1rCI93/AHfJ7j/VI1QO0nRdd28NiU68KVX6FFhT1OpQzML3ip8NxSDnigjzST56BsN/926ZunttJt7aO6zVr0ckMOsxKDKWiUppCsuEEcTxA7nv5a7XRfQtwqFZdxNbiN11upO1ILjisvrdc8Lwkj3SpRITyz+PVEWpshWejKst7qXdUYFZosJCoS4dHKzIK3xwSoeKEpwD59/y6bfYjfWh770CqVihU2owGKfJEVxE4IClK4BeRwURjCtBM17f2wusmtKtyiqrJWHfb1QWi/4g8l+Jx5ch8c51JFDKcaXmZ1b2vE3nTtcqiVo1g1Jume1gNeB4i8YV9Llx7j0zphzoP5SOIxr91+chrnV+vU+2aNMrFVktxadCbLz77pwltAGSToPe46lCSSfLVEX91d7X2BUHaVIqz9Wq7KilcOksF9SFA90qVkJz+PVL1q9L16savLgW3JlWztREfDUiYoFuVUhnJ4fEYH0c4Gfez5atzbvaC0Ns4CY1ApLKXR3XMkAOyHDjGS4RkfeGB31gcU7Q43D55P6qvKP3WrGJXd6+EIOjqi3ZuUmRaWysl2mE/tcioyy2Vj4kYGPT1Ov1fUPv1T+TlQ2QZejpHJfsk8lQT6+qtXhx75JyfidfhQD8fP01zn853pncWo0uRw6nXiqu0ut+xZb7UC8IVVtKrE8FtTo6lsJOfRwDOPXJSNMjSq7T65Ajz6dKalwZCQtp9hXNC0nyII7aqu4bVo11wXINcpcSoRXElJTJaSsjIxlJIyk/WNLxUduLz6cahJuraaWuoW2E86hbc5xTv7WDkloep7nuPeH1jW7w3tPjZlUW7kclX6T/AMV7+DXbjmp6weoqH39CQO+PXVcbObwUDeW1G61RFOIdbUGpkN4AOxXsd0KHw+B9fxHVkBPHXSqL+hrL/rE3BuqgdRFYp1MuatwYCWoSkxYs91pocmUcvcSoDvk5+OtQBrJfrhdDPUrXHCMhEeCo/iYRoNMGNo7CWy2o2Pa+SkE5pEf4f6GuVVbm2u2PdaTPet20/nUKKODCI3tXh4BzwSM8eQ8/LlpeGvlHLCbaQj7F7oylIHlH/Wait6tHr9MJ2xj8wizwtMsV3sXvacFHDwefl4Ks5x5jQNH9tFs9/wBYdB/9+f6tLV1u70WBuDtBDpVsXXTKrUW6ww+qPFcKlBsNugqxjyyofl0md37YVKz90pO30ubEdqbE1mCZLPLwebnDBGQFY98Z7fHVkb4dJN17HWczclartGnQ3ZjcINQi6XOakrUD7yAMe4fX1GguboV3asfbqxLoiXVc9OpEmVUkOtNSnClS0BlIJAx5ZyPxaXnd7ea6Jm6V4yKBfdeVRHqpIXCMOqPpZLJWeHABQATjGO2qYStSfoqI+8dfz56B+fk+r2uS6L3u1mt3BV6oyzTG1NonzXX0oUXsZAWogHWgivL8Y1kL0p7+UPYO4q/U63TalOaqUJEZtMAI5JUHOWTzUO2NNSPlH7ByM2vdOM/CP+s0CaXNXtwr+v6v2jArdxVf26pSmGaV7c64h4JcWoI4FXEgBOQPq05HQVtfeG2y76+yy3Z9H9uEP2f2tvj4vHxeWO/pyH5RpLtt906XZe+0G/5kOY9S49TkzVRmQjxihwOcR3ITkcxnv8dac7B9R1v7/muih0qqQDRwz4pn+H7/AInPHHgo/wCIc5+rQXbo0aNAaNGjQfypYQO/rpMOr/qUvrZe96HS7WkwG4U2nGS6mVEDqufirRkEkdsJH8upx13yXomwM12O84y4KjEwttZSR759RqCfJ7NtVvbW6HaohM5xus8ELlJDqkjwGzgFWSBnPbQUXb3WTuduHXqZaNalUldHuGS3S5iWoQbWWH1BtwJUFZSris4PodPDtL0zWJszcMmu2vHqTU2RGVDWZMsupLZUlR90jzygd9Q6/wDfnaCdEuix6bUov2YvtSqRHiopjiFe2qSppCA54YSk+IQOWcDzzrPzcbZ3dzaeisVi7Ys6nU559MVt35zQ7lwpKgnCHCR2SfTGgszr/A/Z8BI7CjRex+OXdXfdOxNn9P8Ated3bLjTmrvokOPKjOTJBfYC3uDa+TZABHF1Xr2OD6aT+x+n3dTd6iC47doztWp/iqje0OT2kq5oxlOHFhXbkPq76mDvSD1APsqZdtuUtlQwUKq8cpI+GC7jQXRsrWpPWxOq9K3VCZMK2mm5cIUpPsig46ooVyIzyGED72uNuHvbdvTHuE7tRYLkSPadMUwYyJ7AkPDx0pccy4SCffcVjt2HbS6X7sxuTsnFhS7mpr1FYqTimmVtTm1eIpIBIPhrJ7A+um36eeobae0dj6XQrxrjCbnaErxUvwHZC/edWUZcCFA+6U+vbQWr12qKunmqcgrtPhZJHn+2aQLaTqUvfZakTqTar1PbiT5HtLolRA6rnxCexyMDAHbUYs607z3Zrybat72qqVB1C30xXJgSlSUDJOXFBPYfXqxx0U73ggmzOw/7xi/rNA5+y2xtqbmwrS3rrTU03xUlt1d91iSW2PaEqIBDWCAn3R2zprT6aWPYXeGzdvrYs3aS4qv7Hf8AASimSKZ4DjnCQpZIR4iUls9lDuFY7+emUnPrjxHXm0FxaElSUDzUQM4/H5aD6rISCSCex8tIv1F7gfsn7hT7KXKci7b2ZxlXPKbVn2pYwUspx3KuXuJT5lWT6DXuHWnetw0uY9S9smIrKmnvAkya2hskpJQVJSpA5lKvQZ8tU1t/au59Mes1CbDRVJdRqblxPJkVJpCqytvu34mT7obJKu/mTnUV2f7YnUy9U+OzGt3zdNqWA1ckHbdilWJS4gU0ip1hEWV7OnsghooPBRGPdUcnI+OpVtVuzb+7VAVVaIp1CmVBuREeADjC8A4UAcYOexHY4Oq03hTv5vHYVRtOZtFGgNynGnRIarbKyktr5DKcgHOlx2Tdr+wW+jNEuyJLgqfbUxOiMoMhRCkFSFANhXPBGfdyfPXOcU7OY9yxVXYp1ciN+/uu42XXFcRM9Gi2exOojf241I29hR3J6JMyoTXQxCpkFHiypbhHYIR8P/SPYaqZPUJdV33nWaDttZUe441KbbcXLVPSxkKx5pWBghRxjzGPLXDsup7yTdyq7f0XaeLVakw0KKy0ursoTT0owpaUkn3ionJV+LXPcK7M3Ll6Pq5iI1E6319phbv5sRT9nisyvX7uFa9Bk3VWrBgU63IrfjOtyK62iYhA8wU8ePP045yTgakG2e69t7rUAVagvrKkEJfiO4D0dXfAWAe2cdj5HVRb2Uzfreqx3LZnbQsU5BkNyUPsVxhRSpGfNOQCDy8tUztftpvZ0/XlAmrs9LhrnKnphOVBgIknHPBUFnBGMgn69b/EezGLXYn6eOWqPD191WznV82q+sLh3EgSOnfcuDuzbcdz7GZ7vg3LTmDnnzV2cSk9k5JyPgofBWnVoNUjVykQ6nCeS9EmsofZcSeykKSCD+Q6S2k7ywd06Vdlkbi0YWwHXl0gvrdK4ofHm2p7HFCwoAjJwe2Dqyeia75lX2un25Unw7MtKpOUpJ7Z8AAFvy8/8IA/VrR4LXk02O4y4+6nUb841uFfJ5Jnno8JM2NZN9bTSX+patIUAUqZgJIzg92UDWsg1y6pRqdJakPPQIrrxbVlbjKVKPb4ka2Vcke/nSBtntzszc11UWJVRVafHacYU9OUtAUp1CTlPHv2Udeb5NXHgbk48ucHH5H9JZbdJuvcW549rUR2XPqVRcW2zFcl8UuYBUQStQT5JJ7/AA1oh0ObMXrtA1eqbxo/zaakYhjf7obd8QIDvL6CjjHNPn8dAqe+Sc9ZNWVkDFwwexPf/iNaV7qbTW9vLbbVAuduWunNSky0pjPlpXiJCkjvg9sKV21V28fUFtBb7V4WxVKtGZupmK/GU0aa6pYeUyeA8QNkZ95PfPbWae3dpbgbq1xyiWkubUKm1HMlTPt/hYbSUgnK1geah6+ug0Y+0F2e/wAjrf5xV/Z0faC7Pf5HW/zir+zpN/tS+of/ADDO/PLH63XNuHpq33tWhVGt1akTo9MprC5Ml753aVwbSMqOEuknAHkBoLH6xOnKx9lbUt6fasae3Knzlx3VSpZdBQG+QwCBjvpOOP1j8une+TzccrV83gzVVqnNt0xpSUSj4oSfGAyArODjWhn2OUj/ADXB/i6P6tBgrx+sfl0/Xyah4r3HHmcQPL772nw+xykf5rg/xdH9WvTFpkKDz9liR2OeOXhNpTnHlnA0Hq0aNGgNGjRoKz322kY3rsF61ZFUdpjTslqQZDTKXVftZJxxJA75+OuN09bDxdhLcqdEi1p6rNz5ntpdeYSypB4JRjCVHP0c514urK9rqsDaCXWbOlOxq0mZHaS41HS8rgpR5DipJHl9Wof0ebt3RfFlV6ZuLW0rqbFS8GOZjbcVXheEg9kgJyORV3x/NoETrPJPVvKx2T9nH/64acn5RcY2coOPWvt/oHtXB9q9tJOugXeLYbdrTs0VMTEznyFPlfieIAHOP0u+MY1UHyjIxs5Qfw83+ge0HW+T/GdgyQPe+eZQB/E3rkbXdaVS3C3mp1gu2hDhsSpciMqYiatakhpLigeJQB34fH117OgesU2DsQWpc+Kw588SVcHXkoOOLeDgn6tWVbOx+yln3exdlGp9NjV9h1x5uV86LXxWsKCjxU4U9wpXp66CiflJQPsWsL0Bnyckf6pGqs2V6MKdu1tRAvh67plPdlCQfZWoSHEp8JxaeyisHvxz5eurI+UaqkGpWtYwhzI0gtzpJUGXUrKR4SfPB+rVt9Gv71ihf6NQ/Tu6BNehNIPUPTce8BT5mAf9Xpu+pnqsnbA3NR6NGtqLV0VGCZZdelKZKD4ikccBJz9HP49ZoWRuDce2dyIr1rVA0+rNocaS+GkOYSvsoYWCO4+rXWvy/wC/96p8Wq3LIl1qTCa9maeahpSG0cirj+1pA8yT376Cw7Avpe5fVna92OxEQ3qvckV9cZCytLeVAcQogE+Xw1rlLQXI7iB5qSpI/JrGHp3ivw9/dvWZDLjLyK7ECm3ElKknn6g9xraNaAsYPloEZhU6PF6WaNT51PZNdodekUl8uIHisL9odKwT6ZBScfWNX/BsWY4myalS5rEV+gRVNo8ZsrS8hxsAg47juM/j1SfUNQZW2d1VqsyfG/Y/vWXGfmLZSVfNlQaGPEKR/gupzlXxGmEg1KVce39OftSbEMmXFbMeQsFxn6/Lz7A6yeJzVRNNymesJrURPSX8VN7cBUgmDWLfbYCf+MiOKJPqc8vLS5W5bVb3B6lK9dc+rQeFmuswnvZGFJTIkhlxI45PYoC++c64t7dTt6WYuTDdkUp2rtvuRmoaWFFSlpVxye/YeuqjsjdfcixotSbprlGLtTmOT5b0ltS3HXl9ySrPp5Y1WrtcRuY9ymKo3MdP338L9jFm5VuinejR7ePR6B1Mbi0dTLLLlZp0SqRsAJCwlKUrAHxyCSdWRDt27rcrFbXbNQo7dPqkv2ssTYzi1tuFCUqwUkDBKc6Q2vbq7kTbwo16+JSm69RW1NNuREKQXmVZ5NrB+kk5P5dNBYPUVJvShmXCqdNM1lBVJiusqbdaUBkgJz3HoCM5+ry0owcm3NE0z15YifgvY9dM8ldExvwXnKcvpmEW0VCgqmkAc1RnQgH1OM5+rUdfti7bguK2qhcNVpColFlKkoZgR3EqcWpBSMlR7YzqnZG9O4LrilhdKbSTkJLSvdH386r6sdRN9XvPf28t+RS5dbrjaoomR1qaEAceS3Av1PEK8vL7+vd23nzEzVVEU/n2RV4/dRE1U6lPtkaPS9wWt3ZNVp7M63a7dL5bYfTybdQgY5J+vJ7EYI1WW1Fy3XsVuXurTrOtORctp0yc384Q2HD7Uwg8w2tA7lWASD2PYDOmu2/s+JYtoUa3YJC2YTKEFzASXl+alqx6lRJ7/HVbdJiRWdyt8rkb96PLrLcRtXorh4hP84/LrN4Bl1ZOdfrpmeTUREe2o386Mq1Fu1TH5NhTXjIhMOlDjZcbSvg4PeTkZwfrHrr+pqx7I/3/AOLV/MdfZtPEazr6s+pPc7breit25bdzKg0ZmNGUiOIjC+JWylSveUgnuSfXXWwzyqbWbgubV7l0q72YCJ7tKfccTGW4UJc5IWjuoA4xyz5emtOel7qOmdQCbnVKoEekCjezhAYkqd8XxOec8kjGOHp8dZu9Ots0O9d6LWo10MNyKFNfcEtt14tJUA0tQyoEEe8B5Ea1i2p2s2620FUTYUCLE9v8MywxMXI5cOXDPJasfSV5Yzr6MuerdSx1E7gBJOPbUeX+pb1Y/wAnkVHfSelXpQZHb/2rOnI3h6adr7hgXjd9SthMi4Xob8tcsy30kuoZPFXEL49uCe2MdtJh8n5LjwN8J70t9mO0aFIHN1wIGS6z2yT9R0DX9TXVPUNgbmo1IiW1FqyKlDVKLj0pTRQQso4gJSc+Wfx6lt+3Q5fHSdX7mejJivVe1HZymELKg0VscuIV2Jxnz11dxtrNpN2alDqN3x6bU5cNksMrNSU3wQVciMIcAPc+uufu8q2bf6dbxt+iTILcGDbkiJEjIlJWUoSyUpSCVEnsAO+SdApfycRP2d3oRjPzU1+mGre3961KlsvuVULQj2lEqbcVll4SnZq2yrxGwvHEIPlnHnpCNrtx7+21qE+ZYcyRFlymEtSFx4iJBLYVkZCkqx39e2vNfNXvvci45FxXQxUZ9WfQhDkgwS3lKE8UjCEADAHw0GuO4W6kuytlpm4TdObkvxqfHnexqdKUKLhbynkBntz88emoN0w9Ss/qCcuUS7ej0gUb2fHgyVPeL4vieeUjGOH8up3Dg2hee01Ktm5ZMGTTJlLisyoq5gbKuKEHBKVBQIUkeo8tfbavanbjbJVUNhwI0RU/w/a/AmrkcuHLhnktWPpK8sZ0Fl6NGjQGjRo0EJ3U3NoW0lqquS4lSk0xt9tlRiteIsKWSE9sjt20ku8Nn1LrUrcC7dsPBepVGi/NclVXX7K4HuanMBJCsji4nv8AX9Wry69/3vk78JQ/6Z1DPk4f3MLs/DY/QN6Dr2x1gbbbV25SbGrztWRW7Yit0mcmPB5th9hIbc4q5Dknkk4PqO+ofvHfVI60rcjWRtit92u02UmrvJqjXsjQYSlTRIX3yrk6nt98+mlIvqiR7l6mbgostxxuNUrueiOLaxzSlyWUEpz2zhXbOtINjulK1tibrmV6h1itTJMqGqEtuepooCCtKsjggHOUD+XQZgbobV17Z65RbdzJiJqXs6JWIzodRwWVY97A7+6e2rggdCG7dSgxpjDNCLElpLqM1AA8VAEZ934HXv8AlASP2fU5/wAzRR/8Tmrc6d+su8L+3Gs6w5tFt9mlykqjLfjpd8YJbYUoEZWRk8Bnt8dAq27fTveeyEClyrrbpyGam6tlkxJXiklIBOewx2I0zXTl1Wbebd7K0eyqu9VBWmvaUKDEMuNZddWpPvcvgoZ7a7/ykw5WtYQJxmfJ/RI1BdgOju0dytpKTfdQrVdj1J0yHCxFU14ILTqgkYUgnvwGe/x0FLbn9KO4G1FqPXPcbNKRTGXG2lmNN8VfJZwnCeI9dNp8nCSrbS8Mn/ngeX+oRqCWnvVWusast7VXhAp9Kosxtc1cqihYkhTA5JALpUnBPn2/Jr63zeMzoNnR7QsaOzWqfcDXzq+9XwpTrbgUWuKfCKBxwgHuCcnQQKuE/b+tjJwLti//AOmtRjrH/bi95e4vVbal1VJmNHnVa44sh1qPkNoPIDCQok47DzOtgDoOHdVvxrot+qUaYgKiVGM7GcyAcBaCnPf4Zz98DWemymzdMlV68bDrlduak3NbMsocRSqmplqUwScLCAMf4p7ehzrSU9xj46VLqf2pq9Oq9P3jsZgKum3k86jFHIifHSAMcU91FKSoH4p+8NVMy1XdtVU2p1V+PdJaqimqNx0K3ultfF2l3KdhNqkSadWGRKgSpa/FfJHZxKl+qs9/vEa4gVhHbHfTT1Jm2uqja5t+nSW4lbiAOMqUeLlOl4GUqHc8Ce31juO40qMuLUrfrEmg1+KqDWIiihbbmQl8DP7Y2T9JJxnI1T4NxCb9vuMjpdp6THn1dlwrKt26e6npvq9CRyx6n0z6a8Eq1GaqgShDlDj29ojoUkj6+QGmP2H2vp9QgJuesx/aAtakRYzoHh8R5rUPUkg4+rTEhhpLPhBIS2fIJGP5vT6tbsUcy3k5Nqv7ZpiYZsO200+hKHqpVX2gfoOy1FP3tWV072qiob12/wDN7SUMW6y7OkKAwQlSeCQT6klWdWhv1S7XlTI1OoTS5N/zFhtmHS20udiR70kD+5o7/SPf+XVp7BbKp21ojiHlJkXNVcPVKQFckBSScIQcZCE59fPz1z/H8umxYnHtzu5XGopjx6srLuYvJy2qYjzdDeG/mttduq7cfiI9qjt+FFQ6CfEfV7qBj17nJ+oa7fSnt29t5tHTkzuRq9cX87zSod0uPJSQn8ScfjJ1L6xtTaNbm0yrXLAYqcikBS43tiiWGScZX4ZPAnsPeUDj017JO51mwCG1XDAznGG188Y/0RqPgPDP4fj8t2dV1dZ9PRy3EOI2oq3XXER6zEJwNZJddP7424f9lhf/AC6Nao0a7qHX1Fum1aHLdSnkUMugqA+seekm60+mGv3RV6nudbryqitLDQn0pLf7a2hpAR4jWPpjAyU+Y8xny1vRO/BBbu0Xaeaidx6Ef27smq7jXfTrXogYNVqalIYEhzw2yUpKzlXfHZJ1pb0abC3fsii7xdTMBv51MUx/Y5Ad/ufics9hj6Y0jXR8P/4kbC/2l7/5d3T39WPUncewTlqpoVLpU0VgSS784JcPDwy3jjwUn/HOc/VokXxuP+59dX4Kl/oV6wrKz5dvIemm8rXyg9+1+j1GlSLbthDE+O5GWttD/JKVpKSRlzGcHShLGFEA5A0H5yP1fk0cj9X5NNf0p9Ldsb8WrXatXarWYb9PnJitpp6mglSS2FZPNCjnJ9NVSnaylHqL/Y39rm/M4uI0f2glAkeF43h8vLjzx9WM6CfdHm91r7K3PcVRul2ahifBRHZ9kj+KeYc5HIyMDGtNNs9yKJuxaMW57eXJVTJLjjaDIbLS8oVxVlOT6jWcXVV0vWxsPbNAqtCq1YmvVKYuO4mepshKQ2VAjghPfPx03XQpn7XGhY7kS5n6dWgy63AJF93P5f3zlen/AGytOv8AJpjLm459cQO4++9r+uojozs+zLDvW/olbr7tVj8pqWHlM+CVuPJyCAjOBzPrr8+TTwHNxxkeUD+d/QaBaNGjQGjRo0Cw9e/73yd+Eof9M6hvycP7mN2fhv8A/Tt6mXXv+98nfhKH/TOla6U+qW2NhbMrVIrdJq8+RPqHtaFwEtFKU+ElGDzWk5yk+WgjNf26u+P1Nz689atdbojV4GY5UF091MdDAmci6XCniEBOVcs4x3zjTWdXl9yro2+psXaq5XqrX0VVDj7Vqzi9JRHDbgJUGCVBHIpyT2yR9WmFlyU7p7SPv01KoybpoivZxK7eF7QwePPjny5jOM6Sqwdv53QtVJF/3vJjVmmVVg0ZqPQiVPJcWpLoWrxQgccMqHnnJHbQT3ptNpHbj/y0iifZkJz2Ps08L2/2fCfDP+6ff4Z5Y9PPGrqpVW2GoVRZqNKnbcQJ7BJbkRHYLTiMjBwpJBHYkfjOlVvjaGrdbNaRubZk2DR6OpoUsRq2VpkeIySVK/akrTxPiDHfPY6jf3OLcPOPsotTP+skfqtBMflBb4tq6rZslFBuGkVV2POkKcRAmNvlALaMFQQo4GfjpLKXuTeVCp6KbSrrrlPpyOXGJEqDrTSeRJV7iVAdyTnt3zqyt8ul+5dhoFHmV2rUiciqvOMtJp6nCUlCQok80J7d/TXf2y6Mru3T2+h3rSq7Qo1OlB4hmWt4Op8JakqyEtkeaTjvoKVsl27DXkfYaKv898F8PmfxfaOGPex4fvYx56ldfsbeC7ZLMiv23fNVfZTwQ7OhS31ITnOAVpJAzk/j1ZvQejw+oamAZ/3hM7/+z08++HVRbGw9dptIrtIrE1+oRfa21wEtFKU8yjB5rT3yD5aD49Ne1VAp+0diTqtZ1Oi3RHiJdcflU1Dcxt4LVhSlKTzCh27nvq/TpVbJ68bIvq7qJbUC3bjZmVeW3EadkIYDaFLOAVcXCcfeGmqPkNB/JONfJ1HNOPI5zn4a+pGdfhTjy0Cr7ndMVUp90Lv3aGox6FdK1rcmQZBKos8qPfIOQgnJyCMH6tVRXd3bWudqPa2+1g1Oi1aL+1+1OMLSzyzgrbcGFIST8OQ0/p7+euZXLfpdyQXINXgRp0JwYUxJbDiD+I6pZWDZyJ564mKo8Ko6TCWi9XT0iehOKVDaYYZY2+34p7FHbTxRBqgjTVN/eUSleAPQ69q6LMktvNXlv1GNLcQQ5HpnstPKknzHiZUrBHw76tardHGy9YWXF2YzGWfP2OU8yPyBWBrxQeibZWC6F/Yq6/g54yKg+tP5OWq84eVMcsZE69Yjf+1n6ufL9VMwd4NodnC/Rdv6VLuGry+yhSEqkrkq9At9RPLvjsAcfDTVbXP1j7AI9buyM1TalNQqa/DCSn2Fo90NKz3KkoxyJx3z2107M2ws/b1lTNr27T6SlzHMxWsKX39VHKj+XXqv9p9dl3AmOrCzCdx/90//AJa9Y/C7GPM3Y+6v/KesqWXmXItVVR+ImdFg3D3IqN6VJxCXlt0hCiGIyTgEZ+kr4kj0PYagv8mP5Ndq06yzRa5DlykIXAKvDkNrTyCmVYCxj73f8Wrmq1u7ZWK+qpSuU1T2HYtOK/EwPTCfh/peWvkUTd3VVL8XoxbvFZryrt6ImJ+7mnWvLXnH4VJaVn3Hcklp2ixH0hC/9+hRbQ0R6lf9WTplrGuluYRQajWo9Tr0RsrkOxUkt4zjHLyKh2B+/qgLw3UrNzIMNjFNpA91MSMcBSfTkR59vQdtdDYZt9W4EdTWQ01GdL31Ix2/+IjUlm5FNcU0ddtPgmfZw823j4UzXzTETM9I+Kf3nr6Op1R0uw9vtprjqFFh23bt6+zoepsiE0xEqHIvIC1MqSA5niVAlPoTqp+hRKd2W75N+pF1/NyoYh/Pw9u9mCw7y8PxeXHlxTnGM4Hw1J+vraao3fatOvWJKhNwbVju+1NulQedDrraUhGAR2OfMjUa+TUSUNbkJPouCP5H9aD9UM/f+0e38OxrmkR7Htll9qmylocbpTCVJUGVkEEIyCCAdY30O3KxdM4wqLSp9UmBsuFiDHW84EjAKuKQTjuO/wBetwdxyDt9dWD/AM1S/wBCvWb3yeORvrP8xmgyP0rOgoYVLcXalPzeJF0Wt7X+3eAVyIPike7z4+7y+Gfq1pTs7W9nf2PrJrNaqVifZeadFkyp8x6J7cJXAFS1uKPPxOWSSTnOly+Uj/dDs/z/AL0L/Tq0k+dBoF8oBe9sXRY9osUG46RVXmam6txuDNbfUhJZIyQhRwNWB0W7j2fbewNEgVi66FTpyJUsqjzKgy04kF4kEpUoEZGsvkjkoDTIbRdGl37x2RDuyj1yhRIEp1xpLUxTwdBQspJ91sjGR8dBpLVtzNrK7Ceg1S8LOmwX08HY0mpRnG3BnOFJUogjI9dezb8bcqVPNhfYvn3DLFA9n7+fDxPC/wDWxn68ax8s7aqp3nudFsGJMiM1OTMehJkvFXghbfPJOAVYPA+nqNaQdJfTjcXT+u6zXqnSZ3zyIvhfN5cPDwy5nlzSnz5jGM+ugZ/Ro0aA0aNGgWHr3/e+TvwlD/pnWUOPePl6+utzNy70tWwrZVWLxlMRqKh5DanHo6n0haj7o4JSo+frjVN/bUdOxAzcNLPxzRXv1OgmdmVaTQel6h1eEpAmU6z2pbBWnknm3DC05HqMgdtKbs1flW60bimWNud7O5QqdENWZFKa9ld8dC0NjK8qyni6vtjzwfTV93P1SbRXfZ9atS3bqak1isQH6bT4iIMhsOvutqbabBLYSnKlJHfAGfTVUdFmwO4m1G51Wqt226unU+RSFxkPGSy4C4XW1BOELJ8kn0xoGz2v2mt/Z+1/sctoS000yFySJLvir5r4g+9gdvdHbShbM9Wu4l8dQVKsqqu0g0STPlR1hmGEOFDaHSnCuXnlA9Nffq12R3Zv/do1ezKROlUYU5hnxWKi2wnxUlfIcVOJOe6e+NXltlvftLWKzQLSpVUhO3h4YjeAimuIWHm2j4g8QtgZHBffPfHn8Qme8Gxdqb3w6XGukT1M0xxbrAhyPCPJYAOexz2SNJNuRvRc/TTfc3aGyFw02hTy0Gk1Fn2iR/uhCXHMuZGfecVjt2GBpgOtLbS+9yaLacexYMiXIhyn3JQYmJjlKFNpCclS057g6lHTztnVLa2Op1Ju+iNIudoSvGErw5Dp5OLLeXMqz7pTjv2+rQenbHpP2+2oupi5rfTWE1RllxlJlTC4jitOFduI7410t3Ommx966zBqt0IqSpUGP7K17JJLSQjkVdxg5OVHvrPpfSz1DqVlNv1UJ7+daZ/XarXce0NyNpajCp13qqVNmzGfaGmjUfF5I5FOcoWQO4Og0mtPop2usy5aTcNLbrSajS5KJUcuzipAWg5GRx7jOmLI1iLthclXf3Js9tyqT1oXWIaSlUpZBBfRkEZ7jWg3yg86TT9m6M9FkPMOGutJKmXFIJBZe7ZB8u3loG0x9evz8v5NKx0DypNQ2NdfkyHX3BWpI5PLK1YCWu2SdZvXpctZavC4EJq1QCU1CQABKWAB4qvr0G5OAfTRgD01nl8nNVptSu+9hLmSZART2CkPPKWAS6ryye2vr1S7Fbv3rvJX69adInv2+4zH8N9qpNspJQykLwguA+YI8u+g0HwPh/Jown4fyawdcuattrUg1eo5ScH/AHU5/XqwNtdu90d22p71oIqVTbpykJlYqQa8Pnnj9NYznifL4aDaPA+Gv4dbS42tCgFJUCCD6jVcdPtvVu1Nm7So1yR3Y9chRS3KaddDqkr5qPdQJB7EeROvzdy/qRtw/ZtVrsn2amSKwILj5+i0XWHgla/ggKAyfTOfTQlRm7FgIsqrodiOJXTpylqZaBHJvB7px8O/b8mq9USk4UOJHorsdOtUqNb9ZXBr0tuJIRCbKo8lbgU0hJIJUDnj6Dvr5z/sXmUn5+nJo7tLQ17R7e8EKaDQGefiHtxx65xqnXic1W4lwGb2Li9fuXLNyKKZncR4z8/JPKTRKhXZSItNgvSXlf4LYz2+JPkB9Z00e1u3SLCpb8uatt2rSU5edH0WkjuED4geZPqde6zd0LEu6ozKLaFdpdSkwGkvPM05QU20gq4g8kjj5+gOuBf/AFKbZbfVmdbtyXImBWGGkqXHMV9eAtGU+8lBT3BHrqS1jxbne9y1+C9l7HDa++qnmr8/IiXUb1gV6/pd2WfRPYDYkpYitLVGPjvIbUk+JzJyOS05Ax5Y1U20PUJeOyQq4tVVPQKsWjIMuP42fD5ccdxj6Z1+dPVz0G0t7bartyyG2KDEkOrkuusl1ISWnEjKQCT7xT6a0S+2o6duP/CGmZx/mV79Tqw6hO9ma9M3f2OoVXuNSDLuCA8iYYqPCSQpS2zxHfB4/wAul03h22ovRrazO4O2hlIuCTKRSFmqu+1M+A4lS1YRhOFZaRg58s/HS2X3fsS5+pZVQtWryHLbmV2GYngKcZaLfJoHDZxgZ5dsD+XT19ZW3Nz7q7UxaFaVLNSqbVXZkqZDyG8NpbdCjlagOxWn19dBmtu9vddG9tUp9RukwlSoLBjNGIx4Q4FXLuMnJyfPVcY1Otwdorv2mqMKDd9J+bZkxkvstl9t3kgK459xRA7j10/20vUjsTQNsLPpVbrdOZq8Klx2JbblJdcUl1KAFAqDRBOR55OgzHA7jWtHQn26cqD2P+/Jnp/26tLR1m7wbZbkWnbcWxKjEly4k9x2QliCuOQ2WsAkqQnPfSgRK/U4TQZjVCYwynJDbUhaUg/eB0E2XfNU243mqdzUXwBVKZV5brBfRzQCVuJOU579lHWgfRrv7eG+a7v+ytyAfmkRTH9jjeDjxC5yz3OfoJ/l10d96NT2ekOsy24MRMg0OEvxQwkLySzk8sZycnv9eqe+TT/um5H3oH872g0C0aNGgNGjRoKp6hto5O9m3D9qRao1THXZTMj2h1kupAQSccQR55+OsuuobYaXsDctLosqts1Zc+H7YHWWFMhA5qRxIKjn6Oc62b1UW5+yW2W6Fbi1G96azNnxWDHZLs9yOUt8irASlaQe5PfQKRs50LVSWiw78F5wgw57DWfZPYFlQTlDvh8ueM+mca0TA4j01HaA5b1s0OnUamyojNPp0dEaO17UlXBtCQlIyVZOAB56oPrH3jr+2e3dKq1k15iHU3asiO4ptLMgqaLTiiOKgoD3kjvjQfu/HWHTtj76FryrTl1Rz2RqX7Q1MQ0kBZV24lJ8uPx1DNl+jqo2lulQdzXLsiSI3iu1D2BMNaV4faXhPMrx28Qd8emvjsHt1bfVJYKb83Up3z/dImu08zfFXG/aG+JQngyUp7c1d8Z76XWudVW+dtTp8GJcMmPS6e8uOyF0ljihpCihA5Ka79gBknQawYH1a/e2sg/t2d7/AOGQ/NsX9Xr00/rU3tkT4rTl5AocdQlQ+bYvcFQB/wCL0GlO+W7MfZSwpF2SaW7U2mH2WDGaeDSiXFYB5EHy+9rL3qb36ib/AN00WrxKI/SUU+EYhbekJeKyXFL5ZCRj6WNPb13A/a8VLPmZ8Lv/AO01ldGpUyUOTEZ95KVYJaaUoA/DIGgbParpGnrsW3t3hdEX2SEyK8aZ7GvxFpjqLha8TlgE+GRnHbPlrmdSvV3Tt+LGg25FteXSnI1QRNL70tLoIShaeOAkf4/n9Wm/2pbcb6NYMZTTge+xaYkoKTyB8N7tjzzpJekTai2r+3GqVOv6kqdo7VLW+2mQ65FHihxsAhYKc9lK7Z/m0DffJ9d9hnvT/wANyj/8DWqqrvydFYrNbqVRF+U9sTJLr4Qaas8eayrGeffz1Fd+Nza70y3qiytoqu3RbTchN1BURpDcwe0OFQWrxHQtXcIR2zgY8tOvuFddcpHT9VrlpklabgYoImMvoaSo+P4SVcuGCD3PljGgVOkW+v5P51y4Ks+m7W7oT7AhmGn2QsFo+JyJXy5Z5YwMabfZ7cxne7bWJdUanOUxqol9lMd1wOqRwWpvJUAM5xnSkdPr1W6r61WaTvO09XaZQ4yJVPbWyYXhurUUrOWQgq90AYORp2rEsCg7a27Ft62oXsNHiqcU0x4q3OJWoqV7yySckk9zoM0N8+jGpbM2FOu+VdsOpNsPtNGM1CW0pRcXxzyKz5Z1bvyan+8Nx/8AWQf5ntXD14/vdqz/ALbD/SjVO/JrnFO3II/6SD/M9oLPu/rVpto7vSNul2hMkSGKi1TvbUzUJQS4UAK4cc4HPyz6asXqR2Ulb8WHDtyLWGaU7HqDc0vvMF0KCULTxwCMfTzn6teeudPe0Vdvl27KrSI7t0uS25S3zU3UK8ZJTxPhhwAfRT2xrg9Xm4l37bbbQatZMx2LVXao3HWtuMl8+GW3Cr3VJUPNKe+NBnpv3t3XtiLjasSTdUiqwHYbc7w2S4zHHNSxjwiojI4Zz9ercldaVLk7CnbX7EJiZBt8UX2721HDkGgjnw4ZxkZxnS5bn3/du5Nxs1e85TkmrpjojpccjJYPhBSin3UpSPNR741Gk0GpLSlaIMpSFDKVJYWQR8Qcd9Bc/TF1BRNgK7XqlMocirJqcVEdLbMhLPApXyySUnOozvvuixvXujPuuLTnaY1ObjsiO66HSgobSjPIAZzjPlqv/sfqf+b5n8XX/Vr5ezSKfJAdbcZeQUq4rQUqHqDgj72gardTobqe1u3VavJ+8oU5mlsodMZqCttTnJaUYCis4+nny9NQPp16aJvUI3cK4lxR6R8yqYSoPRlPeL4vPywoYxw/l1ZW0+8G5e99/ULbzcSfJqVlVxxTNQhqgIjBxCEKcSPFQhKk++hB7KB7Y9dPVtxtPt/sqagbXp7VHFV4eOl2atfi+HniR4ijjHM+Xx0CoW18nbWKDcVIqqr7gOpgS2ZJbFOWCsIWlWM8+2caanf3eiNsPZTFzSqO9VW3pzcLwGXg0QVpWrlyIP8AiYxj11Ygr1MUQBUIhJOAA+jufy6iu5m39obm0JqkXpDbl0huQmQltyStgB0JISeSVJPkpXbOgTmq2m51+ut3ZSZSbSat1Jpa48tBlqfKj4vMKQUAD3sY76UcbVvq3r/Y0+dGvaPnv5l9v8I8OXi+H4nDOceuM6arfquVTpfrlKoeyLqqRRKtGVOnNx2xUAt8L4AlToWU+6AMAgaUoXFef2e/Zzwl/ZL7d85e1exf8o5cufDjx+l3xjGgbL7mvWj/APaDTz//AGxz9Zo+5r1kf/aBTvzY5+s1P+jTencnc66rkh3vVH5cOJAQ8wlyA3HAcLuD3ShOe3pqHdUvULu7t/vJVaFaNYkRaIzHjLbaRTWnwFLaCle8psnzJ9dA2m4W1Mi9tk5u3rVTajSJFOjwRNU0VJBaLeVcAc4PDyz66gfS900Tunxdzql3DGq/zz7Px8GMpnwvDK85yo5zz/k0sfTz1Sbs3xvZaNtXFc5lUqfJW3Ij+wx2+QDS1Y5JQFDukeR1pQO4GgNGjRoDRo0aCG7n7nUHaO1nLkuNclFMbeQwoxmS6vkskJ90fe0kO9to1LrRr1Ouza1DL9Jo0X5skqqixEcD3NTnZKs5HFxPf7+nP3m2npm89lO2tV50yFCckNSC9DKPECkHIHvAjHf4a5Gxmx1G2IoVQo9Gqc6fHnSvaluTi3zSrglGBwSBjCfXQZ1Vroe3YoFGqFWmxaMmHAjuSXimoJUQhCSpWBjucA9tLecjtreW56Mxc9u1aiPPKaYqcV2I443jmlDiCgkZyM4V2zpRh8nJt/jvddzZ/wBKN+r0El+T9x+wErIyPnmV2/8AVb1A+pfqx25vnae8rLpUiqGtyeDDaHYKkN8m30KVlRPYYQf5NM5sztBS9k7ONsUaoS5sP2pyWHZhRz5L45HugDHuj09Tqh6l8npYtXqUyc9dVyh2U8t5SUqj4BUoqIH7X9egzGAK1ADzJ1fW2fSpuHf1tU286KxS3KK44taVOzUoXhpwhXu4+KTqYdVnTHbewFHtudRqtVZ66pJeZcE7wsICEBQI4JHqfXXK2w6ybr2s2+i2XTLfosymxvGCX5Qe8UhxSlH6KwO3I47aBjt2t3ra6r7Mf2126clvXPKealtIqMcxWShk8l5cOQDjyGrI6N9mrp2Wsy4KVdTcRuVNqIlNCLIDyeHhJT3I8jlOky6FHfH6hqdnun2CZ2P+r01PVR1TXLsHdlEpFEo9InsVCAZa1zvFKkqDikYHBQGMJz+PQNJXKtEt6kT6rMSv2WDHclO+GjkrghJUogepwD9/SV70bgUbrKtaLYu2C35FegS0VZ5FTbMRoR0IW2ohasgq5Oo7fAk+mq/gddF57jzotn1G2qBHgXG4mlPvxw/4jTcghpSkclkcgFkjIIyBqaXttnTuhmkt7g2bKl12pVF5NGci1rj4KWlguFY8IIVyBZA88YJ7aBLd0dqLi2fuVNv3KiKioqjJkhMZ8Op4LKgO49fdPbWiFs9c+0dLtujwZEusePEiMsr401RHJLYScHPxB0gO8+8VU3qu9Ny1inw4UxERuIGYnPw+KCog++Scnl300V7dEtm2zs1Vb4jXDXnZ8SjfOSY7pY8JS/DC+JwjOMn450F4/b77Pf5XWvzav+vX79vvs9/lda/Nqv69ZRuApUcAhOewOvtAbS/MYacKuDi0oOPrONA9vVN1W7d7sbQVK2rdkVNdUfkx3UJkQlNo4ocBV7xPw1XvRlv5ZuyUK8W7renNqqy4pjiLFL2Q2HOWcEY+kNXyn5OawltpUq67n7gHzjj/AOnr9+5y2CEkpuu58j64/wCr0Cabj7iUO5epCZfEBb5oLtajTkrWzxcLSC2VHh55909taZ7VdTlg7xXG/QrYfqLlQajrlK9ohKaT4YUlJ94nzyodtZg3/tlTbV3/AJO38aZMdpjNWj0/2l0pLxQ4UAq7Djn3zjtjsNNpeu2cDoapaNxrNly67VJzwoy41b4llDTgLhWPCCVcgWUjzxhR0FRfKFDO/EP66HG/SPaYLa3rV2stLba0aDUpdY+cKXS40SQEU9SkhxDaUqwc9xkeeo3Zm01N64KSvcy8ZsyiVaO8aOmLRuIY8NoBaVHxQtXIl05747DtpHtzLbjWbuDc9uQnXno1IqUiE249jmtLbhSCcADJx6aDTL7fbZ7/ACyt/m1f9el73Q2Yuvqkv1/dHb5uI9a1QSyywuoSRGe5MJDa8tkEj3kKx8R31VfSlsFRd+a/cNMrtRqUBumxG5Da4Ph8lFS+JB5pPb72tMtrdsYGzdhR7XpU2VMiQi88h6Zw8RSlqKzniAMZ+rQWCyghltKx7wSM5Oe+lM6zNg7w3ves9VpMQXE0lMsSPapKWcFwtccZBz9A/wAmoVsl1uXjuduzbtnVG36DFhVN9xpx6N43iICW1r7clkeaB5jVmdV3UbcHT+7aoo1JpdQNaTJ8X27xPc8Mt448FDz5nOfhoM4JFtTtpN141LuVLSJVAqUdcwR1B0AJUhw8SPpe7/VppOrvqdsDeLbCLb9svVFypM1VqWRJhFpIQlDiT7xPnlY7ff1InOnS39/Nv5u9lbq1SgV+uQZFUegQfC9mQ40lSQlPNJXxPhDOST3ODpa+mHZ2j767iSrZrM6dBiNU1yal2Fw8QqQttOCVgjHvn0z2Ggtvo36jLI2UtC4addT89qVPnpktCLELoKA2E9yD2OR5aZP7ffZ7/LK3+bV/16h5+TlsBPY3Zc4/9aP+r1FdzegyyrH26ui5odyXE/KpFOfmNNPlgtrUhBUArCAcHHodBbX2+2z3+V1r82r/AK9H2+uz3kJdaHf0pq/69JR0rbDULfu5K9S6zUajAZp0NElC4Ph8lFTnHB5pV2x8NNR9zisId/sruf8ALH/V6BN9qdwaLaXUTT75qTkhNAYqsqWpbbJW54bgd4+58ffHb7+tRNot/wCzd6/nUWq9OcNK8L2j2qKWceJy44ye/wBA6yx2220pl676wtvpcyWxTZNSkwlSWuPjBLYcIIyOOTwHprTTYbpwoOwaq2aFVqnUBWPB8b24t+54fPHHgkefM5z8BoLs0aNGgNGjRoF+6yryr1ibKS6xbdVk0uponRm0yYyglYSpRCh5eR0gFG3s6iblYckUS4LzqbDauC3ILC30pVjOCUIIBwQcfXp4uvf975O/CUP+mdQv5OUrVtfdYBP9+wO3w9nb0Cx/sk9Uf+Ubh/m579Xo/ZJ6o/8AKNw/zc9+r03t19e+39oXPWbfm0K6HJlJluw3lstMFCltrKSU5dBxkeoGuR90a21/g/d3/uY/67QKz+yT1Rf5TuH+b3v1epj0yb77oXPv7aNv3HeFYl0+Q++iTDkuDiriw4cKGM9lJHb4jT6bObu0ney0Rc9Ci1CLT/a1xC1OSlLnJHEk+6pQx7w9fjrNvpq79YFB/Cs/9G/oGe+UJtau3VbVkM0OjVGqOszZCnEQYq31IBbSASEA4B+vX16cOnWyqpsNTJ95WBFVcwTL8dVSirbke665w5BRBHu8cdh2xq7N9N/Lf2Eg0ifcECqTGaq6tloU5CFKSUJCjy5LT2wR8dUk58obtzUmVwWaBdSXZKSyhTjMfAUocQT+25x30Gfu31VvKiXM3MsRdURXktuJQaW0px/gR7+EpBOMYz21Kb1pO9O406NOuug3nVpUZrwWnZVLfUUIyVYHueWSTpkbK2WrvRxXW91bzl02o0GI2uG5Foi1uSeb44oIDqUJwCO/vZ+GdN7sfvpQd+KDVKvQIVTiRqfJEVaaglCVlfALyOClDGCNBSGw9gbI0fbmzZV3wrSp97xGUPS01SS2xMZkJWSC4hawpKhhJwQPTTAVtG2G9EVFBny7cuhqOv2wQ25jcgtlIKfE4oVkY5kZ8ve1lV1We71Dbg4A/vifT/0E69/SxvRQ9jr/AJ9w1+FPlxJFOchpRAQhTiVKcQrPvKSMYQfX1Gg7nWrZFvWFvCzSrYpEWlU00mO8Y8ZJSnmpTgKsE+ZAH5NSXaS4N7rsvS0rau1N4S7EqMliJOjTYToiOwzgFKlcAOBT658vXU6vnaar9a9aG5djyYNMoiGE0gs1xSm5HjNZKlYaStPE+KnBznsew1cO33WVZlRuS3tuWaRcIrXjNUfx1ttCP4yf2sqyHOXHKSfLP1aCluu/aWydubWtCVattU+kPzJrzby4qCkuJDYIB7n1Okkpf98of+uR/SGtZOq/YC49+aDblPoM6lxHaXKdfcXUFrSlSVICQBwSo5yPXGs1Nzdtp2y+4Mi165IiSZ9O8B1x2CpSmlBaUrGOQSc4PwHfQaj9U1XvCi7LzZdirqiLhTIipaNLaU4/wKxzwlIJxjz7ar3oquXc24I15/skPXC460uKIQrMdbRAIc58OSRn/Bz+LXJb+UX21QhANu3ZySADhmP8P9dr9X8oxtsoHFv3bn0yzH/XaBWt5/36FR//AKmh/wBJnWm+5lFsOv0JqLuE3R3KMiSlxsVd5LbIewoJwVKA5YKvXyzrKG5L5gbldTbF10tmQzAq1wQ3mm5IAcSPEaThQBIzlJ8idO18oeE/sKUokf8APzH6J7QXTZlw7ObfUlVJte4rOpVOW8p8x4tUYSkuKABV9PzISB+LWd8mwJde6o5dYrFuzJFhTrpdkSKk/FX83uQ1Pklwv44eEUnPLljHfOuVsz0kXfvfaLlzUGq0CLCbluQy1PW6lwrQEkn3G1DBCx66vO/OqO1bV2hrmy8ynVly5KVSHLbeksttmGqQ0jwitJK+fDkk4ynOPQaBsdrrX2ht6oz3tumrZROdZSmV8zSUOr8PlkcglRwM/wAukq6u98NyLM3zrdDty7qrT6W3HiFuJHcAQkrZSVYGPUkn8evR8m5hV8XtkD+9jPp/22q663XksdStdcV5JYgK/EGEH/8ALQeTpks65LO32s6vXLQKtRqLEkOuSajUobkeOyksOAKW6tISkEqAyT5kfHV29eSVboPWKbGSbo9gRM9qNCHt3s/MtcOfhcuPLirGcZwfhqQ3P1NWt1PW3L2jtanVqBcFzITGiyaqhtMVCmyHSVlC1KAw0R2Se5GrJ6SenW49hBdYr86lShWDGLIpy3FcPD8Tly5pT58xjGfXQIdT7h6g7btQW/EZvmDbkeO4z7KKe8llDRCisHLfYYKie+rC+TyBTvtUAfMUKR+lZ1pDuOMbf3Vgn+9Uv1/7Fesm+lveWh7HbjSrlrsOfLiO0xyEG4CEKc5rW2oHClJGPcPr8NA3PWfdO7tCvK3GtuX7nRT3KetUlNGjOOo8UOnHIpQcHjjz1alzS6tP6OanKrypSq29Zy1zVS0lLxeMf3+YIGFZzntqtT8oztoT/wAHru/EzHH/ANbUU3P68rAvfbm6rbg0O5mplXpz8NlyQywG0rWgpBVh0nHfvgHQRL5N7/h7eX4Ka/TDWkCvL8Y1nB8nBxN/Xlx8vmpr9MNaPq8vxjQYdVy5ataG61brVDnvQKrDqstbElk4W2S4tJI/ESPx6fPoK3SvLcpd9fZZcU+sCCIfs4lrCvC5F3ljAHnxH5NZ77gf8O7n/Ccr9MvTs/JpfT3H+9A/ne0GgWjRo0Bo0aNAsPXv+98nfhKH/TOoZ8nD+5hdn4bH6BvUz69/3vk78JQ/6Z1DPk4f3MLs/DY/QN6BEN8v3Z9wfw9O/Tr1AdMZu5077p1vdS9qlAsOvSIMyszH2Hm4xKXG1PKKVA57ggg6hv2se73/AFd3D/FD/XoH4+T9/cDP4alf0W9J700/vwKD+Fah+if07/RVZlwWLsyaVclHmUqo/O0h32eW3wXwUG8Kx8Dg/k0kHTT+/AoP4VqH6J/QaOby7G2tvhDpUK6PnAsUxxbzPsT/AIR5LAB5e6cjA1UMjoK2np8Z6YwLh8aOhTqOU8Y5JGR24fEainyi9Tm0u2LFchTJEVS5slKiw6pvkPDR58SM693TDvtYdv8AT7SaVc180yNXsTPGYnSyXhydc45zk90lOPqI0FYbabw3H1bXWztnuB7Eq25bTktz5pjmM/zYHJGFlSu2fMY06Gz2y1sbI0So0q2BUfZp0j2l32x3xVc+IT2ISMDAGsWo1TlU2QXoUl1hzuAtlxSFd/rBB1YNmWjutuFCkTbXg3NV4kdzwXXYbjq0oXgHiTy88EH8egm++dGjXB1bXBS5oc9kn3FHiu8DxVwWWkqwcHBwe2nM+0A2iyfduP8Aj4/V6Qup7Dbxwm5VWn2VciEsJVJelvMqygJGSsrJz2Azn6tR6zoW4e4NSep1smv1ee00X1sRH3VrS2CAVEcvLKgPxjQNTujujX+jq5xt1twmL9j7kdFUKawyZL3jOkpV74Kfd/a04GPjpRbfveqW5fsW84hi/PESd84N+Ink14vMq7pyO2T5Z1Op3TxvVUXPFmWLdEhzjx5vMLWrA8hkknWkdjbi7PzI9v22KzarlxKaYhmCENF4yAkJLeOP0uQIx8dBXPR91HXnvdcNzQrnVTDHpsRp5kQYpbPJSyDn3jkYGlW6122pPU7Xm3CPDW3ASoZwcFhvP8+r++UJZbte1bMeoiE011+e+hxcEBguJDaSAooxkZ+Ovb0sbtbW0rZahRr0ua3mriQ9JL6ampC5AHjqKORWkn6OMd/LGgg/U10m7fbTbP1C6aAmrmpsvxmkGVNDiAFrAV7oQM9vr0izSQpxIIyCfLWnvU3ftr717S1Cz9u63Bua5ZMmO8zTKW54r60Nr5LUEj0ABJ1nbeW2t37buQvsot6oUdc3mY4ms8PF445cfjjkPyjQPb069I+3lz7dWNfcwVn59dQicS1L4teKh0kYTw8vcHbOpN8ocSdj6UT5/PzH6J7SdbQbZbt1Kr2bW6bQbmdtpU+M8iQx4ns5ZDw5EYVjj2Ppjz043yiA47I0of8AfzP6J7Qez5PT9wiZ+HZP6NnSXVu1qfe/V3V7cqni+w1W8Hoj/gr4L4LkKB4nBwfr0y3RHvLYVhbOyaXct20mlVBVYkPiPLfCFlBQ0ArHwJSfyarO2tqL2rHVXBvqBa9Uk2fNuv50j1dpkmM7EW+VpfSv1QUEKB+B0Do7Q9N1m7HVSo1C1hVPHqLKWHhLkh1PFKuQwAkYOdcHdHpN2/3UuqfdtwIrRqkhpCXExpfhtkNo4pATwPoB66rD5RWpTaZZdluQpciMtVSeSVMOqbJHheRwRpLrX2/3ivOitVqgUi6qlSnipKJUZbq21lJKVAHl6EEfi0Ha6RUBPUvYyUA8Uy38evYR3dO11hdQd47HPWgi2DTgKsmUX/bo3if3Mt8ePvDH0zn741mdadIr9cuOJTLcjTZNdkKUlhmHnxlKAJPHBz5An7wOtEuiTbW76K3eo3Gt2otF1UQwvnprxM48Xnw8TOPNOcfVoL02fuadu/sfQ6pcZaMm4YDqJfsifDThSltngMnB4j8v5NVYOgDaLAyLjz/t4/V6Ye7qSU2NXoNJi8XlU+S3HYjJ4nmWlBISBjBJPp66x8vCyd3LCpSKrctNuik09bqWBIluOoQXCCQnPLzISfyaB/ftANoR5/ZEPv1AD/6eofut0S7X2ftndtw0wV4z6VTJEtguzQpHNCCoZHAZHb469nyd0+XWLAu1c+VIlLRVmwlT7qlkDwUnA5E6Wvf7bHdpN+7i1xNAuYWqKjNk+0ftns3s3NR5fSxw49/LGNBW+0O9tybHVWoVC1zA9pqDCY7wmRy8AkK5dhyGO+tSemLcqubtbQ066LgMVVTkyJLavZWvDb4ocKU4Tk+g+OsZ8kqyda0dCP73Og/7XM/Tq0HgqvQjtRVqnNqEv5/9pmPLfc41AY5LUVHA8PyyTqx9nOn+0djHKsbVFS/8L+EJAmyPF/ufLjx90Y+mc/8A7a8HVo87D6e77lR3XGZCIjfFxtRSpP7e35Edx56XT5OOrT6q5uJ7dOlSfC9h4eO8pfHu9nHInGgfbRo0aA0aNGgWLr2BPT5Ox/nGH/TOlH6Zeqym7AWpWKLMtyZVnKhO9sDjElDQQPDSjiQoHJ93P49aV7hbc27ulbi7fuiCqbSVuoeUyl5bRK0HKTyQQe339VEeh7Y8n/gk/wDnSV+s0FP/AHSWg/wAqf8AH2v7Gj7pLQf4AVP+Ptf2NW/9o7sf/BJ/86S/1mj7R3Y/+CT/AOdJf6zQVB90loJ7fYDVAPqntf2NLf0rTU1TqstSe22pDcqdMfCVHJTyYeVjPrjOnv8AtHdj/wCCT/50l/rNSCyulLarb25qfclvW69ErFPUpUd81CQ4EFSSk+6pZB7KI7j10HH6ounuf1A0m3oEKtxqUaVIdeUt9hToWFoCcDiRjGNLT9zYrw/8/qb+b3f7etFtGgyk3r6MKlsrYkm65t1wqiyw+0x7OzEW2olxXEHkVEdvPX9dMfVVTNgLWrFHmW1LqzlQmiWHWJKGwgBtKOJCkn/Fz+PWl+4O3Vu7o265b90QlTaS64h1bKXltZUg5SeSCD2P16qH7R3Y/wDgk/8AnSX+s0FNyeu+j7kx3rNj2XUIb9xoNJbkrmNrSyqQPCCykJyQCvOB3ONcaibYv9CMtW4lZntXTGqSDRUwoLRjLQpZDniFayoEDwSMYz7w+GmJpXRjs1RKnCqUG13mpkJ9Ehlz5ykq4uIUFJOC4QcEDse2rK3J2stbduiMUW7aeufTmHxJQ0l9xnDgSUhWUKB8lK7Z9dBHdit5Iu+VmLuaLSXaWwmY5DDD7qXFFSAg8spAH+H5fVrKSi3g3YG+6LofjOS2aPXnJimG1hKnAh5R4gnsNa/7ebYWztXQVUO1IK4FNU+qSWlPLdPiKxyOVknvxHr6aq+d0VbK1GbJmSbUeXIkuKdcV85yhlSiSTgOYHc+mgoOuV5HX+2zb1FYXaq7XJnuPTyJIfDv7WEpCOOMcc5OuBI+TersZhx037TeLaSo/wC4HfQZ/wAfTn7Y7A2Ds9OnzbPo7lPkT2ksvqVLee5pScgYcUcdz6ash9hEllbS88FpKTg4OCMaDF/YLdSLspudEuuVTnqnHisPs+zsuhtSitHHOSCO2pl1QdRdP6hH7ZdhUGVSTRkvpIefS74viFGMcQMY4fy6exfRBsg4oqVaT3I9z/4UlfrNfg6HtkAci0n8/hSV+s0Eg6TUj7Xbb/sP94H9IvVWfKJ/uJUoevz6x+he0z1n2jSbDtqnW7Qo6o1IpzfhR2VOKcKE5JxyUST3J8zrk7k7WWtu1RGqNdtPXOprT6ZKWkyHGcOAKSDlBB8lH19dBhqOQ+Ott9gwP2E9vPLPzFC/Qp1Xo6Htjwc/Yk9+dJf6zV6W7b8C1aHTqLS2izTqcwiNHbKioobQOKU5Pc4AHc6CmOqDp/nb/wBDoFNhVqPSjTJS5CnH2FOhfJHHACSMakGxe1kjZramLaEyoMVB6GZLpktNFtKvEWpeOKiT2zjVta+bzIfbUhRPFQIOPgdBj10kjHUzY+R/yx/z/wBQ7rQ7qC6mYHT85QETLflVX54DxR4EhLXh+EUA5yDnPPt97XRs7pQ2psK5oNyUC3XYlZgrLjD5nyHOBKSk+6pZSeyiO49dSPc7Ymxd4VU03jSHKh82hwRuEp1nhzxy/uahnPEefw0CwfdJ6F/AGp/x9v8Asa5ta3SY664idtaRTHbWlRFitGdNcTJQtDQLfh8EBJBPjA5zj3T8dXh9o7sf/BJ/86S/1mpjtv03bcbTV9dctKhuwKk5HVFU6qa+8C2opJTxWsjzSnv59tArdDuxvoCZdtOsxV3U9cSvnREmCoRUspSPC4FK+RJynORrl7j9fVFvuwbltlmyqhFerEB6Gl9c1tSWytBTyICcnGfLTgbmdPm3+79Sh1G8KM5UJUNksMqTLeZ4oKuWMNqGe5PnqDfaO7H/AMEn/wA6S/1mgyOUn9sATk9vhrWXoTyOnKhfH2yZ+nVr2joe2PByLSfz+FJf6zVvWDt5b+2VssW5bERcOkMLW42yp5bpSpauSveWSfMk+egRfqA60aVfFl3nt83ac6LIkKXCExcxtSApt4Hlx45wfD+Prr3/ACahw5uOT2yIHn997TCVHot2Xqs+VOl2s85KlOredX85yU8lKUVE4DmPMnU42x2LsbZ35y+w2kuU75y8P2nlKde8Thy4/wB0UrGOSvL46CxtGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aA0aNGgNGjRoDRo0aD//2Q==" alt="赞助二维码">
+  <div class="tpcap">赞助与反馈请联系<b>1546306975@qq.com</b></div>
+  <div class="tpupd">内容持续更新</div>
+</div>
+
 <!-- SECTION: modal -->
 <div class="modal hidden" id="modal">
   <div class="dlg">
@@ -667,7 +788,8 @@ function emptyWorld(){
     objs: [],
     links: [],
     view: { ox: 60, oy: 0, s: 120 },
-    trail: true, forces: true, vels: true, grid: true, unitLen: "m"
+    trail: true, forces: true, vels: true, grid: true, unitLen: "m",
+    sticks: []
   };
 }
 let W = emptyWorld();
@@ -705,14 +827,17 @@ const DEF = {
   cart:  { type:"cart",  w:1.2, h:0.32, m:2.0, cartMu:0.2, wr:0.09 },
   shape: { type:"shape", w:1.0, h:1.0, R:0.9, orient:"TL", m:1.5, wallMu:0.0 },
   half:  { type:"shape", half:true, w:1.2, h:0.6, R:0.6, orient:"TL", m:1.5, wallMu:0.0 },
+  ring:  { type:"shape", ring:true, w:1.52, h:1.52, R:0.70, m:1.5, wallMu:0.0, fixed:true },
   poly:  { type:"poly",  verts:null, w:0.8, h:0.6, m:1.0, wallMu:0.2, topMu:0.15 },
   rope:  { type:"rope",  elastic:false },
   rod:   { type:"rod",   len:1.4 },
   ground:{ type:"ground", mu:0.3, tilt:0 },
   deck:  { type:"deck",   w:2.4, h:0.14, mu:0.2, tilt:0 },
+  belt:  { type:"belt",   w:2.4, h:0.18, vt:2.0, mu:0.2, tilt:0 },
   wall:  { type:"wall",  mu:0.1 },
   anchor:{ type:"anchor" },
-  pulley:{ type:"pulley", r:0.18, fixed:1, m:0.2 }
+  pulley:{ type:"pulley", r:0.18, fixed:1, m:0.2 },
+  glue:  { type:"glue",  w:0.22, h:0.062 }
 };
 
 function makeObj(type, x, y){
@@ -720,7 +845,7 @@ function makeObj(type, x, y){
   const o = Object.assign({}, d);
   o.id = nid();
   o.x = x; o.y = y;
-  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", half:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA", deck:"#E9EEF6" };
+  const DEFC = { cart:"#DDE7F6", shape:"#E8EEF8", half:"#E8EEF8", ground:"#F1F4F9", pulley:"#F2F5FA", deck:"#E9EEF6", belt:"#EDF3FA", glue:"#F5E6B8" };
   o.color = DEFC[type] || COLORS[Math.floor(Math.random()*4)];
   o.vx = 0; o.vy = 0;
   o.fx = 0; o.fy = 0;        // 外力
@@ -748,6 +873,16 @@ function rectPts(o){
 function shapePts(o, seg){
   seg = seg || 18;
   const {x,y,w,h} = o;
+  if(o.ring){
+    /* 圆环轨道：轮廓取外圈圆（轨道背面），内圈导轨面由 ringContact 解析处理 */
+    const Ro = Math.min(o.R, Math.min(w, h)/2) + 0.06;
+    const n = 48, out = [];
+    for(let i=0;i<n;i++){
+      const a = (i/n)*Math.PI*2;
+      out.push({ x: x + Ro*Math.cos(a), y: y + Ro*Math.sin(a) });
+    }
+    return out;
+  }
   if(o.half){
     const x0 = x-w/2, x1 = x+w/2, y0 = y-h/2, y1 = y+h/2;
     const R = Math.min(o.R, Math.min(w/2, h));
@@ -792,6 +927,7 @@ function shapePts(o, seg){
 /* 1/4弧槽的圆弧圆心与半径（与 shapePts 的镜像规则一致）。
    用来区分"落在凹弧面上（导轨，顺弧滑）"与"撞在外侧实体壁（正常碰撞）。" */
 function shapeArcGeom(o){
+  if(o.ring) return { cx:o.x, cy:o.y, R: Math.min(o.R, Math.min(o.w, o.h)/2) };
   if(o.half) return { cx:o.x, cy:o.y + o.h/2, R: Math.min(o.R, Math.min(o.w/2, o.h)) };
   const x0 = o.x - o.w/2, y0 = o.y - o.h/2;
   let cx = x0, cy = y0 + o.h;
@@ -938,7 +1074,86 @@ function shapeBowlHalfContact(A, S, h, vMin){
   }
 }
 
+/* 圆环轨道：竖直面内的圆环，物块在内侧跑。内壁只能"顶"、不能"拉"——
+   球心离圆心不超过 (R − r) 时贴壁滑行，超过才被推回来；速度不够时它自己
+   离开内壁掉下去，这正是"圆轨道内侧"模型该有的行为。 */
+function ringContact(A, S, h, vMin){
+  const g = shapeArcGeom(S);
+  const isBall = A.type === "ball";
+  const rad = isBall ? (A.r || 0) : 0;
+  const pts = isBall ? [{ x:A.x, y:A.y }] : polyOf(A);
+  if(!pts || !pts.length) return;
+  const target = Math.max(1e-4, g.R - rad);
+  /* ux,uy 是"圆心 → 物体"的径向单位向量，也是 contactSolve 要求的法向
+     （contactSolve 里 (nx,ny) 表示"从 B 指向 A"，B 是轨道、A 是物体）。
+     接触求解时还要翻成"轨道→物体"（朝圆心），见函数末尾。 */
+  let worst = -1e9, ux = 0, uy = 0;
+  for(let i=0;i<pts.length;i++){
+    const dx = pts[i].x - g.cx, dy = pts[i].y - g.cy;
+    const d = Math.hypot(dx, dy);
+    if(d < 1e-9) continue;
+    const pen = d - target;                      // 越过内壁（朝环外）为正
+    if(pen > worst){ worst = pen; ux = dx/d; uy = dy/d; }
+  }
+  if(worst <= 1e-6) return;                      // 还在内壁以内：自由运动（内壁只顶不拉）
+  const mu = (S.wallMu !== undefined ? S.wallMu : 0.0);
+  const e = (W.collision === "elastic") ? 1 : 0;
+  const relx = (A.vx||0) - (S.vx||0), rely = (A.vy||0) - (S.vy||0);
+  const vOut = relx*ux + rely*uy;                // 朝壁压过去的速度（向外为正）
+  const tx = -uy, ty = ux;                       // 切向
+  const vt = relx*tx + rely*ty;
+  /* 沿壁滑行：穿透浅、撞壁速度小、切向速度不弱于法向速度 → 走几何约束。
+     约束力沿半径、与运动垂直，不做功 → 环内机械能守恒。
+     反例：球竖直落到环底，法向速度全是"撞壁"、切向几乎为零，走不到这里
+     （否则竖直速度会被切成水平速度，球在环底自己横着滑走）。 */
+  const gliding = worst < 0.06 && vOut < 0.9 && Math.abs(vt) >= Math.max(0.08, vOut);
+  if(gliding){
+    if(invM(A) > 0){
+      const t = physOwner(A) || A;
+      const m = totalMassOf(A) || 1;
+      /* 环内导轨是光滑的：约束力沿半径、与运动垂直，不做功，机械能守恒。
+         做法是记一份"这一段滑行的能量基准"（在贴回位置之前取，用的还是
+         这一步入口的 y 与速度），贴回内壁后按它反解速率。
+         基准不每步重记：重记等于把上一步的离散误差固化成新的能量，球会
+         越绕越矮；但基准也不能无限期沿用，所以超过 0.5 s 没贴壁、或者能量
+         已明显偏离（说明中途被别的物体撞过 / 被绳拉过）时，就换新基准。 */
+      const gZ = W.g || 0;
+      const curE = 0.5*m*((A.vx||0)*(A.vx||0) + (A.vy||0)*(A.vy||0)) + m*gZ*t.y;
+      const refE = (A._ringE === undefined) ? curE : A._ringE;
+      if(!(A._ringT >= 0) || T - A._ringT > 0.5 ||
+         Math.abs(curE - refE) > Math.abs(refE)*0.25 + 0.05){
+        A._ringE = curE;
+      }
+      A._ringT = T;
+      const Eref = A._ringE;
+      t.x -= ux*worst; t.y -= uy*worst;                 // 1) 位置：贴回内壁
+      if(t !== A){ A.x = t.x; A.y = t.y; }
+      /* 2) 速度：方向取切向，速率由"基准能量不变"反解。 */
+      const vt2 = (A.vx||0)*tx + (A.vy||0)*ty;
+      const sg = vt2 >= 0 ? 1 : -1;
+      const sp = Math.sqrt(Math.max(0, 2*(Eref - m*gZ*t.y)/m));
+      A.vx = tx*sp*sg; A.vy = ty*sp*sg;
+      if(t !== A){ t.vx = A.vx; t.vy = A.vy; }
+      /* 3) 环没固定时，球压壁的这份法向动量按质量分给环：球绕内壁跑会
+         把环拖着走，而不是凭空消失（固定环时 invM(S)=0，什么也不做）。 */
+      const imS = invM(S);
+      if(imS > 0 && Math.abs(vOut) > 1e-6){
+        const imA = invM(A);
+        const wS = imS/(imA + imS);
+        const tS = physOwner(S) || S;
+        tS.vx = (tS.vx||0) + ux*vOut*wS;
+        tS.vy = (tS.vy||0) + uy*vOut*wS;
+      }
+    }
+    return;
+  }
+  /* (ux,uy) 是圆心→物体的径向；contactSolve 要的是"从轨道指向物体"，
+     也就是朝圆心，故取负号。写成 +(ux,uy) 会把球推出环外，直接从轨道上掉下去。 */
+  contactSolve(A, S, -ux, -uy, Math.min(worst, 0.25), e, mu, vMin);
+}
+
 function shapeBowlContact(A, S, h, vMin){
+  if(S.ring){ ringContact(A, S, h, vMin); return; }
   if(S.half){ shapeBowlHalfContact(A, S, h, vMin); return; }
   const g = shapeArcGeom(S);
   const sx = (S.orient === "TR" || S.orient === "BR") ? -1 : 1;
@@ -1157,7 +1372,7 @@ function hitTest(wx, wy){
       if(Math.abs(wx - o.x) < 0.12 && wy > groundY(wx)-0.1) return o;
       continue;
     }
-    if(o.type==="deck"){
+    if(o.type==="deck"||o.type==="belt"){
       // 平台是一块可倾斜的板：先转到板的局部坐标，再按矩形判命中
       const th = (o.tilt||0)*Math.PI/180, c = Math.cos(th), sn = Math.sin(th);
       const lx =  (wx - o.x)*c + (wy - o.y)*sn;
@@ -1174,8 +1389,17 @@ function hitTest(wx, wy){
       if(dist(wx,wy,o.x,o.y) < Math.max(o.r||0.16, 0.16)) return o;
       continue;
     }
+    if(o.type==="glue"){
+      if(Math.abs(wx-o.x) < (o.w||0.22)/2 + pad && Math.abs(wy-o.y) < (o.h||0.062)/2 + pad*0.7) return o;
+      continue;
+    }
     if(o.type==="ball"){ if(dist(wx,wy,o.x,o.y) < o.r+pad) return o; continue; }
     if(isBody(o)){
+      /* 圆环：只有环壁可以点，中间的空腔留给腔里的物体 */
+      if(o.ring){
+        const gR = shapeArcGeom(o);
+        if(Math.hypot(wx - gR.cx, wy - gR.cy) < Math.max(0, gR.R - pad)) continue;
+      }
       const poly = polyOf(o);
       if(!poly.length) continue;
       // 自定义轮廓的几何中心常正好落在边或凹角上（三角斜边、L 形内角），
@@ -1695,8 +1919,65 @@ function dirW(o, dx, dy){
 
 /* ---------- 通用接触求解 ----------
    n 由 B 指向 A；pen>0 为重叠深度；A/B 可为 null（静态） */
-function contactSolve(A, B, nx, ny, pen, e, mu, vMin, svx){
+/* ---------- 胶块造成的粘连 ----------
+   glueFor：判断这次接触是不是"撞在胶块上"（只看胶块所在的那一侧 + 沿边范围）
+   addStick：撞上了就登记这一对，之后每步把两者速度拉成一致（完全非弹性 → 碰后共速）
+   solveSticks：速度同步（动量守恒的按质量加权共速），分离或拉开即解除          */
+function glueFor(A, B, nx, ny){
+  const G = W._glues;
+  if(!G || !G.length || !A || !B) return null;
+  for(let i=0;i<G.length;i++){
+    const g = G[i];
+    let host = null, sgn = 0;
+    if(g.host === A.id){ host = A; sgn = 1; }
+    else if(g.host === B.id){ host = B; sgn = -1; }
+    else continue;
+    const cx = -nx*sgn, cy = -ny*sgn;                     // 从宿主指向对方
+    if((g.nx||0)*cx + (g.ny||0)*cy < 0.35) continue;    // 撞的不是胶所在的那一侧
+    const mx = host.x + (g.ox||0), my = host.y + (g.oy||0);
+    const other = sgn > 0 ? B : A;
+    const tx0 = -(g.ny||0), ty0 = (g.nx||0);
+    const tc = (other.x - mx)*tx0 + (other.y - my)*ty0; // 对方在边上的位置
+    if(Math.abs(tc - (g.t||0)) > (g.w||0.22)/2 + 0.16) continue;   // 没撞在胶块这一段
+    return g;
+  }
+  return null;
+}
+function addStick(A, B){
+  if(!W.sticks) W.sticks = [];
+  for(const s of W.sticks){
+    if((s.a === A.id && s.b === B.id) || (s.a === B.id && s.b === A.id)) return;
+  }
+  W.sticks.push({ a:A.id, b:B.id, gap:dist(A.x, A.y, B.x, B.y) });
+}
+function solveSticks(h){
+  if(!W.sticks || !W.sticks.length) return;
+  const alive = [];
+  for(const s of W.sticks){
+    const A = byId(s.a), B = byId(s.b);
+    if(!A || !B) continue;
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1e-9;
+    if(d > s.gap + 0.10) continue;                        // 已经分开：粘性解除
+    const nx = dx/d, ny = dy/d;
+    if((B.vx - A.vx)*nx + (B.vy - A.vy)*ny > 0.25) continue;   // 正在被拉开：解除
+    const ad = isDyn(A), bd = isDyn(B);
+    if(!ad && !bd) continue;
+    if(ad && bd){
+      const ma = Math.max(1e-9, totalMassOf(A)), mb = Math.max(1e-9, totalMassOf(B));
+      const cvx = (ma*A.vx + mb*B.vx) / (ma + mb);
+      const cvy = (ma*A.vy + mb*B.vy) / (ma + mb);
+      A.vx = cvx; A.vy = cvy; B.vx = cvx; B.vy = cvy;
+    } else if(ad){ A.vx = B.vx||0; A.vy = B.vy||0; }
+    else { B.vx = A.vx||0; B.vy = A.vy||0; }
+    alive.push(s);
+  }
+  W.sticks = alive;
+}
+
+function contactSolve(A, B, nx, ny, pen, e, mu, vMin, svx, svy){
   if(A && B && physOwner(A) === physOwner(B)) return 0;   // 同一刚体的两个部件不自碰
+  const gl = (A && B) ? glueFor(A, B, nx, ny) : null;
+  if(gl){ e = 0; mu = Math.max(mu || 0, 40); vMin = 1e6; }  // 胶面：不回弹、切向也不许滑
   const imAr = A ? invM(A) : 0;
   const imBr = B ? invM(B) : 0;
   const imA = imAr * dirW(A, nx, ny);
@@ -1724,6 +2005,8 @@ function contactSolve(A, B, nx, ny, pen, e, mu, vMin, svx){
     if(imBr) pushVel(B, -nx*jn, slideLocked(B) ? 0 : -ny*jn);
   }
 
+  if(gl && jn > 0 && isBody(A) && isBody(B)) addStick(A, B);   // 撞上了：登记粘连
+
   // 3) 切向摩擦（库仑，静摩擦上限 μ·jn）
   //    非质点球：用接触点速度（含 ω×r），冲量同时改平动与自转 → 纯滚动时接触点速度归零
   if(jn > 0 && mu > 0){
@@ -1735,7 +2018,7 @@ function contactSolve(A, B, nx, ny, pen, e, mu, vMin, svx){
     const vaxc = vax - wa*ray, vayc = vay + wa*rax;
     const vBxc = vbx - wb*rby, vByc = vby + wb*rbx;
     // 支撑面自己也可能在动（传送带）：相对切向速度要减掉带速
-    const vt = (vbx + (B ? 0 : (svx || 0)) - vaxc)*tx + (vby - vayc)*ty;
+    const vt = (vbx + (B ? 0 : (svx || 0)) - vaxc)*tx + (vby + (B ? 0 : (svy || 0)) - vayc)*ty;
     const imAt = imAr * dirW(A, tx, ty), imBt = imBr * dirW(B, tx, ty);
     const den = imAt + imBt + iIA*(rax*rax + ray*ray) + iIB*(rbx*rbx + rby*rby);
     if(den < 1e-12) return jn;                // 切向没有可行自由度：不求解，避免 0/0 = NaN
@@ -1825,7 +2108,9 @@ function inArcCavity(o){
     const g = shapeArcGeom(S);
     const d = Math.hypot(o.x - g.cx, o.y - g.cy);
     if(d > g.R + 0.02 || d < 1e-9) continue;
-    if(S.half){
+    if(S.ring){
+      if(o.y - g.cy <= g.R + 0.02) return true;      // 环底贴地时球由内壁托着
+    } else if(S.half){
       if(o.y - g.cy <= 0.02 && Math.abs(o.x - g.cx) <= g.R + 0.02) return true;
     } else {
       const sx = (S.orient==="TR"||S.orient==="BR") ? -1 : 1;
@@ -1853,7 +2138,8 @@ function solveGrounds(h){
       if(s > TOUCH) continue;
       // 在弧槽内腔里的球由弧面托着，地面被槽体挡住，这里不再额外顶它
       if(o.type === "ball" && inArcCavity(o)) continue;
-      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, g.mu||0, undefined, g.vt||0);
+      const muG = (o.type === "cart" && o.groundMu !== undefined) ? o.groundMu : (g.mu||0);
+      const jn = contactSolve(o, null, nx, ny, Math.max(0, -s), eG, muG, undefined, g.vt||0);
       o._N += jn/h;
       o._onGround = true;
     }
@@ -1883,7 +2169,47 @@ function solveDecks(h){
   }
 }
 
+/* ---------- 传送带：恒速驱动面 ----------
+   带速恒定（电机驱动，物块不会反推带），顶面按库仑摩擦给定切向冲量：
+   物体相对带滑动时摩擦朝"带速方向"，与带共速后自动转为静摩擦。
+   带可倾斜，带速沿带面（+vt 表示朝板的上坡方向）。 */
+function solveBelts(h){
+  const bs = W.objs.filter(o=>o.type==="belt");
+  if(!bs.length) return;
+  for(const o of W.objs){
+    if(!isDyn(o)) continue;
+    if(o.type === "shape" && o.slide) continue;
+    for(const b of bs){
+      const th = (b.tilt||0)*Math.PI/180;
+      const nx = -Math.sin(th), ny = Math.cos(th);      // 带面法向（朝上）
+      const ux = Math.cos(th), uy = Math.sin(th);       // 沿带面向上
+      const along = (o.x - b.x)*ux + (o.y - b.y)*uy;
+      if(Math.abs(along) > b.w/2 + 0.02) continue;
+      const pen = (o.x - b.x)*nx + (o.y - b.y)*ny - (b.h||0.18)/2 - supportAlong(o, nx, ny);
+      if(pen > TOUCH) continue;
+      if(pen < -1.2) continue;
+      b._onBeltHit = true;
+      // 小球在驱动面上按中学口径取纯滚动：不产生滑动摩擦
+      const muB = (o.type === "ball") ? 0 : (b.mu !== undefined ? b.mu : 0.2);
+      const V = (b.vt || 0);
+      const jn = contactSolve(o, null, nx, ny, Math.max(0, -pen), 0, muB, undefined, V*ux, V*uy);
+      o._N += jn/h;
+      o._onBelt = b.id;
+    }
+  }
+}
+
 /* ---------- 车面（支持载物、动量在车与物块间守恒） ---------- */
+/* 车面摩擦：cart 可指定一段粗糙、其余光滑（2022 山东 18 的 L 型平板：O' 左侧粗糙、右侧光滑） */
+function cartTopMu(c, o){
+  if(c.roughFrom !== undefined && c.roughTo !== undefined){
+    const rel = (o.x - c.x);
+    if(rel >= c.roughFrom && rel <= c.roughTo) return (c.roughMu !== undefined ? c.roughMu : 0.4);
+    return (c.smoothMu !== undefined ? c.smoothMu : 0);
+  }
+  return c.cartMu !== undefined ? c.cartMu : 0.2;
+}
+
 function solveCarts(h){
   const carts = W.objs.filter(o=>o.type==="cart" && isDyn(o));
   if(!carts.length) return;
@@ -1895,13 +2221,26 @@ function solveCarts(h){
       const pen = (c.y + c.h/2) + supportAlong(o, 0, 1) - o.y;
       if(pen < -TOUCH) continue;
       o._onCart = c.id;                        // 先登记"坐在车面上"，此时可滑块有两个自由度
-      const muC = c.cartMu !== undefined ? c.cartMu : 0.2;
+      const muC = cartTopMu(c, o);
       c._vLock = true;                         // 车竖直方向由地面承担，只把支撑力给载物
       // 车面是载物平台：物块放上去要跟着车走，不弹（初始摆放在车上时的穿透修正也会被弹飞）
       const jn = contactSolve(o, c, 0, 1, Math.max(0, pen), 0, muC);
       c._vLock = false;
       o._N += jn/h;
       o._onCart = c.id;
+    }
+  }
+  // L 型平板的端挡板：跟着车走，物块撞上去按弹性碰撞处理（冲量按质量分给车）
+  for(const c of carts){
+    if(!c.endWall) continue;
+    const wx = c.x + c.w/2;
+    for(const o of W.objs){
+      if(!isDyn(o) || o === c) continue;
+      if(o._onCart !== c.id) continue;
+      const s2 = (wx - o.x) - supportAlong(o, -1, 0);
+      if(s2 > TOUCH) continue;
+      const jn = contactSolve(o, c, -1, 0, Math.max(0, -s2), 1, 0.2, 0.05);
+      o._N += jn/h;
     }
   }
 }
@@ -1956,7 +2295,7 @@ function ballPolyContact(b, obj, h, e, vMin){
   const raw = polyOf(obj);
   if(raw.length < 3) return;
   const poly = ensureCCW(raw);
-  const r = b.r || 0;
+  const r = (W.pointMass && b.type === "ball") ? Math.min(0.03, b.r || 0) : (b.r || 0);
   let nx = 1, ny = 0, pen = 0;
 
   if(pointInPoly(b.x, b.y, poly)){
@@ -2084,7 +2423,7 @@ function solveBodies(h){
       }
 
       if(isCirc(A) && isCirc(B)){
-        const d = dist(A.x,A.y,B.x,B.y), rr = (A.r||0)+(B.r||0);
+        const d = dist(A.x,A.y,B.x,B.y), rr = W.pointMass ? 0.04 : ((A.r||0)+(B.r||0));
         if(d < rr && d > 1e-9){
           const jn = contactSolve(A,B, (A.x-B.x)/d, (A.y-B.y)/d, rr-d, e, 0.06, VMIN_PAIR);
           A._N = (A._N||0) + jn/h;
@@ -2106,7 +2445,9 @@ function solveBodies(h){
             continue;
           }
         }
-        const soft = other.type === "shape" || ball.type === "pulley" || other.type === "pulley";
+        // 环的外壁是实心圆盘边缘，按正常弹性碰撞；只有弧槽内腔、滑轮才走"只分离不反弹"
+        const soft = (other.type === "shape" && !other.ring) ||
+                     ball.type === "pulley" || other.type === "pulley";
         ballPolyContact(ball, other, h, soft ? 0 : e, VMIN_PAIR);
         continue;
       }
@@ -2157,6 +2498,7 @@ function ropeSegLen(L, g){
 
 function solveRope(L, h){
   if(L.type !== "rope") return;
+  const SLACK_EPS = 5e-4;      // 松弛容差 0.5 mm：不到原长就是松的，松着绝不传力
   const info = ropeInfoOf(L);
   if(!info) return;
   const g = info.g;
@@ -2206,13 +2548,15 @@ function solveRope(L, h){
           // 施加方向：两端一律沿「端点 → 切点」的绳方向（info.uA / info.uB），
           // 这样物块受到的拉力真的顺着细线指向轮缘切点，而不是指向轮心；
           // 中间的滑轮才用折线梯度（轮心处的法向）。
-          const dirFix = (i)=>{
-            if(i === 0 && info.uA && (Math.abs(info.uA.x) + Math.abs(info.uA.y) > 1e-6)) return info.uA;
-            if(i === list.length-1 && info.uB && (Math.abs(info.uB.x) + Math.abs(info.uB.y) > 1e-6)) return info.uB;
-            return {x:-grad[i].x, y:-grad[i].y};
-          };
-          if(Math.abs(over) > 2e-4){            // 拉长收回来；略微偏短时只做极小的回拉（每子步 ≤2 mm）
-            const corr = (over > 0 ? Math.min(over, 0.12) : Math.max(over, -0.002))*0.7/den;
+          // 约束方向必须与位置投影同一套（折线梯度），否则每子步只消掉一部分多余速度，
+          // 表现为「滑轮传力打折」（实测 a 仅理论值的 0.79）。端点受力显示方向由 uA/uB 负责绘制。
+          const dirFix = (i)=>({x:-grad[i].x, y:-grad[i].y});
+          // 绳只能拉、绝不能推：只有「实际长度 > 原长」才把端点往回收。
+          // 松弛时一律放手（图案自己变短），恢复原长后才重新传力。
+          if(!(over > SLACK_EPS)) L._slack = true;
+          if(over > SLACK_EPS){
+            L._slack = false;
+            const corr = Math.min(over, 0.12)*0.7/den;
             // 位置投影必须沿折线梯度：λ/den 是按梯度算的，换成切点方向就成了「按 A 算、往 B 推」，
             // 每步只完成一小部分，绳长残留越积越多（实测跑一次 0.5 s 就长出去 0.54 m）。
             for(let i=0;i<list.length;i++){
@@ -2221,7 +2565,7 @@ function solveRope(L, h){
               list[i].y -= grad[i].y*corr*ims[i];
             }
           }
-          if(eDot > 0 || (over < -2e-4 && eDot < 0)){   // 拉长收速；已经偏短时不许再靠近
+          if(eDot > 0 && over > -SLACK_EPS){   // 只消掉「把绳拉长」的那份速度；绳在缩短时完全不管
             const lam = eDot/den;
             for(let i=0;i<list.length;i++){
               if(!ims[i]) continue;
@@ -2255,7 +2599,21 @@ function solveRope(L, h){
   }
   if(!(L.L0 > 0)) L.L0 = g.len > 0 ? g.len : ropeSegLen(L, g);   // 兜底：缺省取当前绳长
   const over = (g.len > 0 ? g.len : ropeSegLen(L, g)) - L.L0;   // >0 表示绳被拉长
-  if(over < -0.005){ L._geom = g; return; }      // 真正松弛（松了 5mm 以上）才放手：绳不能推
+  // 只有真正短于原长（松了 2 mm 以上）才彻底放手；这 2 mm 的余量是留给浮点残余的，
+  // 否则悬挂静止时绳每步都被判「松」，张力会被打成 0。
+  if(over < -0.002){ L._geom = g; L._slack = true; return; }
+
+  // 严格不许伸长：一旦超过原长就把两端沿「绳内」方向收回（只收不放，绝不外推）
+  if(denom > 1e-12){
+    const corr = Math.min(over, 0.10)/denom;
+    if(imA){ A.x += info.uA.x*corr*imA; A.y += info.uA.y*corr*imA; }
+    if(imB){ B.x += info.uB.x*corr*imB; B.y += info.uB.y*corr*imB; }
+    for(let i=0;i<pulls.length;i++){
+      const im = invM(pulls[i].o);
+      if(!im) continue;
+      pulls[i].o.x += pulls[i].ux*corr*im; pulls[i].o.y += pulls[i].uy*corr*im;
+    }
+  }
 
   if(L.elastic){
     const k = L.k || 260;
@@ -2344,9 +2702,14 @@ function solveRod(o, h){
 
 /* ---------- 单个子步 ---------- */
 function substep(h){
+  W._glues = [];
+  for(let i=0;i<W.objs.length;i++){
+    const o = W.objs[i];
+    if(o.type === "glue" && o.host) W._glues.push(o);
+  }
   const dyn = W.objs.filter(o=>isDyn(o));
   for(const o of dyn){
-    o._N = 0; o._onGround = false; o._onCart = null;
+    o._N = 0; o._onGround = false; o._onCart = null; o._onBelt = null;
     if(o._arcSteps > 0) o._arcSteps--;          // 离开弧面几子步后，弧段能量基准作废
     if(o.omg) o.ang = (o.ang||0) + o.omg*h;     // 自转角（质点模式下 ω 恒为 0）
     o._fsx = 0; o._fsy = 0;                     // 弹簧力每子步重算
@@ -2382,6 +2745,7 @@ function substep(h){
     solveCarts(h);
     solveWalls(h);
     solveDecks(h);
+    solveBelts(h);
     solveBodies(h);
     for(let i=0;i<W.links.length;i++){
       const L = W.links[i];
@@ -2391,6 +2755,7 @@ function substep(h){
       const o = W.objs[i];
       if(o.type === "rod") solveRod(o, h);
     }
+    solveSticks(h);
   }
   // 张力（冲量/h，一个子步内累计）
   for(let i=0;i<W.links.length;i++){
@@ -2477,6 +2842,7 @@ function step(dt){
 
 /* SECTION: init / reset */
 function resetSim(){
+  W.sticks = [];                       // 胶块造成的粘连每轮重置都解除
   for(const o of W.objs){
     if(o._x0!==undefined){ o.x=o._x0; o.y=o._y0; o.vx=o._vx0||0; o.vy=o._vy0||0; }
     o.trail = [];
@@ -2555,12 +2921,13 @@ function drawScene(){
 
   if(W.grid) drawGrid(w,h);
   drawGround();
-  W.objs.forEach(o=>{ if(o.type==="wall") drawWall(o); else if(o.type==="deck") drawDeck(o); });
+  W.objs.forEach(o=>{ if(o.type==="wall") drawWall(o); else if(o.type==="deck") drawDeck(o); else if(o.type==="belt") drawBelt(o); });
   W.objs.forEach(o=>{ if(o.type==="rod") drawRod(o); });
   W.objs.forEach(o=>{ if(o.type==="anchor") drawAnchorObj(o); });
   W.objs.forEach(o=>{ if(isBody(o)) drawBody(o); });
   W.objs.forEach(o=>{ if(o.bind) drawBind(o); });
   W.objs.forEach(o=>{ if(o.type==="pulley") drawPulley(o); });
+  W.objs.forEach(o=>{ if(o.type==="glue") drawGlue(o); });
   W.links.forEach(L=>{ if(L.type!=="rope") return; drawRope(L); });
   W.links.forEach(L=>{ if(L.type==="spring") drawSpring(L); });
   W.objs.forEach(o=>{ if(isBody(o)&&W.trail) drawTrail(o); });
@@ -2661,6 +3028,123 @@ function drawDeck(o){
   ctx.restore();
 }
 
+function drawBelt(o){
+  const w = o.w || 2.4, hh = o.h || 0.18;
+  const th = (o.tilt||0)*Math.PI/180;
+  const cx = wx2sx(o.x), cy = wy2sy(o.y);
+  const pw = w * W.view.s, ph = Math.max(4, hh * W.view.s);
+  const rr = Math.max(3.5, ph/2);
+  if(selId === o.id){
+    ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = "#2f7d32";
+    ctx.fillRect(cx - pw/2 - 3, cy - ph/2 - 3, pw + 6, ph + 6);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-th);
+  ctx.fillStyle = o.color || "#EDF3FA";
+  ctx.fillRect(-pw/2, -ph/2, pw, ph);
+  ctx.strokeStyle = "#34495E"; ctx.lineWidth = 1.6;
+  ctx.strokeRect(-pw/2, -ph/2, pw, ph);
+  // 两端滚筒
+  ctx.fillStyle = "#FFFFFF";
+  [-pw/2, pw/2].forEach(x=>{
+    ctx.beginPath(); ctx.arc(x, 0, rr, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  });
+  // 带速箭头
+  const V = o.vt || 0, dir = V >= 0 ? 1 : -1;
+  const ax = -dir*pw*0.16, bx = dir*pw*0.16;
+  ctx.strokeStyle = "#2F6FED"; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(ax, 0); ctx.lineTo(bx, 0); ctx.stroke();
+  ctx.fillStyle = "#2F6FED";
+  ctx.beginPath();
+  ctx.moveTo(bx, 0);
+  ctx.lineTo(bx - dir*8, -3.6);
+  ctx.lineTo(bx - dir*8, 3.6);
+  ctx.closePath(); ctx.fill();
+  // 文字放到带体左端外侧，避免被滑过的物块挡住
+  const lab = (V < 0 ? "← " : "→ ") + "v=" + Math.abs(V).toFixed(1) + " m/s · μ=" + (o.mu||0).toFixed(2);
+  const lab2 = (V < 0 ? "← " : "→ ") + "v=" + Math.abs(V).toFixed(1) + " m/s";
+  ctx.fillStyle = "#41506A"; ctx.font = "8.5px system-ui";
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  if(pw > 120) ctx.fillText(lab, pw/2 + rr + 7, 0);
+  else if(pw > 60) ctx.fillText(lab2, pw/2 + rr + 7, 0);
+  ctx.restore();
+}
+
+/* ---------- 胶块：贴在物块边上，把这边的碰撞变成完全非弹性（粘住共速） ----------
+   胶块本身不参与物理，只提供两件事：
+     ① 贴在哪条边、朝外法向 —— 决定"从哪一侧撞上来会粘"；
+     ② 沿边覆盖范围 —— 只有撞在胶块这一段才会粘。                        */
+function glueFacesOf(o){
+  const hw = (o.w||0.6)/2, hh = (o.h||0.6)/2;
+  return [
+    { mx:o.x,      my:o.y+hh, nx: 0, ny: 1, half:hw },
+    { mx:o.x,      my:o.y-hh, nx: 0, ny:-1, half:hw },
+    { mx:o.x+hw,   my:o.y,    nx: 1, ny: 0, half:hh },
+    { mx:o.x-hw,   my:o.y,    nx:-1, ny: 0, half:hh }
+  ];
+}
+function syncGlue(g){
+  if(!g.host) return;
+  const o = byId(g.host);
+  if(!o){ g.host = null; return; }
+  const nx = g.nx||0, ny = g.ny||0, tx = -ny, ty = nx;
+  const mx = o.x + (g.ox||0), my = o.y + (g.oy||0);
+  g.x = mx + tx*(g.t||0) + nx*((g.h||0.062)/2);
+  g.y = my + ty*(g.t||0) + ny*((g.h||0.062)/2);
+}
+function syncGlues(){ for(const o of W.objs){ if(o.type === "glue") syncGlue(o); } }
+/* 把胶块吸到最近的物块边上（吸附带宽 0.55 m） */
+function snapGlue(g){
+  let best = null, bestD = 0.55;
+  for(const o of W.objs){
+    if(o.id === g.id) continue;
+    if(o.type !== "block" && o.type !== "cart" && o.type !== "poly" && o.type !== "shape") continue;
+    for(const f of glueFacesOf(o)){
+      const d = dist(g.x, g.y, f.mx, f.my);
+      if(d < bestD){ bestD = d; best = { o:o, f:f }; }
+    }
+  }
+  if(!best){ g.host = null; return false; }
+  const f = best.f, tx = -f.ny, ty = f.nx;
+  g.host = best.o.id; g.nx = f.nx; g.ny = f.ny;
+  g.ox = f.mx - best.o.x; g.oy = f.my - best.o.y;
+  g.edgeHalf = f.half;   // 注意别用 half：那是 1/2 弧槽的标识位
+  const lim = Math.max(0, f.half - (g.w||0.22)/2);
+  g.t = clamp((g.x - f.mx)*tx + (g.y - f.my)*ty, -lim, lim);
+  syncGlue(g);
+  return true;
+}
+function drawGlue(o){
+  syncGlue(o);
+  const w = o.w||0.22, hh = o.h||0.062;
+  const nx = o.nx||0, ny = o.ny||0, tx = -ny, ty = nx;
+  const cx = wx2sx(o.x), cy = wy2sy(o.y);
+  const pw = Math.max(9, w * W.view.s), ph = Math.max(4, hh * W.view.s);
+  const ang = Math.atan2(-ty, tx);
+  if(selId === o.id){
+    ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = "#2f7d32";
+    ctx.fillRect(cx - pw/2 - 3, cy - ph/2 - 3, pw + 6, ph + 6);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(ang);
+  ctx.fillStyle = o.color || "#F5E6B8";
+  ctx.strokeStyle = "#C9A227"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.rect(-pw/2, -ph/2, pw, ph); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "rgba(176,137,26,0.55)"; ctx.lineWidth = 1;
+  for(let i = -pw/2 + 3; i < pw/2 - 1; i += 5.5){
+    ctx.beginPath(); ctx.moveTo(i, ph/2 - 1.2); ctx.lineTo(i + 2.6, -ph/2 + 1.2); ctx.stroke();
+  }
+  ctx.restore();
+  if(!o.host){
+    ctx.fillStyle = "rgba(198,120,10,0.9)"; ctx.font = "8.5px system-ui";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("拖到边上", cx, cy - ph/2 - 7);
+  }
+}
+
 /* 平台的两个端点（世界坐标） */
 function deckEnds(o){
   const th = (o.tilt||0)*Math.PI/180, c = Math.cos(th), sn = Math.sin(th);
@@ -2684,6 +3168,73 @@ function snapDeckEnds(o, band){
   if(!best) return false;
   o.x += best.dx; o.y += best.dy;
   return true;
+}
+
+/* ---------- 面与面对接（平台 / 传送带 / 小车 / 物块 / 地面） ---------- */
+/* 取一个对象的"顶面"：中心点、沿面方向 u、法向 n、半长 half、倾角度 */
+function faceTop(o){
+  if(o.type === "ground"){
+    const th = (o.tilt||0)*Math.PI/180;
+    const ux = Math.cos(th), uy = Math.sin(th);
+    return { x:o.x||0, y:groundY(o.x||0), ux, uy, nx:-uy, ny:ux, half:1e4, tilt:o.tilt||0, t:0 };
+  }
+  const th = (o.tilt||0)*Math.PI/180;
+  const ux = Math.cos(th), uy = Math.sin(th);
+  const t = (o.h||0.1)/2;
+  return { x:(o.x||0) - uy*t, y:(o.y||0) + ux*t, ux, uy, nx:-uy, ny:ux,
+           half:(o.w||0)/2, tilt:o.tilt||0, t };
+}
+
+/* 把 o 的顶面吸到另一块的顶面上：同倾角、端到端、接缝无台阶 */
+function snapFace(o, opts){
+  if(o.type !== "deck" && o.type !== "belt") return false;
+  const band = (opts && opts.band !== undefined) ? opts.band : 0.50;
+  const only = opts && opts.only;
+  const allowGround = !!(opts && opts.ground);
+  const my = faceTop(o);
+  if(!(my.half > 0)) return false;
+  const mine = [
+    { s:-1, x:my.x - my.ux*my.half, y:my.y - my.uy*my.half },
+    { s:+1, x:my.x + my.ux*my.half, y:my.y + my.uy*my.half }
+  ];
+  let best = null, bestD = band;
+  for(const f of W.objs){
+    if(f === o) continue;
+    const t = f.type;
+    if(t === "wall" || t === "anchor" || t === "pulley" || t === "rod" ||
+       t === "spring" || t === "rope" || t === "shape") continue;
+    if(t === "ground") continue;
+    if(only && only.indexOf(t) < 0) continue;
+    if(!(f.w > 0)) continue;
+    const F = faceTop(f);
+    if(!(F.half > 0)) continue;
+    for(const a of mine){
+      for(const sg of [-1, 1]){
+        const bx = F.x + sg*F.ux*F.half, by = F.y + sg*F.uy*F.half;
+        const d = Math.hypot(a.x - bx, a.y - by);
+        if(d < bestD){ bestD = d; best = { a, bx, by, F }; }
+      }
+    }
+  }
+  if(best){
+    const F = best.F;
+    const th = (F.tilt||0)*Math.PI/180;
+    const ux = Math.cos(th), uy = Math.sin(th), nx = -uy, ny = ux;
+    const t = (o.h||0.1)/2;
+    o.tilt = F.tilt || 0;
+    o.x = best.bx - nx*t - best.a.s*ux*my.half;
+    o.y = best.by - ny*t - best.a.s*uy*my.half;
+    return true;
+  }
+  if(allowGround){
+    const g = W.objs.find(q=>q.type === "ground");
+    if(g && Math.abs((o.y||0) - groundY(o.x||0)) < 0.60){
+      o.tilt = g.tilt || 0;
+      o.y = groundY(o.x||0) + (o.h||0.18)/2;   // 底面贴着地面
+      return true;
+    }
+  }
+  return false;
 }
 
 function drawWall(o){
@@ -2883,7 +3434,54 @@ function drawHalfBowl(o, sel){
   if(clipped) ctx.restore();
 }
 
+function drawRing(o, sel){
+  const g = shapeArcGeom(o);
+  const R = g.R, th = 0.06;
+  const cx = wx2sx(g.cx), cy = wy2sy(g.cy);
+  const Rs = Math.max(4, R*W.view.s), Ts = Math.max(2.4, th*W.view.s);
+  ctx.beginPath();
+  ctx.arc(cx, cy, Rs + Ts, 0, Math.PI*2);
+  ctx.arc(cx, cy, Rs, 0, Math.PI*2, true);
+  ctx.closePath();
+  ctx.fillStyle = o.color || "#E8EEF8"; ctx.fill();
+  ctx.strokeStyle = sel ? "#2F6FED" : "#34495E"; ctx.lineWidth = sel?2.6:1.8; ctx.stroke();
+  // 内导轨面
+  ctx.beginPath(); ctx.arc(cx, cy, Rs, 0, Math.PI*2);
+  ctx.strokeStyle = "#7C6BD6"; ctx.lineWidth = 2.2; ctx.stroke();
+  /* 水平直径：过圆心的水平线，两端落在内导轨面上（中学题常说的"水平直径两端"） */
+  {
+    const x0 = cx - Rs, x1 = cx + Rs;
+    ctx.setLineDash([6,4]); ctx.strokeStyle = "rgba(47,111,237,.55)"; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(47,111,237,.85)";
+    [[x0, cy], [x1, cy]].forEach(p=>{
+      ctx.beginPath(); ctx.arc(p[0], p[1], 3, 0, Math.PI*2); ctx.fill();
+    });
+    /* 长度标注放在环外右侧，免得压住环内的小球或腔里的物体 */
+    ctx.textAlign = "left"; ctx.font = "8.5px system-ui";
+    const lbl = "水平直径 2R=" + (2*R).toFixed(2) + " m";
+    const tw = ctx.measureText(lbl).width + 9;
+    const lx = cx + Rs + Ts + 7, ly = cy - 6;
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    roundRect(ctx, lx, ly - 10, tw, 14, 4); ctx.fill();
+    ctx.strokeStyle = "rgba(47,111,237,.35)"; ctx.lineWidth = 1;
+    roundRect(ctx, lx, ly - 10, tw, 14, 4); ctx.stroke();
+    ctx.fillStyle = "rgba(47,111,237,.92)";
+    ctx.fillText(lbl, lx + 4.5, ly);
+  }
+  // 球心轨迹
+  const rBall = (W.objs.find(b=>b.type==="ball")||{}).r || 0.18;
+  const rr = Math.max(1, (R - rBall)*W.view.s);
+  ctx.setLineDash([4,4]); ctx.globalAlpha = .45; ctx.strokeStyle = "#2F6FED"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.setLineDash([]);
+  ctx.fillStyle = "#3A4A5E"; ctx.font = "9px system-ui"; ctx.textAlign = "center";
+  ctx.fillText("圆环轨道", cx, cy + Rs + Ts + 13);
+}
+
 function drawShapeBody(o, sel){
+  if(o.ring){ drawRing(o, sel); return; }
   if(o.half){ drawHalfBowl(o, sel); return; }
 
   const clipped = clipIfOnGround(o);
@@ -3132,6 +3730,10 @@ function drawSelection(){
     ctx.beginPath();
     p.forEach((q,i)=>{ const sx=wx2sx(q.x), sy=wy2sy(q.y); i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy); });
     ctx.closePath(); ctx.stroke();
+  } else if(o.type === "glue"){
+    const x=wx2sx(o.x), y=wy2sy(o.y);
+    const pw = Math.max(11, (o.w||0.22)*W.view.s + 8), ph = Math.max(6, (o.h||0.062)*W.view.s + 9);
+    ctx.strokeRect(x - pw/2, y - ph/2, pw, ph);
   } else {
     const x=wx2sx(o.x), y=wy2sy(o.y);
     const r = Math.max(14, (o.r||0.15)*W.view.s+6);
@@ -3173,8 +3775,9 @@ function drawAnchors(){
 function nameOf(o){
   const n = { block:"物块", ball:"小球", cart:"小车", shape:"1/4弧槽", poly:"自定义形状",
     rope:"细线", rod:"细杆", ground:"地面", wall:"墙壁", anchor:"固定点", pulley:"滑轮",
-    deck:"平台" };
+    deck:"平台", belt:"传送带", glue:"胶块" };
   if(o && o.half) return "1/2弧槽";
+  if(o && o.ring) return "圆环轨道";
   return n[o.type] || o.type;
 }
 function drawWirePreview(){
@@ -3411,9 +4014,190 @@ function evtPos(e){
   const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
   return {x,y};
 }
+/* ---------- 双指手势：捏合缩放 + 双指拖动平移（触屏 / 电子白板） ---------- */
+const touchPts = new Map();     // pointerId → {x,y}
+let panTouch = null;            // 单指空白处滑动平移：{lastX,lastY,moved}
+let pinch = null;               // {mode, base, d0, s0, wx, wy}
+let pinchStartSel = null;       // 手势开始前就已经选中的元素（避免"刚被第一指选中"就误改尺寸）
+
+/* ---------- 选中元素的两指缩放（手指在元素图形内时缩尺寸，在外部时缩视角） ---------- */
+let pinchTipEl = null;
+function pinchTip(show, txt, cx, cy){
+  if(!pinchTipEl){
+    pinchTipEl = document.createElement("div");
+    pinchTipEl.id = "pinchTip";
+    pinchTipEl.style.cssText = "position:fixed;z-index:9997;pointer-events:none;display:none;" +
+      "background:rgba(47,111,237,.94);color:#fff;font:600 12.5px system-ui;padding:4px 9px;" +
+      "border-radius:8px;white-space:nowrap;transform:translate(-50%,-150%);box-shadow:0 3px 10px rgba(20,50,120,.28)";
+    document.body.appendChild(pinchTipEl);
+  }
+  if(!show){ pinchTipEl.style.display = "none"; return; }
+  pinchTipEl.textContent = txt;
+  pinchTipEl.style.left = cx + "px";
+  pinchTipEl.style.top  = cy + "px";
+  pinchTipEl.style.display = "block";
+}
+
+/* 哪些元件有"尺寸"可缩放 */
+function canResize(o){
+  if(!o) return false;
+  const t = o.type;
+  if(t === "ground" || t === "anchor" || t === "rope" || t === "spring" || t === "wall") return false;
+  if(t === "rod") return true;
+  if(t === "pulley") return true;
+  if(o.w !== undefined || o.r !== undefined) return true;
+  return false;
+}
+
+/* 两指中点是否落在该元素的图形区域内（ring 的环腔也算，方便夹住整个环） */
+function inObjArea(o, wx, wy){
+  if(o.type === "ball")   return dist(o.x, o.y, wx, wy) <= Math.max(0.03, o.r||0.1) * 1.15;
+  if(o.type === "pulley") return dist(o.x, o.y, wx, wy) <= Math.max(0.05, o.r||0.1) * 1.1;
+  if(o.type === "rod"){
+    const e = rodEnds(o);
+    const vx = e.b.x - e.a.x, vy = e.b.y - e.a.y;
+    const L2 = vx*vx + vy*vy || 1;
+    const t = clamp(((wx - e.a.x)*vx + (wy - e.a.y)*vy)/L2, 0, 1);
+    return dist(e.a.x + t*vx, e.a.y + t*vy, wx, wy) <= 0.17;
+  }
+  if(o.ring) return dist(o.x, o.y, wx, wy) <= Math.min(o.R||0.5, Math.min(o.w||1, o.h||1)/2) + 0.14;
+  const hw = (o.w||0.2)/2, hh = (o.h||0.2)/2;
+  return Math.abs(wx - o.x) <= hw + 0.03 && Math.abs(wy - o.y) <= hh + 0.03;
+}
+
+/* 缩放基准：把初始尺寸全存下来，每一步都按"基准 × 倍数"算，避免累积漂移 */
+function objBaseline(o){
+  return {
+    id:o.id, type:o.type, ring:!!o.ring, half:!!o.half,
+    w:o.w, h:o.h, r:o.r, R:o.R, len:o.len, wr:o.wr,
+    x:o.x, y:o.y
+  };
+}
+
+/* 按倍数 k 缩放元素：底边 / 圆心 / 锚点保持不动，缩放完不会陷地也不会突然弹起来 */
+function applyObjScale(b, k){
+  const o = byId(b.id);
+  if(!o || running) return;
+  const s2 = clamp(k, 0.15, 6);
+  if(o.type === "ball"){
+    o.r = clamp(b.r * s2, 0.02, 1.5);
+    o.x = b.x;
+    /* 贴地滚动的小球：底边钉住，放大后向上长，不会一头埋进地面；
+       悬空 / 在轨道里的球：球心不动，圆圈原地长大 */
+    const gg = (typeof groundObj === "function") ? groundObj() : null;
+    const flat = gg && Math.abs(gg.tilt || 0) < 1e-6;
+    if(flat && Math.abs((b.y - b.r) - gg.y) < 0.06) o.y = gg.y + o.r;
+    else o.y = b.y;
+  } else if(o.type === "pulley"){
+    o.r = clamp(b.r * s2, 0.03, 0.9);
+  } else if(o.type === "rod"){
+    o.len = clamp(b.len * s2, 0.15, 8);
+  } else if(o.ring){
+    const low = b.y - (b.R + 0.06);              // 环底（轨道下沿）钉住，变大向上长
+    o.R = clamp(b.R * s2, 0.04, 3.5);
+    o.w = o.h = Math.max(0.2, 2*o.R + 0.12);     // 外框正好裹住轨道（与面板里的联动一致）
+    o.y = low + (o.R + 0.06);
+  } else if(o.type === "shape" && o.half){
+    const low = b.y - b.h/2;                     // 1/2 弧槽：碗底钉住，宽=2R、深=R
+    o.R = clamp(b.R * s2, 0.06, 6);
+    o.w = Math.max(0.2, 2*o.R); o.h = Math.max(0.1, o.R);
+    o.y = low + o.h/2;
+  } else if(o.type === "shape"){
+    const low = b.y - b.h/2;                     // 1/4 弧槽：宽=高=R，底边钉住
+    o.R = clamp(b.R * s2, 0.06, 6);
+    o.w = Math.max(0.15, o.R); o.h = Math.max(0.1, o.R);
+    o.y = low + o.h/2;
+  } else {
+    const low = b.y - b.h/2;                     // 矩形类：底边与水平中心钉住
+    o.w = clamp(b.w * s2, 0.03, 12);
+    o.h = clamp(b.h * s2, 0.03, 12);
+    o.y = low + o.h/2;
+    if(o.verts) o.verts = normalizeToBox(o.verts, o.w, o.h);
+    if(o.type === "cart" && b.wr) o.wr = clamp(b.wr * s2, 0.03, 0.4);
+  }
+  if(o.tangent) shapeTangency(o);
+  if(o.type === "cart" || o.bind) followBinds();
+}
+
+function objSizeText(o){
+  if(!o) return "";
+  const uu = lenUnit(), kk = lenK(), dd = lenDec();
+  const f = v => (v*kk).toFixed(dd) + " " + uu;
+  if(o.type === "ball" || o.type === "pulley") return "半径 " + f(o.r||0);
+  if(o.type === "rod") return "长 " + f(o.len||0);
+  if(o.ring || o.type === "shape") return "R = " + f(o.R||0);
+  return "宽 " + f(o.w||0) + " × 高 " + f(o.h||0);
+}
+
+function pinchBegin(){
+  const pts = [...touchPts.values()];
+  if(pts.length < 2) return;
+  drag = null; dragVis = null; mouse.down = false; mouse.panning = false;
+  const r = cv.getBoundingClientRect();
+  const mid = { x:(pts[0].x + pts[1].x)/2, y:(pts[0].y + pts[1].y)/2 };
+  const wx = sx2wx(mid.x - r.left), wy = sy2wy(mid.y - r.top);
+  /* 选中了某个元素，且两指中点落在它的图形区域里 → 缩放这个元素的尺寸 */
+  const sel = byId(pinchStartSel);
+  let base = null;
+  if(sel && !running && canResize(sel) && inObjArea(sel, wx, wy)) base = objBaseline(sel);
+  pinch = {
+    mode: base ? "obj" : "view",
+    base: base,
+    d0: Math.max(1, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)),
+    s0: W.view.s,
+    wx: wx,
+    wy: wy
+  };
+  if(base) pinchTip(true, nameOf(sel) + "　" + objSizeText(sel), mid.x, mid.y);
+  $("btnTrash").classList.remove("hot");
+}
+function pinchMove(){
+  const pts = [...touchPts.values()];
+  if(!pinch || pts.length < 2) return;
+  const r = cv.getBoundingClientRect();
+  const d = Math.max(1, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
+  const k = clamp(d / pinch.d0, 0.15, 6);
+  if(pinch.mode === "obj"){
+    applyObjScale(pinch.base, k);
+    const o = byId(pinch.base.id);
+    pinchTip(true, nameOf(o) + "　" + objSizeText(o) + "　×" + k.toFixed(2), (pts[0].x + pts[1].x)/2, (pts[0].y + pts[1].y)/2);
+    syncPanel(); draw();
+    return;
+  }
+  W.view.s = clamp(pinch.s0 * clamp(d / pinch.d0, 0.12, 8), 16, 800);
+  const mx = (pts[0].x + pts[1].x)/2 - r.left, my = (pts[0].y + pts[1].y)/2 - r.top;
+  W.view.ox = mx - pinch.wx * W.view.s;
+  W.view.oy = my + pinch.wy * W.view.s;
+  draw();
+}
+function pinchRelease(){
+  const wasObj = pinch && pinch.mode === "obj";
+  pinch = null;
+  pinchTip(false);
+  mouse.down = false; mouse.panning = false; drag = null;
+  $("btnTrash").classList.remove("hot");
+  if(wasObj){
+    // 尺寸变了：重置基准跟着更新，右键撤销也能回到缩放前
+    if(typeof captureInitial === "function") captureInitial();
+    syncPanel(); syncButtons();
+    if(typeof refreshEnv === "function") refreshEnv();
+    draw();
+  }
+}
+
 cv.addEventListener("pointerdown", (e)=>{
   // 指针捕获失败会整段处理中断（某些环境 pointerId 无效），拖不动就是这么来的
   try { cv.setPointerCapture(e.pointerId); } catch(_){}
+  /* 记住"这一轮手势开始前"的选中项：第一根手指点下去往往顺带选中了对象，
+     若拿当前 selId 判断，用户只想缩放视角时会把刚选中的元素误改尺寸 */
+  if((e.pointerType === "touch" || e.pointerType === "pen") && e.isPrimary) pinchStartSel = selId;
+  if((e.pointerType === "touch" || e.pointerType === "pen") && !e.isPrimary){   // 第二根手指
+    touchPts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    pinchBegin();
+    return;
+  }
+  if(e.pointerType === "touch" || e.pointerType === "pen") touchPts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if(touchPts.size >= 2){ pinchBegin(); return; }   // 双指：全部交给手势
   const p = evtPos(e);
   mouse.x = p.x; mouse.y = p.y;
   mouse.wx = sx2wx(p.x); mouse.wy = sy2wy(p.y);
@@ -3457,17 +4241,43 @@ cv.addEventListener("pointerdown", (e)=>{
     }
     syncPanel(); draw();
   } else {
-    if(selId || selLink){ selId = null; selLink = null; syncPanel(); draw(); }
+    if(e.pointerType === "touch" || e.pointerType === "pen"){
+      /* 单指按在空白处：先记下起点，滑动就平移视角；轻点抬手指才取消选中 */
+      panTouch = { lastX:p.x, lastY:p.y, moved:false };
+      $("btnTrash").classList.remove("hot");
+    }
+    else if(selId || selLink){ selId = null; selLink = null; syncPanel(); draw(); }
   }
 });
 
-/* 点击浅红垃圾桶：删掉当前选中的物体（拖拽那条路径见 pointerup） */
+/* 点击浅红按钮：清空整台；拖物体到它上面仍然只删那一个（拖拽路径见 pointerup） */
 let trashJustDropped = 0;   // 拖拽刚落上时的时刻，用来挡掉随后的 click
+
+/* 清空操作台：全部清掉后补回一块默认地面，视角与显示开关保持不变 */
+function clearStage(){
+  if(running){ toast("先点「重置」退出运行，再清空", "warn"); return; }
+  const others = W.objs.filter(o=>o.type !== "ground");
+  if(!others.length && !W.links.length){ toast("操作台已经是空的"); return; }
+  pushUndo();
+  if(wireMode) endWire(true);
+  const view = { ox:W.view.ox, oy:W.view.oy, s:W.view.s };
+  const keep = { g:W.g, unitLen:W.unitLen, trail:W.trail, forces:W.forces,
+                 vels:W.vels, grid:W.grid, collision:W.collision, pointMass:W.pointMass,
+                 integrator:W.integrator, dur:W.dur };
+  W = emptyWorld();
+  Object.assign(W, keep);
+  W.view = view;
+  const gd = makeObj("ground", 0, 0); W.objs.push(gd);
+  T = 0; samples = []; physAcc = 0;
+  selId = null; selLink = null; drag = null; dragVis = null;
+  syncLibCards(); hintHome();
+  syncPanel(); draw(); drawChart(); refreshEnv(); syncButtons();
+  toast("已清空操作台（保留一块地面），Ctrl+Z 可撤销");
+}
+
 $("btnTrash").addEventListener("click", ()=>{
   if(Date.now() - trashJustDropped < 260) return;
-  if(running){ toast("先点「重置」退出运行，再删"); return; }
-  if(!selId && !selLink){ toast("先在画布上点选一个物体"); return; }
-  deleteSel();
+  clearStage();
 });
 
 /* 指针是否落在浅红垃圾桶上 */
@@ -3479,6 +4289,20 @@ function inTrash(clientX, clientY){
 }
 
 cv.addEventListener("pointermove", (e)=>{
+  if(touchPts.has(e.pointerId)) touchPts.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if(pinch){ pinchMove(); return; }
+  /* 单指滑动平移：跟手移动视角，超过 2 px 才算"滑动"，否则当轻点 */
+  if(panTouch){
+    const pp = evtPos(e);
+    const dx = pp.x - panTouch.lastX, dy = pp.y - panTouch.lastY;
+    if(panTouch.moved || Math.abs(dx) + Math.abs(dy) > 2){
+      panTouch.moved = true;
+      W.view.ox += dx; W.view.oy += dy;
+      panTouch.lastX = pp.x; panTouch.lastY = pp.y;
+      draw();
+    }
+    return;
+  }
   if(mouse.down && drag && !running){
     $("btnTrash").classList.toggle("hot", inTrash(e.clientX, e.clientY));
   }
@@ -3499,7 +4323,12 @@ cv.addEventListener("pointermove", (e)=>{
           o.ax += nxw - o.x; o.ay += nyw - o.y;      // 杆的位置由锚点决定，不跟着改就拖不动
         }
         o.x = nxw; o.y = nyw;
-        if(o.type === "deck") snapDeckEnds(o);   // 端点吸到别的平台端点，拼长台面 / 台阶
+        if(o.type === "glue") snapGlue(o);
+        if(o.type === "deck"){                   // 端点吸到别的平台端点，拼长台面 / 台阶
+          snapDeckEnds(o);
+          snapFace(o, { only:["belt"] });        // 与传送带顶面共面对接
+        }
+        if(o.type === "belt") snapFace(o, { ground:true, only:["deck","belt","cart","block"] });
         if(isBody(o)) settleDrag(o);
         if(o.type === "cart") followBinds();
         if(isBody(o)){
@@ -3523,6 +4352,15 @@ cv.addEventListener("pointermove", (e)=>{
   if(running) draw();
 });
 cv.addEventListener("pointerup", (e)=>{
+  if(touchPts.has(e.pointerId)) touchPts.delete(e.pointerId);
+  if(pinch){ if(touchPts.size < 2) pinchRelease(); else pinchMove(); return; }
+  if(panTouch){
+    const moved = panTouch.moved;
+    panTouch = null;
+    mouse.down = false; mouse.panning = false; drag = null;
+    if(!moved && (selId || selLink)){ selId = null; selLink = null; syncPanel(); draw(); }
+    return;
+  }
   const dropping = !running && drag && inTrash(e.clientX, e.clientY);
   $("btnTrash").classList.remove("hot");
   if(dropping){
@@ -3543,7 +4381,19 @@ cv.addEventListener("pointerup", (e)=>{
   if(!running){ syncPanel(); draw(); }                                     // 拖完把面板的 x/y 刷成新位置
 });
 cv.addEventListener("contextmenu", e=>e.preventDefault());
-cv.addEventListener("pointerleave", ()=>{ mouse.down=false; drag=null; });
+/* 触屏长按不弹系统菜单（希沃/安卓平板上长按 0.5 s 就会弹，会把拖拽打断） */
+document.addEventListener("contextmenu", e=>{
+  const t = e.target;
+  if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+  e.preventDefault();
+});
+cv.addEventListener("pointerleave", ()=>{ mouse.down=false; drag=null; panTouch=null; });
+cv.addEventListener("pointercancel", (e)=>{
+  touchPts.delete(e.pointerId);
+  if(pinch && touchPts.size < 2) pinchRelease();
+  panTouch = null;
+  mouse.down = false; drag = null;
+});
 
 cv.addEventListener("dblclick", (e)=>{
   const p = evtPos(e);
@@ -3579,7 +4429,28 @@ function groundSeat(o, band){
   return true;
 }
 /* 自动吸附链条：地面（最高优先）→ 小车车面 → 1/4弧槽表面 */
+/* 圆环内壁吸附：环腔里没有轮廓多边形（外圈是实心圆盘），"内腔判点 / 最近边吸附"
+   对环全不成立，所以按"到圆心的径向"单独贴合 —— 中心距 = R - 自身半宽。
+   放在地面之前判定：小环贴地时，腔底的球离地也很近，先贴地面就会把球塞进内壁里。 */
+function snapToRing(o, band){
+  const lim = Math.max(0.18, band === undefined ? 0.18 : band);
+  for(const s of W.objs){
+    if(s.type !== "shape" || s === o || !s.ring) continue;
+    const gR = shapeArcGeom(s);
+    const dx = o.x - gR.cx, dy = o.y - gR.cy;
+    const d = Math.hypot(dx, dy);
+    if(d < 1e-6) continue;
+    const want = gR.R - supportAlong(o, -dx/d, -dy/d);
+    if(!(want > 1e-4)) continue;
+    if(Math.abs(d - want) > lim) continue;         // 离内壁太远：不吸，交给普通吸附
+    o.x = gR.cx + dx/d*want;
+    o.y = gR.cy + dy/d*want;
+    return true;
+  }
+  return false;
+}
 function snapToSurface(o){
+  if(snapToRing(o, 0.2)){ o.vy = 0; o.vx = 0; return true; }
   if(o.type==="shape" && o.tangent){
     if(shapeTangency(o)){ o.vy = 0; return true; }
   }
@@ -3943,6 +4814,16 @@ function snapToNeighborEdges(o, band){
 function vertexInside(o, b){
   const A = polyOf(o), B = polyOf(b);
   if(A.length < 3 || B.length < 3) return false;
+  /* 环腔里的物体不算"顶点互陷"：环的外圈多边形看起来是实心圆，
+     顶点确实落在里面，但那里本来就是可通行的空腔。 */
+  if(b.ring && b.R){
+    const Rin = Math.min(b.R, Math.min(b.w || 0, b.h || 0)/2 || b.R);
+    if(Math.hypot(o.x - b.x, o.y - b.y) < Rin) return false;
+  }
+  if(o.ring && o.R){
+    const Rin = Math.min(o.R, Math.min(o.w || 0, o.h || 0)/2 || o.R);
+    if(Math.hypot(b.x - o.x, b.y - o.y) < Rin) return false;
+  }
   for(let i=0;i<A.length;i++) if(pointInPoly(A[i].x, A[i].y, B)) return true;
   for(let i=0;i<B.length;i++) if(pointInPoly(B[i].x, B[i].y, A)) return true;
   return false;
@@ -3950,6 +4831,16 @@ function vertexInside(o, b){
 
 /* 单个实体的穿模推出：只移动待拖动的 o，其余物体保持不动 */
 function pushOutOf(o, b){
+  /* 圆环轨道是个"中空轨道"：物体中心落在内圈里就是放进轨道里了，
+     不能按实心圆盘的穿模把它推到环外（以前拖球进环，一松手就被弹飞）。 */
+  if(b.ring && b.R){
+    /* 环壁很薄（≈0.06 m），比任何物体的半宽都小，用"中心距"根本分不出
+       物体是在腔里还是压在壁上；以前按"整体在腔内"（d < R - half）才放行，
+       球心稍靠外一点就被当成穿模，沿径向 0.04 m×10 轮推到环外 ——
+       这就是"球一松手就飞到环外面"。环的贴合统一交给 snapToRing（径向吸附）
+       与运行态的 ringContact（内壁接触），这里一律不推。 */
+    return false;
+  }
   if(o.type === "ball" && b.type === "ball"){
     const dx = o.x-b.x, dy = o.y-b.y, d = Math.hypot(dx,dy);
     const need = o.r + b.r;
@@ -4145,18 +5036,57 @@ function addObj(type, wx, wy){
   const o = makeObj(type, wx, wy);
   if(type==="ground"){ o.y = wy; o.x = wx; }
   if(type==="wall"){ o.x = wx; o.y = wy; }
+  if(type==="belt"){ o.y = groundY(wx) + (o.h||0.18)/2; }
   if(type==="rod"){
     o.ax = wx; o.ay = wy;
     o.x = wx; o.y = wy;
   }
   if(isBody(o) && !o.half) snapToSurface(o);
   W.objs.push(o);
+  if(type === "belt" || type === "deck") snapFace(o, { ground:true, only:["deck","belt","cart","block"] });
+  if(type === "glue"){
+    if(!snapGlue(o)) toast("把胶块拖到物块边上，它才会生效", "warn");
+    else toast("胶块已贴在边上：这边的碰撞按完全非弹性处理");
+  }
   selId = o.id;
   captureInitial();
   syncPanel(); draw(); refreshEnv();
 }
 
 /* SECTION: wiring */
+function hintHome(){
+  $("hintBox").innerHTML =
+    "<b>小提示</b>点击元素卡片即可添加到画面中心，也可以直接拖进去。<br>拖动物体改位置（靠近地面 / 车面 / 弧面会自动吸附），双击打开属性，Delete 删除。<br>触屏：两指捏合缩放、两指拖动平移画面。";
+}
+/* 元素库里"细线 / 弹簧"两张卡片：亮起＝正在那种模式，再点一次就退出 */
+function syncLibCards(){
+  document.querySelectorAll(".card[data-add]").forEach(c=>{
+    const t = c.dataset.add;
+    const on = wireMode && ((t === "rope" && wireKind !== "spring") ||
+                            (t === "spring" && wireKind === "spring"));
+    c.classList.toggle("on", on);
+    const cd = c.querySelector(".cd");
+    if(cd && (t === "rope" || t === "spring")){
+      cd.dataset.base = cd.dataset.base || cd.textContent;
+      cd.textContent = on ? "再点退出" : cd.dataset.base;
+    }
+  });
+}
+function endWire(quiet){
+  if(!wireMode) return false;
+  wireMode = false; wirePts = null;
+  syncLibCards();
+  if(!quiet) toast("已退出布线模式");
+  hintHome();
+  draw();
+  return true;
+}
+function toggleWire(kind){
+  if(wireMode && wireKind === kind){ endWire(); return; }
+  if(wireMode) endWire(true);      // 换另一种模式：先清掉旧提示与半截连线
+  startWire(kind);
+  syncLibCards();
+}
 function startWire(kind){
   wireKind = kind === "spring" ? "spring" : "rope";
   if(!W.objs.some(o=>isBody(o) || o.type==="anchor" || o.type==="pulley")){
@@ -4237,19 +5167,20 @@ const P = {
 const ROW_VIS = {
   rowMass:  "body",            rowVel:   "body",            rowAng:    "body",
   rowForce: "body",            rowFdir:  "body",
-  rowRadius:"ball pulley",     rowWH:    "block cart shape poly deck",
+  rowRadius:"ball pulley",     rowWH:    "block cart shape poly deck belt",
   rowH:     "block cart shape poly",
   rowSlotR: "shape",           rowOrient:"shape",           rowTangent:"shape",
   rowSlide: "shape",           rowBind:  "shape",
-  rowWallE: "wall",            rowMu:    "ground wall deck",     rowTilt:   "ground deck",
-  rowBelt: "ground",
+  rowWallE: "wall",            rowMu:    "ground wall deck belt",     rowTilt:   "ground deck belt",
+  rowBelt: "ground belt", rowBeltDir: "ground belt",
+  rowGlueW: "glue", rowGlueInfo: "glue",
   rowCartMu:"cart",            rowTopMu: "block",           rowBlockShape:"block poly",
   rowRodLen:"rod",
   rowRodAng: "rod",
   rowFixed: "pulley",
 };
 /* 有面的对象才给色板：墙、细杆、固定点都是纯线条 */
-const CAN_COLOR = "ball block shape cart ground pulley";
+const CAN_COLOR = "ball block shape cart ground pulley belt glue";
 
 const hitRule = (rule, t, hasMass) =>
   rule === "body" ? hasMass : (" " + rule + " ").indexOf(" " + t + " ") >= 0;
@@ -4258,6 +5189,11 @@ function applyRowVisibility(t, hasMass, o){
   for(const id in ROW_VIS) $(id).classList.toggle("hidden", !hitRule(ROW_VIS[id], t, hasMass));
   if(o && o.half){
     ["rowOrient", "rowTangent", "rowBind"].forEach(id=>$(id).classList.add("hidden"));
+    $("vBind").classList.add("hidden");
+  }
+  if(o && o.ring){
+    /* 圆环只有半径一个尺寸：宽高跟着半径走，朝向/切线/结合/滑动都不适用 */
+    ["rowOrient", "rowTangent", "rowBind", "rowSlide", "rowWH", "rowH"].forEach(id=>$(id).classList.add("hidden"));
     $("vBind").classList.add("hidden");
   }
   $("vRadiusNote").classList.toggle("hidden", t !== "ball");
@@ -4346,10 +5282,10 @@ function syncPanelSize(o, t, hasMass){
     });
     o.w = +(bx1-bx0).toFixed(3); o.h = +(by1-by0).toFixed(3);
   }
-  if(t === "block" || t === "cart" || t === "shape" || t === "poly" || t === "deck"){
+  if(t === "block" || t === "cart" || t === "shape" || t === "poly" || t === "deck" || t === "belt"){
     // 宽 = 板长 / 块宽；平台的板厚固定，不再提供「高」的调节
     setRange("rW", o.w, 0.1, 8, running);
-    if(t !== "deck") setRange("rH", o.h, 0.02, 4, running);
+    if(t !== "deck" && t !== "belt") setRange("rH", o.h, 0.02, 4, running);
   }
 
   if(t === "shape"){
@@ -4418,13 +5354,32 @@ function syncPanelColor(o, t){
 }
 
 function syncPanelSurface(o, t){
-  if(t === "ground" || t === "wall" || t === "deck") setRange("rMu", o.mu || 0, 0, 1, running);
+  if(t === "ground" || t === "wall" || t === "deck" || t === "belt") setRange("rMu", o.mu || 0, 0, 1, running);
   if(t === "ground") setRange("rTilt", o.tilt || 0, -30, 30, running);
   if(t === "deck")   setRange("rTilt", o.tilt || 0, -90, 90, running);
-  if(t === "ground"){
+  if(t === "belt")   setRange("rTilt", o.tilt || 0, -30, 30, running);
+  if(t === "ground" || t === "belt"){
+    const sp = Math.abs(o.vt || 0);
+    if(o.beltSign === undefined) o.beltSign = ((o.vt || 0) < 0 ? -1 : 1);
+    setRange("rBelt", sp, 0, 8, running);
     const nb = $("nBelt");
-    nb.value = (o.vt || 0).toFixed(1);
+    nb.value = sp.toFixed(1);
     nb.disabled = running;
+    const up = (o.beltSign || 1) > 0;
+    const sloped = Math.abs(o.tilt || 0) > 0.5;
+    const bd = $("btnBeltDir");
+    bd.textContent = sloped ? (up ? "↗ 沿面上行" : "↙ 沿面下行") : (up ? "→ 向右" : "← 向左");
+    bd.disabled = running;
+    bd.classList.toggle("on", !up);
+  }
+  if(t === "glue"){
+    setRange("rGlueW", o.w || 0.22, 0.08, 0.8, running);
+    $("nGlueW").value = ((o.w || 0.22) * lenK()).toFixed(lenDec());
+    $("nGlueW").disabled = running;
+    const h = o.host ? byId(o.host) : null;
+    $("vGlueInfo").innerHTML = h
+      ? ("已贴在 <b>" + nameOf(h) + "</b> 的边上<br>从这一侧撞上来的物体会被粘住、碰后共速")
+      : "还没贴到物块上：把胶块拖到物块边上";
   }
   if(t === "cart") setRange("rCartMu", o.cartMu || 0, 0, 1, running);
   if(t === "block") setRange("rTopMu", o.topMu !== undefined ? o.topMu : 0.15, 0, 1, running);
@@ -4476,6 +5431,11 @@ function buildSwatches(o){
   });
 }
 function noteText(o){
+  if(o.type==="shape" && o.ring){
+    return "<b>圆环轨道</b>竖直面内的圆环，物块在内侧跑。<br>" +
+      "球心不超过 <span class='em'>R − r</span> 就贴壁，超过才被顶回；<br>" +
+      "速度不够时自己离开内壁掉下去，与真实圆轨道内侧一致。";
+  }
   if(o.type==="shape"){
     return "<b>弧面</b>球心沿半径 <span class='em'>R − r</span> 的圆弧运动，<br>" +
       "要求 r < R 才放得进槽里。<br>凹槽内支持力恒正，球不会脱离弧面。";
@@ -4493,7 +5453,9 @@ function noteText(o){
   if(o.type==="ground") return "<b>地面</b>摩擦系数影响是否能推动。<br>倾角为 0 表示水平。";
   if(o.type==="wall") return "<b>墙壁</b>竖直支持面，可设摩擦。<br>碰撞模式：弹性按 e=1 等速反弹，非弹性撞上即停。";
   if(o.type==="deck") return "<b>平台</b>可抬高的水平板：改「宽」调长度、「倾角」当斜面。<br>拖动时两端小圆会吸到别的平台端点，物体靠近会自动贴住板面。";
+  if(o.type==="belt") return "<b>传送带</b>长度 w 的恒速驱动面：带速 v<sub>t</sub> 恒定（+ 朝上坡/向右），物体放上去先被摩擦带动，共速后一起走。<br>倾角 θ 可当斜面传送带；μ 是带面摩擦系数。";
   if(o.type==="pulley") return "<b>滑轮</b>理想滑轮绳中张力处处相等。<br>定滑轮 F=G 只改方向；动滑轮 n=2、F=G/2。<br>绳必与轮缘相切。";
+  if(o.type==="glue") return "<b>胶块</b>贴在物块／小车／自定义形状的边上，只管这一小段。<br>从胶这边撞上来的物体，碰撞按<span class='em'>完全非弹性</span>处理：<br>法向不回弹、切向不滑动，碰后两者共速一起走。<br>宿主一动胶块跟着走；重新拖动可以换到别的边。";
   if(o.type==="rod") return "<b>细杆</b>可推可拉，与细线不同。<br>靠近杆端的物体会被约束成摆锤。<br>杆本身可整体拖动；杆长与杆角在右侧调。";
   if(o.type==="cart") return "<b>小车</b>车面摩擦决定物块是否随之运动。<br>μ 不足时物块会相对滑动。";
   if(o.type==="block") return "<b>物块</b>拖动能改位置，吸附顺序：地面 → 车面 → 弧面。<br>" +
@@ -4536,6 +5498,11 @@ bindRange("rH", (o,v)=>{
 });
 bindRange("rSlotR", (o,v)=>{
   o.R = v;
+  if(o.type === "shape" && o.ring){
+    o.w = o.h = Math.max(0.3, 2*v + 0.12);      // 外框正好裹住轨道，圆心不动
+    if(o.tangent) shapeTangency(o);
+    return;
+  }
   if(o.type === "shape"){
     /* 半径一变就把宽高重算成"刚好撑满"的比例，弧才不会漂在框里：
        半圆碗   宽 = 2R、碗深 = R —— 碗口正好容下整个半圆，两侧不留空壁；
@@ -4625,9 +5592,33 @@ bindRange("rTilt", (o,v)=>{
   o.tilt = v;
   W.objs.forEach(b=>{ if(b.type==="shape" && b.tangent) shapeTangency(b); });
 });
+/* 带速：滑杆与数字都调「速率」，方向由独立按钮翻转；vt 内部仍存带符号值 */
+function setBeltSpeed(o, v){
+  const sp = clamp(isFinite(v) ? v : 0, 0, 8);
+  if(o.beltSign === undefined) o.beltSign = ((o.vt || 0) < 0 ? -1 : 1);
+  const sg = (o.beltSign || 1) > 0 ? 1 : -1;
+  o.beltSign = sg; o.vt = sg * sp;
+}
+bindRange("rBelt", (o,v)=>{
+  if(o.type !== "ground" && o.type !== "belt") return;
+  setBeltSpeed(o, v);
+});
 bindNum("nBelt", (o,v)=>{
-  if(!isFinite(v) || o.type !== "ground") return;
-  o.vt = clamp(v, -20, 20);          // 传送带速度：+ 向右、− 向左
+  if(!isFinite(v) || (o.type !== "ground" && o.type !== "belt")) return;
+  setBeltSpeed(o, v);
+});
+$("btnBeltDir").addEventListener("click", ()=>{
+  const o = byId(selId); if(!o || running) return;
+  if(o.type !== "ground" && o.type !== "belt") return;
+  if(o.beltSign === undefined) o.beltSign = ((o.vt || 0) < 0 ? -1 : 1);
+  o.beltSign = -(o.beltSign || 1);
+  o.vt = (o.beltSign || 1) * Math.abs(o.vt || 0);
+  captureInitial(); syncPanel(); draw();
+});
+bindRange("rGlueW", (o,v)=>{ if(o.type !== "glue") return; o.w = clamp(v, 0.08, 0.8); syncGlue(o); });
+bindNum("nGlueW", (o,v)=>{
+  if(o.type !== "glue" || !isFinite(v)) return;
+  o.w = clamp(v / lenK(), 0.08, 0.8); syncGlue(o);
 });
 bindRange("rCartMu", (o,v)=>{ o.cartMu = v; });
 bindRange("rTopMu", (o,v)=>{ o.topMu = v; });
@@ -5529,14 +6520,17 @@ function drawEditor(){
   for(let i=0;i<pts.length;i++){
     const a = pts[i], b = pts[(i+1)%pts.length];
     const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
-    g.beginPath(); g.arc(mx,my,7,0,7);
+    const coarse = document.body.classList.contains("touchui");
+    g.beginPath(); g.arc(mx,my, coarse ? 10 : 7, 0, 7);
     g.fillStyle = "#FFFFFF"; g.fill();
     g.strokeStyle = "#9AB4E8"; g.lineWidth = 1.2; g.stroke();
-    g.fillStyle = "#5B82C8"; g.fillText("＋", mx, my+0.5);
+    g.fillStyle = "#5B82C8"; g.font = coarse ? "700 13px system-ui" : "600 11px system-ui";
+    g.fillText("＋", mx, my+0.5);
   }
   pts.forEach((p,i)=>{
     const on = ed.sel === i;
-    g.beginPath(); g.arc(p.x,p.y, on?7.5:6, 0, 7);
+    const coarse2 = document.body.classList.contains("touchui");
+    g.beginPath(); g.arc(p.x,p.y, on ? (coarse2?10.5:7.5) : (coarse2?9:6), 0, 7);
     g.fillStyle = on ? "#2F6FED" : "#FFFFFF";
     g.fill();
     g.strokeStyle = "#2F6FED"; g.lineWidth = 2; g.stroke();
@@ -5568,12 +6562,15 @@ function drawEditor(){
 function bindEditorCanvas(edcv){
   if(!edState) return;
   edState.canvas = edcv;          // 必须挂上，否则 fitEditorScale / drawEditor 直接 return，画布永远空白
+  const edTouch = new Map();      // 编辑画布上的触点
+  let edPinch = null;             // {d0,s0,mx,my}
   const pos = (e)=>{
     const r = edcv.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   };
   const pickVertex = (p)=>{
-    let hit = -1, bd = 14;
+    const coarse = document.body.classList.contains("touchui");
+    let hit = -1, bd = coarse ? 24 : 14;
     edState.verts.forEach((v,i)=>{
       const q = edToPx(v);
       const d = Math.hypot(q.x-p.x, q.y-p.y);
@@ -5582,9 +6579,27 @@ function bindEditorCanvas(edcv){
     return hit;
   };
   edcv.addEventListener("pointerdown", (e)=>{
-    edcv.setPointerCapture(e.pointerId);
+    /* 某些环境 pointerId 无效会让 setPointerCapture 抛错，整段处理被中断 → 必须 try */
+    try { edcv.setPointerCapture(e.pointerId); } catch(_){}
     const p = pos(e), ed = edState;
     if(!ed) return;
+    /* 触屏双指：捏合缩放 + 双指平移（单指仍是拖顶点） */
+    if(e.pointerType === "touch" || e.pointerType === "pen"){
+      edTouch.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if(edTouch.size >= 2){
+        const pts = [...edTouch.values()];
+        const rr = edcv.getBoundingClientRect();
+        edPinch = {
+          d0: Math.max(1, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)),
+          s0: ed.scale,
+          mx: (pts[0].x + pts[1].x)/2 - rr.left,
+          my: (pts[0].y + pts[1].y)/2 - rr.top
+        };
+        ed.dragging = null;          // 第二根手指落下就放弃顶点拖动，避免误移顶点
+        drawEditor();
+        return;
+      }
+    }
     const hit = pickVertex(p);
     if(hit >= 0){
       refreshEditorAxis();
@@ -5596,7 +6611,7 @@ function bindEditorCanvas(edcv){
     const pts = ed.verts.map(v=>edToPx(v));
     for(let i=0;i<pts.length;i++){
       const a = pts[i], b = pts[(i+1)%pts.length];
-      if(Math.hypot((a.x+b.x)/2-p.x, (a.y+b.y)/2-p.y) < 10){
+      if(Math.hypot((a.x+b.x)/2-p.x, (a.y+b.y)/2-p.y) < (document.body.classList.contains("touchui") ? 17 : 10)){
         if(ed.verts.length >= 12){ toast("最多 12 个顶点", "warn"); return; }
         const la = ed.verts[i], lb = ed.verts[(i+1)%ed.verts.length];
         ed.verts.splice(i+1, 0, [(la[0]+lb[0])/2, (la[1]+lb[1])/2]);
@@ -5611,7 +6626,22 @@ function bindEditorCanvas(edcv){
   });
   edcv.addEventListener("pointermove", (e)=>{
     const ed = edState;
-    if(!ed || !ed.dragging) return;
+    if(!ed) return;
+    if(edTouch.has(e.pointerId)) edTouch.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(edPinch){
+      const pts = [...edTouch.values()];
+      if(pts.length < 2) return;
+      const rr = edcv.getBoundingClientRect();
+      const d = Math.max(1, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y));
+      const mx = (pts[0].x + pts[1].x)/2 - rr.left, my = (pts[0].y + pts[1].y)/2 - rr.top;
+      // 先按两指距离比例缩放（锚点=当前两指中点），再按中点位移平移
+      zoomAt(mx, my, (edPinch.s0 / ed.scale) * clamp(d / edPinch.d0, 0.15, 6));
+      ed.ox += mx - edPinch.mx; ed.oy += my - edPinch.my;
+      edPinch.mx = mx; edPinch.my = my;
+      drawEditor();
+      return;
+    }
+    if(!ed.dragging) return;
     const dg = ed.dragging;
     const snap = dg.snap;
     const n = snap.length, i = dg.idx;
@@ -5632,8 +6662,10 @@ function bindEditorCanvas(edcv){
     syncEdgeValues();
     drawEditor();
   });
-  edcv.addEventListener("pointerup", ()=>{
+  edcv.addEventListener("pointerup", (e)=>{
     const ed = edState;
+    if(e && edTouch.has(e.pointerId)) edTouch.delete(e.pointerId);
+    if(edTouch.size < 2) edPinch = null;
     if(!ed) return;
     if(ed.dragging){
       ed.dragging = null;
@@ -5667,6 +6699,11 @@ function bindEditorCanvas(edcv){
       refreshEditorAxis(); renderEdgeList();
       drawEditor();
     }
+  });
+  edcv.addEventListener("pointercancel", (e)=>{
+    edTouch.delete(e.pointerId);
+    if(edTouch.size < 2) edPinch = null;
+    if(edState) edState.dragging = null;
   });
 }
 
@@ -5886,30 +6923,84 @@ function applySnap(s){
   }catch(e){}
 }
 $("btnSave").addEventListener("click", saveLocal);
-$("btnLoad").addEventListener("click", loadLocal);
+$("btnLoad").addEventListener("click", gkOpen);
 $("btnImg").addEventListener("click", exportImage);
 $("btnJson").addEventListener("click", showJson);
 $("btnPreset").addEventListener("click", showPresets);
 
+/* ---------- 元素库：单击放到中央，按住拖动可落到任意位置 ---------- */
+const libGhost = document.createElement("div");
+libGhost.id = "libGhost";
+libGhost.style.cssText = "position:fixed;left:0;top:0;z-index:9999;pointer-events:none;display:none;" +
+  "padding:4px 10px;border-radius:9px;background:rgba(47,125,50,.92);color:#fff;" +
+  "font:600 12px/1.2 system-ui;box-shadow:0 6px 18px rgba(23,58,26,.22);" +
+  "transform:translate(-50%,-50%)";
+document.body.appendChild(libGhost);
+
+let libDrag = null;            // { t, x0, y0, moved, card }
+let libSwallowClick = false;   // 拖拽结束时若恰好落在原卡片上，浏览器还会补一个 click，要吞掉
+
+function libPlace(t, cx, cy){
+  const r = cv.getBoundingClientRect();
+  if(cx < r.left || cx > r.right || cy < r.top || cy > r.bottom){
+    toast("把元件拖到工作台里再松手", "warn");
+    return false;
+  }
+  if(wireMode) endWire(true);
+  addObj(t, sx2wx(cx - r.left), sy2wy(cy - r.top));
+  return true;
+}
 document.querySelectorAll(".card[data-add]").forEach(card=>{
+  card.addEventListener("pointerdown", (e)=>{
+    if(e.pointerType === "mouse" && e.button !== 0) return;
+    libDrag = { t: card.dataset.add, x0: e.clientX, y0: e.clientY, moved: false, card };
+    libGhost.textContent = nameOf({ type: libDrag.t });
+  });
+  card.addEventListener("dragstart", e=>e.preventDefault());   // 掐掉 SVG 的原生拖拽
   card.addEventListener("click", ()=>{
+    if(libSwallowClick){ libSwallowClick = false; return; }   // 拖拽落下的那一下不算单击
     const t = card.dataset.add;
+    if(t === "rope" || t === "spring"){ toggleWire(t); return; }   // 再点一次＝退出该模式
+    if(wireMode) endWire(true);                                    // 点其它元件：自动退出布线与弹簧模式
     const cx = sx2wx(cv.clientWidth/2), cy = sy2wy(cv.clientHeight/2);
     addObj(t, cx + (Math.random()-0.5)*0.6, Math.max(0.5, cy));
   });
-  card.addEventListener("dragstart", (e)=>{
-    e.dataTransfer.setData("text/plain", card.dataset.add);
-  });
 });
-const stage = $("stage");
-stage.addEventListener("dragover", e=>e.preventDefault());
-stage.addEventListener("drop", e=>{
-  e.preventDefault();
-  const t = e.dataTransfer.getData("text/plain");
-  if(!t) return;
-  const r = cv.getBoundingClientRect();
-  const wx = sx2wx(e.clientX - r.left), wy = sy2wy(e.clientY - r.top);
-  addObj(t, wx, wy);
+document.addEventListener("pointermove", (e)=>{
+  if(!libDrag) return;
+  if(!libDrag.moved && Math.hypot(e.clientX - libDrag.x0, e.clientY - libDrag.y0) > 5){
+    libDrag.moved = true;
+    libGhost.style.display = "block";
+    document.body.classList.add("libdragging");
+  }
+  if(libDrag.moved){
+    const r = cv.getBoundingClientRect();
+    const inCv = e.clientX >= r.left && e.clientX <= r.right &&
+                 e.clientY >= r.top && e.clientY <= r.bottom;
+    libGhost.style.left = e.clientX + "px";
+    libGhost.style.top = e.clientY + "px";
+    libGhost.style.background = inCv ? "rgba(47,125,50,.95)" : "rgba(140,148,160,.92)";
+    const txt = nameOf({ type: libDrag.t }) + (inCv ? " · 松手放下" : " · 拖到工作台");
+    if(libGhost.textContent !== txt) libGhost.textContent = txt;
+  }
+});
+document.addEventListener("pointerup", (e)=>{
+  if(!libDrag) return;
+  const d = libDrag; libDrag = null;
+  libGhost.style.display = "none";
+  document.body.classList.remove("libdragging");
+  if(!d.moved) return;                 // 没拖动 → 交给 click 走原来的"放到中央"
+  const rr = d.card ? d.card.getBoundingClientRect() : null;
+  const onCard = !!rr && e.clientX >= rr.left && e.clientX <= rr.right &&
+                        e.clientY >= rr.top && e.clientY <= rr.bottom;
+  if(onCard){ libSwallowClick = true; return; }   // 拖了一下又放回库里：不添加
+  libPlace(d.t, e.clientX, e.clientY);
+});
+document.addEventListener("pointercancel", ()=>{
+  if(!libDrag) return;
+  libDrag = null;
+  libGhost.style.display = "none";
+  document.body.classList.remove("libdragging");
 });
 
 document.querySelectorAll("#chartTabs button").forEach(b=>{
@@ -5931,18 +7022,391 @@ document.addEventListener("keydown", (e)=>{
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="d"){ e.preventDefault(); duplicateSel(); return; }
   if(e.key==="Delete" || e.key==="Backspace"){ e.preventDefault(); deleteSel(); return; }
   if(e.key==="Escape"){ 
-    if(wireMode){ wireMode=false; wirePts=null; toast("已退出布线模式"); 
-      $("hintBox").innerHTML =
-        "<b>小提示</b>点击元素卡片即可添加到画面中心，也可以直接拖进去。<br>拖动物体改位置（靠近地面 / 车面 / 弧面会自动吸附），双击打开属性，Delete 删除。";
-      draw(); }
+    endWire();
     closeModal();
     return;
   }
   if(e.key===" "){ e.preventDefault(); startOrPause(); }
 });
 
+
+/* SECTION: gk bank —— 历年高考物理题模型库 */
+let gkCur = -1;
+
+const GK_BANK = [
+  { no:"2015 天津 32", short:"传送带送邮件 · 带速 1 m/s，μ=0.5",
+    text:"把质量 2 kg 的邮件轻放在以 1 m/s 匀速运行的传送带上，邮件与带间 μ=0.5，g=10。求邮件与带共速所需时间、此间位移，以及摩擦对传送带做的功。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.5; g.vt = 1.0; W2.objs.push(g);
+      const b = makeObj("block",-0.55,0.10); b.w=0.20; b.h=0.20; b.m=2.0; W2.objs.push(b);
+    }},
+  { no:"2016 全国 I 24", short:"反应时间 + 刹车安全距离 · μ=0.4，v=20 m/s",
+    text:"汽车以 20 m/s 匀速行驶，司机发现情况后经反应时间 0.5 s 才刹车，刹车时 μ=0.4，g=10。分别求晴天与雨天（μ 变小）的安全距离，并求雨天允许的最大车速。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.4; W2.objs.push(g);
+      const c = makeObj("cart",-1.7,0.16); c.w=1.40; c.h=0.32; c.m=60; c.vx=20; W2.objs.push(c);
+    }},
+  { no:"2017 全国 I 15", short:"两球同高平抛 · 1 m/s 与 2 m/s",
+    text:"两球从同一高度分别以 1 m/s 和 2 m/s 水平抛出，不计空气阻力。判断：速度较大的球通过同一水平距离所用时间是否更少。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const a = makeObj("ball",-1.60,1.25); a.r=0.05; a.m=0.2; a.vx=1; W2.objs.push(a);
+      const b = makeObj("ball",-0.70,1.25); b.r=0.05; b.m=0.2; b.vx=2; W2.objs.push(b);
+    }},
+  { no:"2018 全国 II 14", short:"恒力拉木箱 · m=1 kg，μ=0.3，F=8 N",
+    text:"用恒力 F 沿水平方向拉质量 m=1 kg 的木箱，木箱与地面间 μ=0.3，从静止前进位移 s。比较拉力做的功 Fs 与木箱获得的动能 Ek 的大小关系。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.3; W2.objs.push(g);
+      const b = makeObj("block",-1.10,0.20); b.w=0.40; b.h=0.40; b.m=1.0; b.fx=8; W2.objs.push(b);
+    }},
+  { no:"2018 全国 II 24", short:"冰面追尾 · v_A=4.25 m/s，μ=0.04",
+    text:"光滑冰面上质量 mA 的物块 A 以 4.25 m/s 追上静止的物块 B，碰后两物块分别以 2 m/s、3 m/s 同向滑行，冰面 μ=0.04。求碰后各自滑行距离并反推碰前速度。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.04; W2.objs.push(g);
+      const a = makeObj("block",-1.55,0.20); a.w=0.36; a.h=0.36; a.m=1.0; a.vx=4.25; W2.objs.push(a);
+      const b = makeObj("block",0.10,0.20); b.w=0.36; b.h=0.36; b.m=0.75; W2.objs.push(b);
+    }},
+  { no:"2019 江苏 · 板块叠放", short:"敲击物块后相对滑动 · 板与块摩擦",
+    text:"长木板放在光滑水平面上，物块叠在板上。给物块 2 m/s 初速，板与块、板与地面摩擦不同。求两者相对滑动距离与各自的加速度。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const c = makeObj("cart",0,0.16); c.w=2.60; c.h=0.32; c.m=2.0; c.cartMu=0.20; W2.objs.push(c);
+      const b = makeObj("block",-0.40,0.47); b.w=0.30; b.h=0.30; b.m=0.20; b.vx=2.0; W2.objs.push(b);
+    }},
+  { no:"2020 全国 I 16", short:"荡秋千 · 绳长 10 m、最低点 8 m/s、总质量 50 kg",
+    text:"两根等长轻绳各长 10 m，悬挂同学与秋千板（总质量 50 kg）。秋千摆到最低点时速度 8 m/s，g=10。求每根绳平均承受的拉力约为多少（A 200 N / B 400 N / C 600 N / D 800 N）。理论：两绳合力提供向心力，2T = m(g + v²/L) = 50(10+6.4) = 820 N，单绳 410 N → 选 B（400 N）。原 2020 全国 I 第 25 题是柱形区域内匀强电场中的带电粒子运动，属电磁学、力学沙盒无法建模，故本条目改用同卷第 16 题。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const an = makeObj("anchor",0,10.45); W2.objs.push(an);
+      const b = makeObj("ball",0,0.45); b.r=0.20; b.m=50; b.vx=8.0; W2.objs.push(b);
+      W2.links.push({ type:"rope", a:{objId:an.id,local:[0,0]}, b:{objId:b.id,local:[0,0]},
+        pulleys:[] });
+    }},
+  { no:"2022 全国甲 19", short:"板块相对滑动 · 比较 a_P 与 a_Q",
+    text:"物块 P 叠在长板 Q 上，Q 放在水平面上。给 P 一个初速后两者相对滑动，求 a_P、a_Q，并比较碰前 P、Q 速度的大小关系。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const c = makeObj("cart",0.20,0.16); c.w=1.40; c.h=0.32; c.m=2.0; c.cartMu=0.25; W2.objs.push(c);
+      const b = makeObj("block",0.20,0.47); b.w=0.30; b.h=0.30; b.m=0.50; b.vx=1.5; W2.objs.push(b);
+    }},
+  { no:"2022 全国甲 24", short:"1/2 圆弧轨道 · R=0.8 m 最低点速度",
+    text:"小球从 1/2 圆弧轨道边缘由静止滑下，轨道光滑、半径 R=0.8 m，g=10。求小球到达最低点时的速度大小。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const h = makeObj("shape",0,0.40); h.half=true; h.w=1.60; h.h=0.80; h.R=0.80;
+      h.orient="TL"; h.tangent=true; h.m=2.0; h.wallMu=0.0; W2.objs.push(h);
+      const b = makeObj("ball",-0.68,0.70); b.r=0.10; b.m=0.5; W2.objs.push(b);
+    }},
+  { no:"2023 全国乙 8", short:"弹簧振子 · k=20 N/m，m=1 kg",
+    text:"水平弹簧一端固定在墙（固定点）上，另一端连接质量 1 kg 的物块，k=20 N/m。把物块拉离平衡位置后释放，观察振动周期与最大动能。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const an = makeObj("anchor",-1.60,0.50); W2.objs.push(an);
+      const b = makeObj("block",-0.20,0.30); b.w=0.40; b.h=0.60; b.m=1.0; W2.objs.push(b);
+      W2.links.push({ type:"spring", a:{objId:an.id,local:[0,0]}, b:{objId:b.id,local:[-0.20,0]},
+        k:20, L0:1.00 });
+    }},
+  { no:"2023 全国 II 实验", short:"逐差法测加速度（跨定滑轮）· m=0.1 kg 钩码",
+    text:"小车放在长木板上，用细绳跨过定滑轮与悬挂钩码相连。由纸带数据用逐差法求加速度 a，再由牛顿定律求绳中张力 T。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const d = makeObj("deck",-0.20,0.55); d.w=2.40; d.h=1.10; d.mu=0.10; W2.objs.push(d);
+      const pu = makeObj("pulley",1.30,1.26); pu.r=0.13; pu.fixed=1; W2.objs.push(pu);
+      const c = makeObj("cart",-1.10,1.26); c.w=1.00; c.h=0.32; c.m=0.50; c.cartMu=0.10; W2.objs.push(c);
+      const w = makeObj("block",1.30,0.60); w.w=0.20; w.h=0.20; w.m=0.10; W2.objs.push(w);
+      W2.links.push({ type:"rope", a:{objId:c.id,local:[0,0.16]}, b:{objId:w.id,local:[0,0.10]},
+        pulleys:[pu.id] });
+    }},
+  { no:"2024 全国甲 2", short:"加速度随质量变化 · 改变悬挂质量",
+    text:"保持拉力不变，改变悬挂钩码的质量，测出小车加速度并作 a–m 图像。判断图线形状、阈值质量，以及 m 很大时加速度趋于什么。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const d = makeObj("deck",-0.20,0.55); d.w=2.40; d.h=1.10; d.mu=0.10; W2.objs.push(d);
+      const pu = makeObj("pulley",1.30,1.26); pu.r=0.13; pu.fixed=1; W2.objs.push(pu);
+      const c = makeObj("cart",-1.10,1.26); c.w=1.00; c.h=0.32; c.m=0.50; c.cartMu=0.10; W2.objs.push(c);
+      const w = makeObj("block",1.30,0.60); w.w=0.20; w.h=0.20; w.m=0.15; W2.objs.push(w);
+      W2.links.push({ type:"rope", a:{objId:c.id,local:[0,0.16]}, b:{objId:w.id,local:[0,0.10]},
+        pulleys:[pu.id] });
+    }},
+  { no:"2024 新课标 2", short:"平抛射程比 · 同一高度 1 m/s 与 2 m/s",
+    text:"两球从同一高度分别以 1 m/s、2 m/s 水平抛出，不计空气阻力。求两球落地时的水平射程之比。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const a = makeObj("ball",-1.60,1.20); a.r=0.05; a.m=0.2; a.vx=1; W2.objs.push(a);
+      const b = makeObj("ball",-0.70,1.20); b.r=0.05; b.m=0.2; b.vx=2; W2.objs.push(b);
+    }},
+  { no:"2024 新课标 12", short:"木板滑块冲量 · v=3 m/s 滑上长板",
+    text:"长木板静置在水平面上，物块以 3 m/s 滑上木板。求物块相对木板滑行的时间，以及木板最终速度（用动量守恒与冲量判断）。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const d = makeObj("cart",0,0.16); d.w=2.60; d.h=0.32; d.m=2.0; d.cartMu=0.20; W2.objs.push(d);
+      const b = makeObj("block",-0.90,0.47); b.w=0.30; b.h=0.30; b.m=1.0; b.vx=3.0; W2.objs.push(b);
+    }},
+  { no:"2025 安徽 5", short:"定滑轮 + 木箱甲/乙 · μ=0.25",
+    text:"木箱甲放在水平桌面上，用细绳跨过定滑轮与悬挂的木箱乙相连，甲与桌面间 μ=0.25，g=10。求系统加速度与绳中张力。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.25; W2.objs.push(g);
+      const pu = makeObj("pulley",1.10,1.90); pu.r=0.13; pu.fixed=1; W2.objs.push(pu);
+      const a = makeObj("block",-1.40,0.20); a.w=0.40; a.h=0.40; a.m=1.0; W2.objs.push(a);
+      const b = makeObj("block",1.10,1.00); b.w=0.25; b.h=0.25; b.m=0.50; W2.objs.push(b);
+      W2.links.push({ type:"rope", a:{objId:a.id,local:[0,0.20]}, b:{objId:b.id,local:[0,0.125]},
+        pulleys:[pu.id] });
+    }},
+  { no:"2019 全国 I 25(1)", short:"正面弹性碰撞 · m 与 3m",
+    text:"质量 m 的物块 A 以 2 m/s 与静止的质量 3m 的物块 B 在光滑水平面上发生完全弹性正碰。求碰后两物块的速度。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const a = makeObj("block",-1.00,0.20); a.w=0.40; a.h=0.40; a.m=1.0; a.vx=2.0; W2.objs.push(a);
+      const b = makeObj("block",0.40,0.20); b.w=0.40; b.h=0.40; b.m=3.0; W2.objs.push(b);
+    }},
+  { no:"自编 · 单摆", short:"单摆撞最低点 · L=1.2 m，偏角 60°",
+    text:"用细绳悬挂小球构成单摆，摆长 1.2 m，从偏角 60° 处由静止释放。测出最低点速度与振动周期，并与公式 v=√(2gL(1-cos60°))、T=2π√(L/g) 比较。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.30; W2.objs.push(g);
+      const an = makeObj("anchor",0,3.00); W2.objs.push(an);
+      const b = makeObj("ball",1.039,2.40); b.r=0.10; b.m=0.50; W2.objs.push(b);
+      W2.links.push({ type:"rope", a:{objId:an.id,local:[0,0]}, b:{objId:b.id,local:[0,0]},
+        pulleys:[] });
+    }},
+  { no:"自编 · 斜面", short:"30° 斜面上滑 · v=3 m/s，μ=0.2",
+    text:"倾角 30° 的斜面上，物块以 3 m/s 沿斜面向上滑出，斜面 μ=0.2，g=10。求物块上滑的最大距离，以及回到出发点时的速度。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.20; W2.objs.push(g);
+      // 有限长的斜面（用可倾斜平台做），物块上滑到位后回滑，不会掉出画面
+      const d = makeObj("deck",0.10,1.16); d.w=3.60; d.h=0.10; d.tilt=30; d.mu=0.20; W2.objs.push(d);
+      const b = makeObj("block",-1.00,0.655); b.w=0.30; b.h=0.30; b.m=1.0;
+      b.vx = 3*Math.cos(Math.PI/6); b.vy = 3*Math.sin(Math.PI/6); W2.objs.push(b);
+    }},
+  { no:"2021 山东 17", short:"海鸥丢鸟蛤 · 平抛落地",
+    text:"海鸥叼着鸟蛤飞到一定高度、以水平速度飞行时松开嘴，鸟蛤落到坚硬地面被摔碎。把鸟蛤视为质点，不计空气阻力，求它落地所用时间与水平位移（高度、初速可在右侧面板改）。软件地面为理想弹性，读数请取落地前那一段轨迹。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const b = makeObj("ball",-1.20,3.00); b.r=0.06; b.m=0.20; b.vx=6.0; W2.objs.push(b);
+    }},
+  { no:"2021 山东 18", short:"三物块 + 弹簧 + 恒力 · 分与合",
+    text:"三个质量均为 m 的物块 A、B、C 放在水平地面上，A 紧靠竖直墙，劲度系数 k 的轻弹簧连接 A 与 B，C 紧靠 B。给 C 施加水平向左的恒力 F，使 B、C 一起向左运动，速度为零时撤去 F，一段时间后 A 离开墙壁，最终三物块都停下。三物块与地面摩擦力均为 f，最大静摩擦力等于滑动摩擦力。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.25; W2.objs.push(g);
+      const wl = makeObj("wall",-2.00,0.40); W2.objs.push(wl);
+      const a = makeObj("block",-1.85,0.15); a.w=0.30; a.h=0.30; a.m=1.0; W2.objs.push(a);
+      const b = makeObj("block",-0.85,0.15); b.w=0.30; b.h=0.30; b.m=1.0; W2.objs.push(b);
+      const c = makeObj("block",-0.55,0.15); c.w=0.30; c.h=0.30; c.m=1.0; c.fx=-12.5; W2.objs.push(c);
+      W2.links.push({ type:"spring", a:{objId:a.id,local:[0,0]}, b:{objId:b.id,local:[0,0]},
+        k:50, L0:1.00 });
+    }},
+  { no:"2022 山东 18", short:"L 型平板 B + 物块 A + 单摆（O′左粗右光、B 自带端挡板）",
+    text:"L 型平板 B（mB=0.3 kg）静置在水平地面，B 与地面 μ2=0.225；物块 A（mA=0.1 kg）在板上 O′ 点，O′ 左侧粗糙（A 与 B 间 μ1=0.4）、右侧光滑。质量 M 的小球用轻绳悬于 O′ 正上方，绳水平拉直后由静止释放，摆到最低点与 A 弹性相碰；碰后小球速度方向不变、做摆角小于 5° 的简谐运动，A 以 4 m/s 沿板滑行并与 B 右端自带的挡板弹性碰撞，返回到 O 正下方时相对地面速度恰为 0，此时小球第一次升到最高点。求 (1) A 与挡板碰后 A、B 的速度；(2) 光滑段长度 d；(3) A 对 B 的摩擦力做的功；(4) M 的取值范围（用 cos5° 表示）。理论与仿真都从「A 已获得 4 m/s 的瞬间」起算：A 走完光滑段 d 后与 B 自带的挡板弹性正碰（mA=0.1、mB=0.3），故 A 反向 2 m/s、B 向右 2 m/s；随后 B 受地面 μ2 减速、A 在 O′ 左侧粗糙段减速，可读完 (1)(2)(3)。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.225; W2.objs.push(g);
+      const b = makeObj("cart",0.00,0.15); b.w=1.70; b.h=0.30; b.m=0.30;
+      b.endWall=1; b.roughFrom=-0.85; b.roughTo=0.35; b.roughMu=0.40; b.smoothMu=0.0;
+      W2.objs.push(b);
+      const a = makeObj("block",0.35,0.375); a.w=0.15; a.h=0.15; a.m=0.10; a.vx=4.0; W2.objs.push(a);
+    }},
+  { no:"2023 山东 18", short:"弧槽滑下 C 上木板 B · A/B 同向、撞挡板 P（参数齐全）",
+    text:"物块 A（1 kg）和木板 B（2 kg）置于水平地面，B 与地面 μ1=0.1，A 与地面无摩擦；固定光滑弧形轨道末端与 B 上表面相切，竖直挡板 P 固定在地面上。外力使 A、B 以 v0=1 m/s 同向右匀速运动；B 左端经过轨道末端时，从弧上无初速滑下的滑块 C（1 kg）恰好到最低点，以 v=4 m/s 滑上 B 顶面（C 与 B 间 μ2=0.5），同时撤力，此时 B 右端与 P 的距离为 s；B 与 P、A 的碰撞均弹性。求 (1) C 下滑高度 H；(2) B、C 能共速且 A、B 未碰时 s 的范围；(3) s=0.48 m 时 B 撞 P 前摩擦力对 C 做的功 W；(4) s=0.48 m 时三物体总动量变化量。模型按 R=0.8 m 弧槽从顶到底落差 0.8 m 提供 v=4 m/s（gH=½v² 自洽），C 以滑块近似为小球。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const b = makeObj("cart",1.20,0.15); b.w=1.80; b.h=0.30; b.m=2.0; b.vx=1.0;
+      b.cartMu=0.50; b.groundMu=0.10; W2.objs.push(b);
+      const a = makeObj("block",-0.15,0.15); a.w=0.30; a.h=0.30; a.m=1.0; a.vx=1.0; W2.objs.push(a);
+      const c = makeObj("ball",0.40,0.40); c.r=0.10; c.m=1.0; c.vx=4.0; W2.objs.push(c);
+      const wl = makeObj("wall",2.58,0.30); W2.objs.push(wl);
+    }},
+  { no:"2020 山东 18 · U 形池", short:"单板滑雪 U 形池 · 斜抛腾空（注：2024 山东 18 为磁场中带电粒子，属电磁学，未收录）",
+    text:"U 形滑道由两个半径相同的 1/4 圆柱面轨道与中央平面直轨道连接而成，轨道倾角 17.2°。运动员（视为质点）以 10 m/s 从轨道边缘 M 点沿竖直切面滑出，腾空后从 N 点落回轨道，不计空气阻力。求腾空过程中离开边缘线的最大距离与腾空时间（模型按与水平面成 72.8° 抛出简化，地面弹性、腾空段读数不受影响）。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0.0; g.tilt = 17.2; W2.objs.push(g);
+      const b = makeObj("ball",-0.80,1.20); b.r=0.08; b.m=0.50;
+      b.vx = 10*Math.cos(72.8*Math.PI/180); b.vy = 10*Math.sin(72.8*Math.PI/180);
+      W2.objs.push(b);
+    }},
+  { no:"传送带 · 反向运行（2015 天津 32 变式）", short:"带速 −2 m/s、μ=0.2、物块 v₀=4 m/s 滑上带",
+    text:"质量 1 kg 的物块以 4 m/s 向右滑上以 2 m/s 反向（向左）运行的传送带，物块与带面 μ=0.2，g=10。求物块速度减为零所用时间与这段时间内的位移，以及之后物块的运动情况。（理论：a=−2 m/s²，t=2 s 速度归零，位移 4 m，之后随带向左加速到 −2 m/s）",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const bt = makeObj("belt",0.60,0.09); bt.w = 6.0; bt.vt = -2.0; bt.mu = 0.20; W2.objs.push(bt);
+      const b = makeObj("block",-2.20,0.33); b.w = 0.30; b.h = 0.30; b.m = 1.0; b.vx = 4.0; W2.objs.push(b);
+    }},
+  { no:"倾斜传送带 · 典型模型", short:"θ=30° 带静止，物块沿带上滑 μ=0.5",
+    text:"倾角 30° 的传送带静止，物块以 2 m/s 沿带面向上滑上带面，物块与带面 μ=0.5，g=10。求上滑的最大距离与所用时间。（理论：a=−(g sinθ+μg cosθ)=−9.33 m/s²，t=0.214 s，最大距离 s=0.214 m）",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const bt = makeObj("belt",0.0,1.00); bt.w = 4.0; bt.vt = 0.0; bt.mu = 0.50; bt.tilt = 30; W2.objs.push(bt);
+      const th = 30*Math.PI/180, ux = Math.cos(th), uy = Math.sin(th);
+      const nx = -Math.sin(th), ny = Math.cos(th);
+      const sup = 0.15*Math.abs(ny) + 0.15*Math.abs(nx) + 0.09;   // 方形块在斜带上的支撑半径 + 带半厚
+      const b = makeObj("block", -1.20*ux + nx*sup, 1.00 - 1.20*uy + ny*sup);
+      b.w = 0.30; b.h = 0.30; b.m = 1.0;
+      b.vx = 2.0*ux; b.vy = 2.0*uy;
+      W2.objs.push(b);
+    }},
+  { no:"2020 浙江 7月 20(1)", short:"竖直圆轨道（内壁）· R=0.2 m，从 H=1.0 m 滑下，求 D 点压力",
+    text:"装置由弧形轨道、竖直圆轨道（R=0.2 m，光滑）、水平直轨道 AB 与倾角 37° 的斜轨道平滑连接。质量 m=0.1 kg 的滑块从弧形轨道离地 H=1.0 m 处静止释放。求滑块运动到与圆心等高的 D 点时对轨道的压力。参考解：mgH = ½mv_D² + mgR → v_D = √(2g(H−R)) = 4 m/s；D 点重力沿径向无分量，N = mv_D²/R = 8 N，方向水平向左。仿真（本题）：球从环底内壁以 √(2gH)=4.47 m/s 射入，到达水平直径（蓝虚线）端点时速率为 4.00 m/s，按 mv²/R 得 8.00 N。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const s = makeObj("ring",0.00,0.26); s.R = 0.20; s.w = s.h = 0.52; s.m = 200; W2.objs.push(s);
+      const b = makeObj("ball",0.00,0.07); b.r = 0.01; b.m = 0.10;
+      b.vx = Math.sqrt(2*10*1.0); W2.objs.push(b);
+    }},
+  { no:"2020 浙江 1月 20(1)", short:"弹射游戏装置 · 竖直圆轨道 r=0.1 m，滑块恰好过最高点 F",
+    text:"装置由固定弹射器、竖直圆轨道（在最低点 E 与水平轨道 EO、EA 相切，r=0.1 m，光滑）与高度可调斜轨 AB 组成。滑块质量 m=2 g，视为质点。滑块恰好能过圆轨道最高点 F，求 v_F。参考解：最高点 mg = mv_F²/r → v_F = √(gr) = 1 m/s。仿真（本题）：从环底射入 √(5g·r_eff)=2.18 m/s，绕行到最高点时速率 0.974 m/s（按球心轨道半径修正的理论值 0.975；与官方 1.00 m/s 相差 2.6%，差值来自小球半径 5 mm 使球心轨道半径略小于 r）。",
+    build(W2){
+      const g = makeObj("ground",0,0); g.mu = 0; W2.objs.push(g);
+      const s = makeObj("ring",0.00,0.16); s.R = 0.10; s.w = s.h = 0.32; s.m = 200; W2.objs.push(s);
+      const b = makeObj("ball",0.00,0.065); b.r = 0.005; b.m = 0.002;
+      b.vx = Math.sqrt(5*10*0.095); W2.objs.push(b);
+    }},
+];
+
+/* 视野自适应：把整组物体框到画面中间 */
+function gkFit(){
+  const cw = cv.clientWidth || 900, ch = cv.clientHeight || 700;
+  let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+  const grow = (x,y,w,h)=>{
+    x0=Math.min(x0,x-w/2); x1=Math.max(x1,x+w/2);
+    y0=Math.min(y0,y-h/2); y1=Math.max(y1,y+h/2);
+  };
+  W.objs.forEach(o=>{
+    if(o.type==="ground"){ y0=Math.min(y0,-0.06); y1=Math.max(y1,0.16); return; }
+    if(o.type==="ball") return grow(o.x,o.y,2*o.r,2*o.r);
+    if(o.type==="pulley") return grow(o.x,o.y,2*(o.r||0.18)+0.18,2*(o.r||0.18)+0.18);
+    if(o.type==="anchor") return grow(o.x,o.y,0.30,0.30);
+    if(o.type==="rod"){
+      const ax = (o.ax===undefined?o.x:o.ax), ay = (o.ay===undefined?o.y:o.ay);
+      x0=Math.min(x0,ax); x1=Math.max(x1,ax); y0=Math.min(y0,ay); y1=Math.max(y1,ay);
+      return grow(ax+(o.len||1.4)*Math.cos(o.ang||0), ay+(o.len||1.4)*Math.sin(o.ang||0), 0.2, 0.2);
+    }
+    return grow(o.x,o.y,o.w||0.6,o.h||0.6);
+  });
+  if(!isFinite(x0)){ x0=-2; x1=2; }
+  if(!isFinite(y0)){ y0=-0.1; y1=2; }
+  const w2 = (x1-x0)+0.40, h2 = (y1-y0)+0.40;
+  const cardW = 268;                       // 右上角题目卡片占的横向空间
+  const availW = Math.max(250, cw - cardW);
+  const availH = Math.max(230, ch - 34);
+  const s = Math.min(availW*0.94/Math.max(0.6,w2), availH*0.90/Math.max(0.5,h2), 300);
+  W.view.s = s;
+  W.view.ox = availW*0.5 - (x0+x1)*0.5*s;
+  W.view.oy = availH*0.60 + (y0+y1)*0.5*s;
+  W._gkbox = { x: W.view.ox + x0*s, y: W.view.oy - y1*s,
+               w: (x1-x0)*s, h: (y1-y0)*s };
+}
+
+/* 从画布抓一张题目模型图 */
+function gkThumb(){
+  try{
+    const W0 = cv.width, H0 = cv.height;
+    if(!W0 || !H0) return "";
+    const T = document.createElement("canvas"); T.width = 600; T.height = 320;
+    const g = T.getContext("2d");
+    g.fillStyle = "#FFFFFF"; g.fillRect(0,0,600,320);
+    const ar = 600/320;
+    const kx = W0/(cv.clientWidth||W0), ky = H0/(cv.clientHeight||H0);
+    let bx, by, bw, bh;
+    const box = W._gkbox;
+    if(box && isFinite(box.w) && isFinite(box.h) && box.w>2 && box.h>2){
+      bx = box.x*kx; by = box.y*ky; bw = box.w*kx; bh = box.h*ky;
+    }else{
+      bw = W0*0.7; bh = H0*0.7; bx = (W0-bw)/2; by = (H0-bh)/2;
+    }
+    const pad = 0.07;
+    bx -= bw*pad; by -= bh*pad; bw *= (1+2*pad); bh *= (1+2*pad);
+    let sw = bh*ar, sh = bh;
+    if(sw < bw){ sw = bw; sh = sw/ar; }
+    if(sh < bh){ sh = bh; sw = sh*ar; }
+    if(sw > W0){ sw = W0; sh = sw/ar; }
+    if(sh > H0){ sh = H0; sw = sh*ar; }
+    let sx = bx + (bw-sw)/2, sy = by + (bh-sh)/2;
+    sx = Math.max(0, Math.min(W0-sw, sx));
+    sy = Math.max(0, Math.min(H0-sh, sy));
+    g.drawImage(cv, sx, sy, sw, sh, 0,0,600,320);
+    return T.toDataURL("image/jpeg",0.75);
+  }catch(e){ return ""; }
+}
+
+function gkCardShow(q, img){
+  const c = $("gkCard"); if(!c) return;
+  $("gkNo").textContent = "题号 · " + q.no;
+  $("gkText").textContent = q.text;
+  const im = $("gkImg");
+  if(img){ im.src = img; im.style.display = "block"; } else { im.style.display = "none"; }
+  c.classList.remove("hidden");
+}
+function gkCardHide(){ const c = $("gkCard"); if(c) c.classList.add("hidden"); }
+
+function gkLoad(i){
+  const q = GK_BANK[i]; if(!q) return;
+  pushUndo();
+  const prevUnit = (W && W.unitLen) || "m";
+  W = emptyWorld();
+  W.unitLen = prevUnit;
+  W.g = 10;
+  q.build(W);
+  // 同一道题每次载入用同一套配色，避免颜色随机跳变
+  let ci = 0;
+  W.objs.forEach(o=>{ if(isBody(o)) o.color = COLORS[ci++ % COLORS.length]; });
+  selId = null; T = 0; physAcc = 0; samples = []; running = false;
+  resize();
+  gkFit();
+  captureInitial();
+  setRunning(false);
+  syncPanel(); draw(); drawChart(); refreshEnv();
+  gkCur = i;
+  gkCardShow(q, gkThumb());
+  toast("已载入题库：" + q.no);
+}
+
+function gkGroup(q){
+  if(q.no.indexOf("山东") >= 0) return "山东卷 · 力学大题";
+  if(q.no.indexOf("自编") === 0) return "自编补充模型";
+  return "全国卷 / 新课标 / 自主命题";
+}
+
+function gkOpen(){
+  openModal("题库 · 历年高考物理模型（共 " + GK_BANK.length + " 题）", (body)=>{
+    const tip = document.createElement("div");
+    tip.className = "gktip";
+    tip.textContent = "点任意一题即载入模型；载入后画布右上角会显示题号、题干与模型图，按「开始」就能算。";
+    body.appendChild(tip);
+    let lastGroup = "";
+    GK_BANK.forEach((q, i)=>{
+      const gname = gkGroup(q);
+      if(gname !== lastGroup){
+        lastGroup = gname;
+        const hd = document.createElement("div");
+        hd.className = "gkgroup"; hd.textContent = gname;
+        body.appendChild(hd);
+      }
+      const btn = document.createElement("button");
+      btn.className = "pcard gkrow";
+      const num = document.createElement("div");
+      num.className = "gknum"; num.textContent = String(i+1);
+      const tx = document.createElement("div");
+      const n = document.createElement("div"); n.className = "pn"; n.textContent = q.no;
+      const d = document.createElement("div"); d.className = "pd"; d.textContent = q.short;
+      tx.appendChild(n); tx.appendChild(d);
+      btn.appendChild(num); btn.appendChild(tx);
+      btn.addEventListener("click", ()=>{ closeModal(); gkLoad(i); });
+      body.appendChild(btn);
+    });
+  }, (foot)=>{
+    const b = document.createElement("button"); b.className = "btn"; b.textContent = "载入本地存档";
+    b.addEventListener("click", ()=>{ closeModal(); loadLocal(); });
+    foot.appendChild(b);
+  });
+}
+$("gkHide").addEventListener("click", gkCardHide);
+
 /* SECTION: boot */
 function boot(){
+  /* 触屏设备（希沃白板等一体机）：放大点击目标，避免手指点不中 */
+  try{ if(window.matchMedia && window.matchMedia("(any-pointer:coarse)").matches)
+        document.body.classList.add("touchui"); }catch(_){}
+  /* 数字输入框：触屏弹数字键盘而不是全键盘 */
+  try{ document.querySelectorAll("input[type=number]").forEach(ip=>{
+        if(!ip.getAttribute("inputmode")) ip.setAttribute("inputmode", "decimal");
+      }); }catch(_){}
   resize();
   loadPreset("slot");
   refreshEnv();
@@ -5953,6 +7417,33 @@ function boot(){
 }
 window.addEventListener("load", boot);
 if(document.readyState==="complete") boot();
+
+/* 赏饭小挂件：点按钮在按钮上方弹出二维码，点空白处或 Esc 收起 */
+(function(){
+  var btn = document.getElementById("tipBtn"), pop = document.getElementById("tipPop");
+  if(!btn || !pop) return;
+  function show(){
+    pop.classList.remove("hidden");
+    btn.setAttribute("aria-expanded", "true");
+  }
+  function hide(){
+    pop.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+  }
+  btn.addEventListener("click", function(ev){
+    ev.preventDefault(); ev.stopPropagation();
+    if(pop.classList.contains("hidden")) show(); else hide();
+  });
+  pop.addEventListener("pointerdown", function(ev){ ev.stopPropagation(); });
+  document.addEventListener("pointerdown", function(ev){
+    if(pop.classList.contains("hidden")) return;
+    if(btn.contains(ev.target) || pop.contains(ev.target)) return;
+    hide();
+  }, true);
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape") hide();
+  });
+})();
 </script>
 </body>
 </html>
